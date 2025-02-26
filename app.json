@@ -9,7 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.erikhein.trail-mate",
+      "appleTeamId": "9XG4F7L9Z4"
     },
     "android": {
       "adaptiveIcon": {
