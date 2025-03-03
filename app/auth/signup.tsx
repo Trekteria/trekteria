@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -30,100 +30,109 @@ export default function Signup() {
      };
 
      return (
-          <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-               <View style={styles.logoContainer}>
-                    <Image
-                         source={require('../../assets/images/logo-green.png')}
-                         style={styles.logo}
-                         resizeMode="contain"
-                    />
-                    <Text style={styles.appName}>Welcome to TrailMate</Text>
-               </View>
-
-               <View style={styles.form}>
-                    <View style={styles.inputContainer}>
-                         <TextInput
-                              style={styles.input}
-                              placeholder="First Name"
-                              placeholderTextColor={Colors.black}
-                              autoCapitalize="words"
+          <KeyboardAvoidingView
+               style={{ flex: 1 }}
+               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+               <ScrollView
+                    style={styles.container}
+                    contentContainerStyle={styles.contentContainer}
+                    showsVerticalScrollIndicator={false}
+               >
+                    <View style={styles.logoContainer}>
+                         <Image
+                              source={require('../../assets/images/logo-green.png')}
+                              style={styles.logo}
+                              resizeMode="contain"
                          />
+                         <Text style={styles.appName}>Welcome to TrailMate</Text>
                     </View>
 
-                    <View style={styles.inputContainer}>
-                         <TextInput
-                              style={styles.input}
-                              placeholder="Last Name"
-                              placeholderTextColor={Colors.black}
-                              autoCapitalize="words"
-                         />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                         <TextInput
-                              style={styles.input}
-                              placeholder="Email"
-                              placeholderTextColor={Colors.black}
-                              keyboardType="email-address"
-                              autoCapitalize="none"
-                         />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                         <View style={styles.passwordContainer}>
+                    <View style={styles.form}>
+                         <View style={styles.inputContainer}>
                               <TextInput
-                                   style={styles.passwordInput}
-                                   placeholder="Password"
+                                   style={styles.input}
+                                   placeholder="First Name"
                                    placeholderTextColor={Colors.black}
-                                   secureTextEntry={!showPassword}
+                                   autoCapitalize="words"
                               />
-                              <TouchableOpacity
-                                   style={styles.eyeIcon}
-                                   onPress={togglePasswordVisibility}
-                              >
-                                   <Feather
-                                        name={showPassword ? "eye-off" : "eye"}
-                                        size={24}
-                                        color={Colors.black}
-                                   />
-                              </TouchableOpacity>
                          </View>
-                    </View>
 
-                    <View style={styles.inputContainer}>
-                         <View style={styles.passwordContainer}>
+                         <View style={styles.inputContainer}>
                               <TextInput
-                                   style={styles.passwordInput}
-                                   placeholder="Confirm Password"
+                                   style={styles.input}
+                                   placeholder="Last Name"
                                    placeholderTextColor={Colors.black}
-                                   secureTextEntry={!showConfirmPassword}
+                                   autoCapitalize="words"
                               />
-                              <TouchableOpacity
-                                   style={styles.eyeIcon}
-                                   onPress={toggleConfirmPasswordVisibility}
-                              >
-                                   <Feather
-                                        name={showConfirmPassword ? "eye-off" : "eye"}
-                                        size={24}
-                                        color={Colors.black}
-                                   />
-                              </TouchableOpacity>
                          </View>
+
+                         <View style={styles.inputContainer}>
+                              <TextInput
+                                   style={styles.input}
+                                   placeholder="Email"
+                                   placeholderTextColor={Colors.black}
+                                   keyboardType="email-address"
+                                   autoCapitalize="none"
+                              />
+                         </View>
+
+                         <View style={styles.inputContainer}>
+                              <View style={styles.passwordContainer}>
+                                   <TextInput
+                                        style={styles.passwordInput}
+                                        placeholder="Password"
+                                        placeholderTextColor={Colors.black}
+                                        secureTextEntry={!showPassword}
+                                   />
+                                   <TouchableOpacity
+                                        style={styles.eyeIcon}
+                                        onPress={togglePasswordVisibility}
+                                   >
+                                        <Feather
+                                             name={showPassword ? "eye-off" : "eye"}
+                                             size={24}
+                                             color={Colors.black}
+                                        />
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+
+                         <View style={styles.inputContainer}>
+                              <View style={styles.passwordContainer}>
+                                   <TextInput
+                                        style={styles.passwordInput}
+                                        placeholder="Confirm Password"
+                                        placeholderTextColor={Colors.black}
+                                        secureTextEntry={!showConfirmPassword}
+                                   />
+                                   <TouchableOpacity
+                                        style={styles.eyeIcon}
+                                        onPress={toggleConfirmPasswordVisibility}
+                                   >
+                                        <Feather
+                                             name={showConfirmPassword ? "eye-off" : "eye"}
+                                             size={24}
+                                             color={Colors.black}
+                                        />
+                                   </TouchableOpacity>
+                              </View>
+                         </View>
+
+                         <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+                              <Text style={styles.signupButtonText}>Register</Text>
+                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-                         <Text style={styles.signupButtonText}>Register</Text>
-                    </TouchableOpacity>
-               </View>
-
-               <View style={styles.footer}>
-                    <TouchableOpacity onPress={handleBackToLogin}>
-                         <Text style={styles.footerText}>
-                              Already have an account? <Text style={styles.loginText}>Log In</Text>
-                         </Text>
-                    </TouchableOpacity>
-               </View>
-          </ScrollView>
+                    <View style={styles.footer}>
+                         <TouchableOpacity onPress={handleBackToLogin}>
+                              <Text style={styles.footerText}>
+                                   Already have an account? <Text style={styles.loginText}>Log In</Text>
+                              </Text>
+                         </TouchableOpacity>
+                    </View>
+               </ScrollView>
+          </KeyboardAvoidingView>
      );
 }
 
