@@ -14,6 +14,10 @@ export default function Home() {
           router.push('/(app)/result');
      };
 
+     const navigateToPreferences = () => {
+          router.push('/(app)/preferences');
+     };
+
      return (
           <View style={styles.container}>
                <Text style={styles.title}>Home Page</Text>
@@ -24,6 +28,10 @@ export default function Home() {
 
                <TouchableOpacity style={styles.button} onPress={navigateToResult}>
                     <Text style={styles.buttonText}>Go to Result</Text>
+               </TouchableOpacity>
+
+               <TouchableOpacity style={styles.button} onPress={navigateToPreferences}>
+                    <Text style={styles.buttonText}>Go to Preferences</Text>
                </TouchableOpacity>
           </View>
      );
