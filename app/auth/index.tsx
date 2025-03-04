@@ -11,7 +11,8 @@ export default function AuthIndex() {
      const [showPassword, setShowPassword] = useState(false);
 
      const handleLogin = () => {
-          router.push('/(tabs)');
+          // In a real app, you would validate credentials here
+          router.replace('/(app)/home');
      };
 
      const handleSignup = () => {

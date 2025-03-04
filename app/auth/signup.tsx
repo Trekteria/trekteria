@@ -13,8 +13,7 @@ export default function Signup() {
 
      const handleSignup = () => {
           // In a real app, you would validate and create an account here
-          // For now, just navigate to the main app
-          router.replace('/(tabs)');
+          router.replace('/(app)/home');
      };
 
      const handleBackToLogin = () => {
