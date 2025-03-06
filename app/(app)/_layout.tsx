@@ -14,14 +14,21 @@ export default function AppLayout() {
                     name="settings"
                     options={{
                          title: 'Settings',
-                         headerShown: true,
+                         headerShown: false,
+                    }}
+               />
+               <Stack.Screen
+                    name="preferences"
+                    options={{
+                         title: 'Preferences',
+                         headerShown: false,
                     }}
                />
                <Stack.Screen
                     name="result"
                     options={{
                          title: 'Result',
-                         headerShown: true,
+                         headerShown: false,
                     }}
                />
           </Stack>
