@@ -16,6 +16,7 @@ import Animated, {
      Easing,
      runOnJS
 } from 'react-native-reanimated';
+import { fetchWeatherData } from '@/services/weatherService';
 
 type TravelerGroup = {
      label: string;
@@ -212,8 +213,123 @@ export default function Preferences() {
                     }
                     return question;
                });
-               console.log('Form submitted:', formattedData.map((question) => question.value));
-               router.push('/(app)/result');
+
+               // Format the data into a readable string
+               const formatFormData = async () => {
+                    let summary = '';
+
+                    // Location (Question 1)
+                    const location = formattedData[0].value;
+                    if (location) {
+                         summary += `I would like to go to ${location}`;
+                    }
+
+                    // Date range (Question 2)
+                    const dateInfo = formattedData[1].value;
+                    if (dateInfo.startDate && dateInfo.endDate) {
+                         const startDate = new Date(dateInfo.startDate).toLocaleDateString();
+                         const endDate = new Date(dateInfo.endDate).toLocaleDateString();
+                         summary += ` from ${startDate} to ${endDate}.`;
+                    } else {
+                         summary += '.';
+                    }
+
+                    // Group composition (Question 3)
+                    const groupInfo = formattedData[2].value;
+                    const groupParts = [];
+
+                    if (groupInfo.adults > 0) {
+                         groupParts.push(`${groupInfo.adults} adult${groupInfo.adults > 1 ? 's' : ''}`);
+                    }
+                    if (groupInfo.olderkids > 0) {
+                         groupParts.push(`${groupInfo.olderkids} older kid${groupInfo.olderkids > 1 ? 's' : ''}`);
+                    }
+                    if (groupInfo.youngkids > 0) {
+                         groupParts.push(`${groupInfo.youngkids} young kid${groupInfo.youngkids > 1 ? 's' : ''}`);
+                    }
+                    if (groupInfo.toddlers > 0) {
+                         groupParts.push(`${groupInfo.toddlers} toddler${groupInfo.toddlers > 1 ? 's' : ''}`);
+                    }
+                    if (groupInfo.pets > 0) {
+                         groupParts.push(`${groupInfo.pets} pet${groupInfo.pets > 1 ? 's' : ''}`);
+                    }
+
+                    if (groupParts.length > 0) {
+                         summary += ` There will be ${groupParts.join(', ')}.`;
+                    }
+
+                    // Experience level (Question 4)
+                    const experience = formattedData[3].value;
+                    if (experience) {
+                         summary += ` My hiking experience is: ${experience}.`;
+                    }
+
+                    // Difficulty preference (Question 5)
+                    const difficulty = formattedData[4].value;
+                    if (difficulty) {
+                         const difficultyLevel = difficulty.split(' - ')[0];
+                         summary += ` I prefer ${difficultyLevel.toLowerCase()} difficulty trails.`;
+                    }
+
+                    // Hike duration (Question 6)
+                    const duration = formattedData[5].value;
+                    if (duration) {
+                         summary += ` I want to hike for ${duration}.`;
+                    }
+
+                    // Scenery preferences (Question 7)
+                    const scenery = formattedData[6].value;
+                    if (scenery && scenery.length > 0) {
+                         summary += ` I enjoy ${scenery.join(', ')} scenery.`;
+                    }
+
+                    // Terrain preference (Question 8)
+                    const terrain = formattedData[7].value;
+                    if (terrain) {
+                         summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
+                    }
+
+                    // Trail features (Question 9)
+                    const features = formattedData[8].value;
+                    if (features && features.length > 0) {
+                         summary += ` I'm looking for trails with ${features.join(', ')}.`;
+                    }
+
+                    // Must-haves (Question 10)
+                    const mustHaves = formattedData[9].value;
+                    if (mustHaves && mustHaves.length > 0) {
+                         summary += ` My trail must-haves are: ${mustHaves.join(', ')}.`;
+                    }
+
+                    // Time of day (Question 11)
+                    const timeOfDay = formattedData[10].value;
+                    if (timeOfDay) {
+                         const preferredTime = timeOfDay.split(' - ')[0];
+                         summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
+                    }
+
+                    // Weather information - properly handle async data
+                    try {
+                         const weatherInfo = await fetchWeatherData();
+                         if (weatherInfo) {
+                              summary += ` The weather forecast shows: ${weatherInfo}`;
+                         }
+                    } catch (error) {
+                         console.error("Error fetching weather data:", error);
+                    }
+
+                    return summary;
+               };
+
+               // Handle the async formatFormData function
+               formatFormData().then(formattedSummary => {
+                    console.log('Form summary:', formattedSummary);
+                    // console.log('Form data:', formattedData.map((question) => question.value));
+                    router.push('/(app)/result');
+               }).catch(error => {
+                    console.error("Error formatting form data:", error);
+                    router.push('/(app)/result');
+               });
           }
      };
 
