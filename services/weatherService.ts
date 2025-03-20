@@ -1,6 +1,6 @@
 import { fetchWeatherApi } from "openmeteo";
 
-export const fetchWeatherData = async () => {
+export const fetchWeatherData = async (startDate: string, endDate: string) => {
   const params = {
     latitude: 52.52,
     longitude: 13.41,
@@ -14,8 +14,8 @@ export const fetchWeatherData = async () => {
     wind_speed_unit: "mph",
     temperature_unit: "fahrenheit",
     precipitation_unit: "inch",
-    start_date: "2025-03-06",
-    end_date: "2025-03-20",
+    start_date: startDate,
+    end_date: endDate,
   };
   const url = "https://api.open-meteo.com/v1/forecast";
   const responses = await fetchWeatherApi(url, params);

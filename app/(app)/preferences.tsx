@@ -1,9 +1,9 @@
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, DateData } from 'react-native-calendars';
 import { MarkedDates } from 'react-native-calendars/src/types';
 import Animated, {
@@ -17,6 +17,7 @@ import Animated, {
      runOnJS
 } from 'react-native-reanimated';
 import { fetchWeatherData } from '@/services/weatherService';
+import { generateTrailRecommendations } from '@/services/geminiService';
 
 type TravelerGroup = {
      label: string;
@@ -43,6 +44,8 @@ type DateRange = {
 export default function Preferences() {
      const router = useRouter();
      const [currentQuestion, setCurrentQuestion] = useState(0);
+     const [loading, setLoading] = useState(false);
+     const [success, setSuccess] = useState(false);
      const [dateRange, setDateRange] = useState<DateRange>({
           startDate: null,
           endDate: null,
@@ -194,6 +197,7 @@ export default function Preferences() {
                });
           } else {
                // Submit form
+               setLoading(true);
                const formattedData = formData.map((question) => {
                     if (question.type === 'select' && question.value === 'Other') {
                          return {
@@ -268,7 +272,7 @@ export default function Preferences() {
                     const difficulty = formattedData[4].value;
                     if (difficulty) {
                          const difficultyLevel = difficulty.split(' - ')[0];
-                         summary += ` I prefer ${difficultyLevel.toLowerCase()} difficulty trails.`;
+                         summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
                     }
 
                     // Hike duration (Question 6)
@@ -310,7 +314,7 @@ export default function Preferences() {
 
                     // Weather information - properly handle async data
                     try {
-                         const weatherInfo = await fetchWeatherData();
+                         const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
                          if (weatherInfo) {
                               summary += ` The weather forecast shows: ${weatherInfo}`;
                          }
@@ -322,10 +326,36 @@ export default function Preferences() {
                };
 
                // Handle the async formatFormData function
-               formatFormData().then(formattedSummary => {
+               formatFormData().then(async formattedSummary => {
                     console.log('Form summary:', formattedSummary);
-                    // console.log('Form data:', formattedData.map((question) => question.value));
-                    router.push('/(app)/result');
+
+                    try {
+                         // Generate trail recommendations with Gemini
+                         const recommendations = await generateTrailRecommendations(formattedSummary);
+                         setSuccess(true);
+
+                         // Store the recommendations and summary in local storage or context
+                         // For simplicity, we'll pass it through router params 
+                         router.push({
+                              pathname: '/(app)/result',
+                              params: {
+                                   summary: encodeURIComponent(formattedSummary),
+                                   recommendations: encodeURIComponent(recommendations)
+                              }
+                         });
+                    } catch (error) {
+                         setSuccess(false);
+                         console.error("Error generating recommendations:", error);
+                         router.push({
+                              pathname: '/(app)/result',
+                              params: {
+                                   summary: encodeURIComponent(formattedSummary),
+                                   error: 'Failed to generate recommendations'
+                              }
+                         });
+                    } finally {
+                         setLoading(false);
+                    }
                }).catch(error => {
                     console.error("Error formatting form data:", error);
                     router.push('/(app)/result');
@@ -662,8 +692,9 @@ export default function Preferences() {
           return !!value;
      };
 
-     const getProgressSegmentStyle = (index: number) => {
-          return useAnimatedStyle(() => {
+     // Pre-compute all animated styles for progress segments
+     const progressSegmentStyles = formData.map((_, index) =>
+          useAnimatedStyle(() => {
                const backgroundColor = interpolateColor(
                     progressSegments[index].value,
                     [0, 1],
@@ -676,94 +707,103 @@ export default function Preferences() {
                     borderRadius: 2,
                     backgroundColor,
                };
-          });
-     };
+          })
+     );
 
      return (
-          <SafeAreaView style={styles.safeArea}>
-               <KeyboardAvoidingView
-                    style={styles.keyboardAvoidingView}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-               >
-                    <View style={styles.container}>
-                         <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-                              <Ionicons name="close" size={35} color={Colors.black} />
-                         </TouchableOpacity>
-
-                         <View style={styles.progressContainer}>
-                              <Animated.View
-                                   style={[
-                                        styles.progressBar,
-                                        {
-                                             width: withSpring(
-                                                  `${((currentQuestion + 1) / formData.length) * 100}%`,
-                                                  {
-                                                       damping: 20,
-                                                       stiffness: 90,
-                                                  }
-                                             ),
-                                        },
-                                   ]}
-                              />
-                              {formData.map((_, index) => (
-                                   <Animated.View
-                                        key={index}
-                                        style={getProgressSegmentStyle(index)}
-                                   />
-                              ))}
-                         </View>
-
-                         <ScrollView
-                              style={styles.scrollView}
-                              contentContainerStyle={styles.scrollViewContent}
-                              keyboardShouldPersistTaps="handled"
-                              showsVerticalScrollIndicator={false}
-                         >
-                              <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
-                                   <View style={styles.iconContainer}>
-                                        <Ionicons
-                                             name={formData[currentQuestion].icon}
-                                             size={40}
-                                             color={Colors.primary}
-                                        />
-                                   </View>
-                                   <Text style={styles.questionText}>{formData[currentQuestion].question}</Text>
-                                   <View style={styles.questionContainer}>
-                                        {renderQuestion()}
-                                   </View>
-
-                                   <View style={[
-                                        styles.navigationContainer,
-                                        currentQuestion === 0 && styles.navigationContainerFirstQuestion
-                                   ]}>
-                                        {currentQuestion > 0 && (
-                                             <TouchableOpacity style={styles.navButton} onPress={handlePrevious}>
-                                                  <Text style={styles.navButtonText}>Back</Text>
-                                             </TouchableOpacity>
-                                        )}
-                                        <TouchableOpacity
-                                             style={[
-                                                  styles.navButton,
-                                                  currentQuestion === 0 && styles.navButtonFirstQuestion
-                                             ]}
-                                             onPress={handleNext}
-                                        >
-                                             <Text style={styles.navButtonText}>
-                                                  {currentQuestion === formData.length - 1
-                                                       ? 'Finish'
-                                                       : hasValue(formData[currentQuestion].value, formData[currentQuestion].otherValue)
-                                                            ? 'Next'
-                                                            : 'Skip'
-                                                  }
-                                             </Text>
-                                        </TouchableOpacity>
-                                   </View>
-                              </Animated.View>
-                         </ScrollView>
+          <>
+               {loading ? (
+                    <View style={styles.loadingContainer}>
+                         <ActivityIndicator size="large" color={Colors.primary} />
+                         <Text style={styles.loadingText}>Finding the perfect trails{'\n'}for your adventure... Hold tight!</Text>
                     </View>
-               </KeyboardAvoidingView>
-          </SafeAreaView>
+               ) : (
+                    <SafeAreaView style={styles.safeArea}>
+                         <KeyboardAvoidingView
+                              style={styles.keyboardAvoidingView}
+                              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                         >
+                              <View style={styles.container}>
+                                   <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                                        <Ionicons name="close" size={35} color={Colors.black} />
+                                   </TouchableOpacity>
+
+                                   <View style={styles.progressContainer}>
+                                        <Animated.View
+                                             style={[
+                                                  styles.progressBar,
+                                                  {
+                                                       width: withSpring(
+                                                            `${((currentQuestion + 1) / formData.length) * 100}%`,
+                                                            {
+                                                                 damping: 20,
+                                                                 stiffness: 90,
+                                                            }
+                                                       ),
+                                                  },
+                                             ]}
+                                        />
+                                        {formData.map((_, index) => (
+                                             <Animated.View
+                                                  key={index}
+                                                  style={progressSegmentStyles[index]}
+                                             />
+                                        ))}
+                                   </View>
+
+                                   <ScrollView
+                                        style={styles.scrollView}
+                                        contentContainerStyle={styles.scrollViewContent}
+                                        keyboardShouldPersistTaps="handled"
+                                        showsVerticalScrollIndicator={false}
+                                   >
+                                        <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
+                                             <View style={styles.iconContainer}>
+                                                  <Ionicons
+                                                       name={formData[currentQuestion].icon}
+                                                       size={40}
+                                                       color={Colors.primary}
+                                                  />
+                                             </View>
+                                             <Text style={styles.questionText}>{formData[currentQuestion].question}</Text>
+                                             <View style={styles.questionContainer}>
+                                                  {renderQuestion()}
+                                             </View>
+
+                                             <View style={[
+                                                  styles.navigationContainer,
+                                                  currentQuestion === 0 && styles.navigationContainerFirstQuestion
+                                             ]}>
+                                                  {currentQuestion > 0 && (
+                                                       <TouchableOpacity style={styles.navButton} onPress={handlePrevious}>
+                                                            <Text style={styles.navButtonText}>Back</Text>
+                                                       </TouchableOpacity>
+                                                  )}
+                                                  <TouchableOpacity
+                                                       style={[
+                                                            styles.navButton,
+                                                            currentQuestion === 0 && styles.navButtonFirstQuestion
+                                                       ]}
+                                                       onPress={handleNext}
+                                                  >
+                                                       <Text style={styles.navButtonText}>
+                                                            {currentQuestion === formData.length - 1
+                                                                 ? 'Finish'
+                                                                 : hasValue(formData[currentQuestion].value, formData[currentQuestion].otherValue)
+                                                                      ? 'Next'
+                                                                      : 'Skip'
+                                                            }
+                                                       </Text>
+                                                  </TouchableOpacity>
+                                             </View>
+                                        </Animated.View>
+                                   </ScrollView>
+                              </View>
+                         </KeyboardAvoidingView>
+                    </SafeAreaView>
+               )}
+          </>
      );
 }
 
@@ -973,5 +1013,21 @@ const styles = StyleSheet.create({
      },
      scrollViewContent: {
           flexGrow: 1,
+     },
+     loadingContainer: {
+          backgroundColor: 'white',
+          flex: 1,
+          height: '100%',
+          width: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 20,
+          padding: 20,
+     },
+     loadingText: {
+          ...Typography.text.h3,
+          lineHeight: 30,
+          color: Colors.primary,
+          textAlign: 'center',
      },
 }); 
