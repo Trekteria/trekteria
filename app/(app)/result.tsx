@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
      trailName: {
           ...Typography.text.h2,
           color: 'white',
-          marginBottom: 10,
      } as TextStyle,
      detailsContainer: {
           marginTop: 5,
