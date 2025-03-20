@@ -1,56 +1,147 @@
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, ViewStyle, TextStyle, ImageBackground, ImageStyle } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { generateTrailRecommendations } from '@/services/geminiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Define the Trail interface for type safety
+interface Trail {
+     name: string;
+     location: string;
+     keyFeatures: string;
+     facilities: string;
+}
+
+// Parse the recommendation string into structured data
+const parseRecommendations = (recommendationsString: string): Trail[] => {
+     if (!recommendationsString) return [];
+
+     // Split the string by '#' to get individual trails (ignoring empty first element if string starts with #)
+     const trailStrings = recommendationsString.split('#').filter(Boolean);
+
+     return trailStrings.map(trailString => {
+          // Split each trail string by the delimiters
+          const parts = trailString.split(/[!@%]/);
+
+          return {
+               name: parts[0] || '',
+               location: parts[1] || '',
+               keyFeatures: parts[2] || '',
+               facilities: parts[3] || ''
+          };
+     });
+};
+
+// Sample trail images - in a real app, these could come from an API or be specific to each trail
+const trailImages = [
+     'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80&w=1000',
+     'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&q=80&w=1000',
+     'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&q=80&w=1000'
+];
 
 export default function Result() {
      const router = useRouter();
-     const params = useLocalSearchParams();
-     const [loading, setLoading] = useState(false);
-     const [recommendations, setRecommendations] = useState<string | null>(null);
+     const [loading, setLoading] = useState(true); // Start with loading state
+     const [recommendationsString, setRecommendationsString] = useState<string | null>(null);
+     const [parsedTrails, setParsedTrails] = useState<Trail[]>([]);
      const [summary, setSummary] = useState<string | null>(null);
      const [error, setError] = useState<string | null>(null);
 
      useEffect(() => {
-          // If we have params, decode and set them
-          if (params.summary) {
-               setSummary(decodeURIComponent(params.summary as string));
-          }
+          // Retrieve data from AsyncStorage
+          const loadData = async () => {
+               setLoading(true);
+               try {
+                    // Get recommendations, summary, and any error
+                    const [recommendationsValue, summaryValue, errorValue] = await Promise.all([
+                         AsyncStorage.getItem('trailRecommendations'),
+                         AsyncStorage.getItem('trailSummary'),
+                         AsyncStorage.getItem('trailError')
+                    ]);
 
-          if (params.recommendations) {
-               setRecommendations(decodeURIComponent(params.recommendations as string));
-          } else if (params.error) {
-               setError(params.error as string);
-          } else if (params.summary && !params.recommendations && !params.error) {
-               // If we have a summary but no recommendations, generate them
-               generateRecommendations(decodeURIComponent(params.summary as string));
-          }
-     }, [params]);
+                    if (summaryValue) {
+                         setSummary(summaryValue);
+                    }
 
-     const generateRecommendations = async (formSummary: string) => {
-          setLoading(true);
-          try {
-               const result = await generateTrailRecommendations(formSummary);
-               setRecommendations(result);
-          } catch (err) {
-               console.error("Error generating recommendations:", err);
-               setError("Failed to generate trail recommendations. Please try again.");
-          } finally {
-               setLoading(false);
-          }
-     };
+                    if (recommendationsValue) {
+                         setRecommendationsString(recommendationsValue);
+                         // Parse the recommendations string into structured data
+                         const trails = parseRecommendations(recommendationsValue);
+                         setParsedTrails(trails);
+
+                         // Store the parsed JSON in AsyncStorage for potential use elsewhere
+                         await AsyncStorage.setItem('parsedTrails', JSON.stringify(trails));
+                    }
+
+                    if (errorValue) {
+                         setError(errorValue);
+                    }
+               } catch (err) {
+                    console.error("Error loading data from AsyncStorage:", err);
+                    setError("Failed to load recommendations. Please try again.");
+               } finally {
+                    setLoading(false);
+               }
+          };
+
+          loadData();
+     }, []);
 
      const handleClose = () => {
           router.push('/(app)/home');
+          // Clear storage when closing
+          // AsyncStorage.multiRemove(['trailRecommendations', 'trailSummary', 'trailError'])
+          //      .then(() => router.push('/(app)/home'))
+          //      .catch((err: any) => console.error("Error clearing AsyncStorage:", err));
      };
 
      const handleRetry = () => {
-          if (summary) {
-               generateRecommendations(summary);
-          }
+          // Clear any previous error before returning to preferences
+          AsyncStorage.removeItem('trailError')
+               .then(() => {
+                    // Return to preferences page to try again
+                    router.push('/(app)/preferences');
+               })
+               .catch((err: any) => console.error("Error clearing error state:", err));
+     };
+
+     // Render a trail card for each parsed trail
+     const renderTrailCard = (trail: Trail, index: number) => {
+          // Use a placeholder image from our array, cycling through them
+          const backgroundImage = trailImages[index % trailImages.length];
+
+          return (
+               <TouchableOpacity key={index} style={styles.trailCard}>
+                    <ImageBackground
+                         source={{ uri: backgroundImage }}
+                         style={{ width: '100%', height: '100%', justifyContent: 'flex-end' }}
+                         imageStyle={{ borderRadius: 15 }}
+                    >
+                         <View style={styles.cardOverlay}>
+                              <Text style={styles.trailName}>{trail.name}</Text>
+
+                              <View style={styles.detailsContainer}>
+                                   <View style={styles.detailRow}>
+                                        <Ionicons name="location-outline" size={18} color="white" />
+                                        <Text style={styles.detailText}>{trail.location}</Text>
+                                   </View>
+
+                                   <View style={styles.detailRow}>
+                                        <Ionicons name="leaf-outline" size={18} color="white" />
+                                        <Text style={styles.detailText}>{trail.keyFeatures}</Text>
+                                   </View>
+
+                                   <View style={styles.detailRow}>
+                                        <Ionicons name="shield-checkmark-outline" size={18} color="white" />
+                                        <Text style={styles.detailText}>{trail.facilities}</Text>
+                                   </View>
+                              </View>
+                         </View>
+                    </ImageBackground>
+               </TouchableOpacity>
+          );
      };
 
      return (
@@ -72,7 +163,7 @@ export default function Result() {
                          {loading ? (
                               <View style={styles.loadingContainer}>
                                    <ActivityIndicator size="large" color={Colors.primary} />
-                                   <Text style={styles.loadingText}>Generating trail recommendations...</Text>
+                                   <Text style={styles.loadingText}>Loading your trail recommendations...</Text>
                               </View>
                          ) : error ? (
                               <View style={styles.errorContainer}>
@@ -81,10 +172,13 @@ export default function Result() {
                                         <Text style={styles.retryButtonText}>Retry</Text>
                                    </TouchableOpacity>
                               </View>
-                         ) : recommendations ? (
+                         ) : parsedTrails.length > 0 ? (
+                              <View style={styles.trailsContainer}>
+                                   {parsedTrails.map(renderTrailCard)}
+                              </View>
+                         ) : recommendationsString ? (
                               <View style={styles.section}>
-                                   <Text style={styles.sectionTitle}>Suggested Trails</Text>
-                                   <Text style={styles.recommendationsText}>{recommendations}</Text>
+                                   <Text style={styles.recommendationsText}>{recommendationsString}</Text>
                               </View>
                          ) : null}
                     </ScrollView>
@@ -123,11 +217,9 @@ const styles = StyleSheet.create({
           ...Typography.text.h1,
           fontWeight: 'thin',
           color: Colors.primary,
-          marginBottom: 20,
           textAlign: 'left',
      } as TextStyle,
      section: {
-          marginBottom: 30,
           padding: 15,
           backgroundColor: '#f5f5f5',
           borderRadius: 10,
@@ -173,5 +265,45 @@ const styles = StyleSheet.create({
      retryButtonText: {
           ...Typography.text.button,
           color: 'white',
+     } as TextStyle,
+     trailsContainer: {
+          marginBottom: 30,
+     } as ViewStyle,
+     trailCard: {
+          marginBottom: 10,
+          borderRadius: 20,
+          overflow: 'hidden',
+          height: 210,
+          elevation: 4,
+     } as ViewStyle,
+     cardOverlay: {
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          padding: 20,
+          borderBottomLeftRadius: 15,
+          borderBottomRightRadius: 15,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+     } as ViewStyle,
+     trailName: {
+          ...Typography.text.h2,
+          color: 'white',
+          marginBottom: 10,
+     } as TextStyle,
+     detailsContainer: {
+          marginTop: 5,
+     } as ViewStyle,
+     detailRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginVertical: 3,
+          gap: 5,
+     } as ViewStyle,
+     detailText: {
+          ...Typography.text.body,
+          color: 'white',
+          fontSize: 14,
+          marginLeft: 10,
      } as TextStyle,
 }); 

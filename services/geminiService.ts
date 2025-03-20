@@ -39,14 +39,13 @@ export const generateTrailRecommendations = async (
     });
 
     // Construct the prompt with the form summary
-    const prompt = `I'm planning a hiking trip with these preferences: ${formSummary}
-    
-    Please recommend 2-3 suitable trails based on these preferences. For each trail include:
-    1. Trail name and location
-    2. Difficulty level and length
-    3. Key features that match my preferences
-    4. Brief description of what I can expect
-    5. Any tips based on my group composition and experience level
+    const prompt = `
+    I want a list of the best trails that match my preferences. Each trail should provide a cool and unique experience.  
+    For each trail, return in this format: #name1!location1@keyFeatures1%facilities1#name2!location2@keyFeatures2%facilities2#name3!location3@keyFeatures3%facilities3. Do not return anything else.   
+    Return the top 3.   
+    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example.
+    ---
+    For context, here are some of my preferences: ${formSummary}
     `;
 
     // Send the prompt to Gemini

@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { fetchWeatherData } from '@/services/weatherService';
 import { generateTrailRecommendations } from '@/services/geminiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TravelerGroup = {
      label: string;
@@ -50,12 +51,20 @@ export default function Preferences() {
           startDate: null,
           endDate: null,
      });
+
+     // Clear previous storage data when component mounts
+     useEffect(() => {
+          // Clear any previous recommendations, summary, and errors
+          AsyncStorage.multiRemove(['trailRecommendations', 'trailSummary', 'trailError'])
+               .catch((err: any) => console.error("Error clearing previous data:", err));
+     }, []);
+
      const [formData, setFormData] = useState<Question[]>([
           {
                id: 1,
                type: 'text',
                question: 'Where would you like to go?',
-               value: '',
+               value: { location: '', radius: 25 },
                icon: 'location-outline',
           },
           {
@@ -91,7 +100,7 @@ export default function Preferences() {
                question: "What's your hiking experience?",
                options: ['First-timer', 'Done a few trails', 'Regular hiker', 'Trail expert'],
                value: '',
-               icon: 'compass-outline',
+               icon: 'footsteps-outline',
           },
           {
                id: 5,
@@ -222,10 +231,10 @@ export default function Preferences() {
                const formatFormData = async () => {
                     let summary = '';
 
-                    // Location (Question 1)
-                    const location = formattedData[0].value;
-                    if (location) {
-                         summary += `I would like to go to ${location}`;
+                    // Location and radius (Question 1)
+                    const locationData = formattedData[0].value;
+                    if (locationData.location) {
+                         summary += `I would like to go within ${locationData.radius} miles of ${locationData.location}`;
                     }
 
                     // Date range (Question 2)
@@ -313,14 +322,14 @@ export default function Preferences() {
                     }
 
                     // Weather information - properly handle async data
-                    try {
-                         const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
-                         if (weatherInfo) {
-                              summary += ` The weather forecast shows: ${weatherInfo}`;
-                         }
-                    } catch (error) {
-                         console.error("Error fetching weather data:", error);
-                    }
+                    // try {
+                    //      const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
+                    //      if (weatherInfo) {
+                    //           summary += ` The weather forecast shows: ${weatherInfo}`;
+                    //      }
+                    // } catch (error) {
+                    //      console.error("Error fetching weather data:", error);
+                    // }
 
                     return summary;
                };
@@ -330,34 +339,41 @@ export default function Preferences() {
                     console.log('Form summary:', formattedSummary);
 
                     try {
-                         // Generate trail recommendations with Gemini
+                         // Generate trail recommendations here
                          const recommendations = await generateTrailRecommendations(formattedSummary);
+
+                         // Store recommendations in AsyncStorage to avoid passing complex data via URL
+                         await AsyncStorage.setItem('trailRecommendations', recommendations);
+                         await AsyncStorage.setItem('trailSummary', formattedSummary);
+
                          setSuccess(true);
 
-                         // Store the recommendations and summary in local storage or context
-                         // For simplicity, we'll pass it through router params 
+                         // Navigate to results page
                          router.push({
-                              pathname: '/(app)/result',
-                              params: {
-                                   summary: encodeURIComponent(formattedSummary),
-                                   recommendations: encodeURIComponent(recommendations)
-                              }
+                              pathname: '/(app)/result'
                          });
-                    } catch (error) {
-                         setSuccess(false);
+                    } catch (error: any) {
                          console.error("Error generating recommendations:", error);
+                         // Store the error and summary in AsyncStorage
+                         await AsyncStorage.setItem('trailSummary', formattedSummary);
+                         await AsyncStorage.setItem('trailError',
+                              error.toString().includes("429") || error.toString().includes("quota")
+                                   ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
+                                   : "Failed to generate trail recommendations. Please try again."
+                         );
+
+                         // Navigate to results page
                          router.push({
-                              pathname: '/(app)/result',
-                              params: {
-                                   summary: encodeURIComponent(formattedSummary),
-                                   error: 'Failed to generate recommendations'
-                              }
+                              pathname: '/(app)/result'
                          });
                     } finally {
                          setLoading(false);
                     }
-               }).catch(error => {
+               }).catch(async (error: any) => {
                     console.error("Error formatting form data:", error);
+                    // Store the error in AsyncStorage
+                    await AsyncStorage.setItem('trailError', "Failed to format your preferences. Please try again.");
+                    setLoading(false);
                     router.push('/(app)/result');
                });
           }
@@ -520,13 +536,46 @@ export default function Preferences() {
           switch (question.type) {
                case 'text':
                     return (
-                         <TextInput
-                              style={styles.input}
-                              value={question.value}
-                              onChangeText={updateValue}
-                              placeholder="Enter city, region, or park name"
-                              placeholderTextColor={Colors.inactive}
-                         />
+                         <View style={styles.locationContainer}>
+                              <TextInput
+                                   style={styles.input}
+                                   value={question.value.location}
+                                   onChangeText={(text) => {
+                                        const newValue = { ...question.value, location: text };
+                                        updateValue(newValue);
+                                   }}
+                                   placeholder="Enter city, region, or park name"
+                                   placeholderTextColor={Colors.inactive}
+                              />
+                              <View style={styles.radiusContainer}>
+                                   <Text style={styles.radiusLabel}>Search radius:</Text>
+                                   <View style={styles.radiusInputContainer}>
+                                        <TouchableOpacity
+                                             style={styles.numberButton}
+                                             onPress={() => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       radius: Math.max(5, question.value.radius - 5)
+                                                  };
+                                                  updateValue(newValue);
+                                             }}>
+                                             <Ionicons name="remove" size={18} color={Colors.black} />
+                                        </TouchableOpacity>
+                                        <Text style={styles.numberText}>{question.value.radius} miles</Text>
+                                        <TouchableOpacity
+                                             style={styles.numberButton}
+                                             onPress={() => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       radius: question.value.radius + 5
+                                                  };
+                                                  updateValue(newValue);
+                                             }}>
+                                             <Ionicons name="add" size={18} color={Colors.black} />
+                                        </TouchableOpacity>
+                                   </View>
+                              </View>
+                         </View>
                     );
                case 'date':
                     return renderDateRange();
@@ -685,6 +734,7 @@ export default function Preferences() {
                     return value.length > 0;
                }
                if ('startDate' in value && 'endDate' in value) return !!value.startDate && !!value.endDate;
+               if ('location' in value) return !!value.location.trim();
                // For the groups/number question, check if any count is > 0
                const values = Object.values(value);
                return values.some(v => typeof v === 'number' ? v > 0 : !!v);
@@ -1029,5 +1079,24 @@ const styles = StyleSheet.create({
           lineHeight: 30,
           color: Colors.primary,
           textAlign: 'center',
+     },
+     locationContainer: {
+          width: '100%',
+          gap: 15,
+     },
+     radiusContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 5,
+     },
+     radiusLabel: {
+          ...Typography.text.body,
+          color: Colors.black,
+     },
+     radiusInputContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 15,
      },
 }); 
