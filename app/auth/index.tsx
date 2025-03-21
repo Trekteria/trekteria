@@ -5,14 +5,31 @@ import { Typography } from '../../constants/Typography';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../constants/firebaseConfig";
 
 export default function AuthIndex() {
      const router = useRouter();
      const [showPassword, setShowPassword] = useState(false);
+     const [email, setEmail] = useState('');
+     const [password, setPassword] = useState('');
 
-     const handleLogin = () => {
-          // In a real app, you would validate credentials here
-          router.replace('/(app)/home');
+     const handleLogin = async () => {
+          if (!email || !password) {
+               alert("Please enter both email and password.");
+               return;
+          }
+
+          try {
+               console.log("Attempting to log in with email:", email);
+               const userCredential = await signInWithEmailAndPassword(auth, email, password);
+               const user = userCredential.user;
+
+               console.log("User logged in:", user);
+               router.replace("/(app)/home");
+          } catch (error) {
+               handleFirebaseError(error);
+          }
      };
 
      const handleSignup = () => {
@@ -39,9 +56,11 @@ export default function AuthIndex() {
                          <TextInput
                               style={styles.input}
                               placeholder="Email"
-                              placeholderTextColor={Colors.black}
+                              placeholderTextColor={Colors.inactive}
                               keyboardType="email-address"
                               autoCapitalize="none"
+                              value={email}
+                              onChangeText={setEmail}
                          />
                     </View>
 
@@ -50,8 +69,10 @@ export default function AuthIndex() {
                               <TextInput
                                    style={styles.passwordInput}
                                    placeholder="Password"
-                                   placeholderTextColor={Colors.black}
+                                   placeholderTextColor={Colors.inactive}
                                    secureTextEntry={!showPassword}
+                                   value={password}
+                                   onChangeText={setPassword}
                               />
                               <TouchableOpacity
                                    style={styles.eyeIcon}
@@ -101,6 +122,16 @@ export default function AuthIndex() {
           </View>
      );
 }
+
+const handleFirebaseError = (error: any) => {
+    if (error.code === "auth/invalid-email") {
+        alert("Invalid email format.");
+    } else if (error.code === "auth/invalid-credential") {
+        alert("Invalid credentials. Please check your email and password.");
+    } else {
+        alert(error.message);
+    }
+};
 
 const styles = StyleSheet.create({
      container: {
@@ -223,4 +254,4 @@ const styles = StyleSheet.create({
           ...Typography.text.body,
           color: Colors.primary,
      },
-}); 
+});

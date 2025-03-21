@@ -5,15 +5,57 @@ import { Typography } from '../../constants/Typography';
 import { useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../../constants/firebaseConfig";
 
 export default function Signup() {
      const router = useRouter();
      const [showPassword, setShowPassword] = useState(false);
      const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+     const [firstname, setFirstname] = useState("");
+     const [lastname, setLastname] = useState("");
+     const [email, setEmail] = useState("");
+     const [password, setPassword] = useState("");
+     const [confirmPassword, setConfirmPassword] = useState("");
 
-     const handleSignup = () => {
-          // In a real app, you would validate and create an account here
-          router.replace('/(app)/home');
+     const handleSignup = async () => {
+          if (!firstname || !lastname || !email || !password || !confirmPassword) {
+               alert("Please fill in all fields.");
+               return;
+          }
+
+          if (password !== confirmPassword) {
+               alert("Passwords do not match.");
+               return;
+          }
+
+          try {
+               // Create a new user with Firebase Authentication
+               const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+               const user = userCredential.user;
+
+               // Store additional user data in Firestore
+               await setDoc(doc(db, "users", user.uid), {
+                    firstname,
+                    lastname,
+                    email,
+               });
+
+               console.log("User created and data saved:", user.uid);
+
+               // Navigate to the home screen
+               router.replace("/(app)/home");
+          } catch (error) {
+               if (error instanceof Error) {
+                    console.error("Error signing up:", error.message);
+                    alert(error.message); // Show an error message to the user
+               } else {
+                    console.error("Error signing up:", error);
+                    alert("An unknown error occurred."); // Fallback for unknown error types
+               }
+          }
+          
      };
 
      const handleBackToLogin = () => {
@@ -52,8 +94,10 @@ export default function Signup() {
                               <TextInput
                                    style={styles.input}
                                    placeholder="First Name"
-                                   placeholderTextColor={Colors.black}
+                                   placeholderTextColor={Colors.inactive}
                                    autoCapitalize="words"
+                                   value={firstname}
+                                   onChangeText={setFirstname}
                               />
                          </View>
 
@@ -61,8 +105,10 @@ export default function Signup() {
                               <TextInput
                                    style={styles.input}
                                    placeholder="Last Name"
-                                   placeholderTextColor={Colors.black}
+                                   placeholderTextColor={Colors.inactive}
                                    autoCapitalize="words"
+                                   value={lastname}
+                                   onChangeText={setLastname}
                               />
                          </View>
 
@@ -70,9 +116,11 @@ export default function Signup() {
                               <TextInput
                                    style={styles.input}
                                    placeholder="Email"
-                                   placeholderTextColor={Colors.black}
+                                   placeholderTextColor={Colors.inactive}
                                    keyboardType="email-address"
                                    autoCapitalize="none"
+                                   value={email}
+                                   onChangeText={setEmail}
                               />
                          </View>
 
@@ -81,8 +129,10 @@ export default function Signup() {
                                    <TextInput
                                         style={styles.passwordInput}
                                         placeholder="Password"
-                                        placeholderTextColor={Colors.black}
+                                        placeholderTextColor={Colors.inactive}
                                         secureTextEntry={!showPassword}
+                                        value={password}
+                                        onChangeText={setPassword}
                                    />
                                    <TouchableOpacity
                                         style={styles.eyeIcon}
@@ -102,8 +152,10 @@ export default function Signup() {
                                    <TextInput
                                         style={styles.passwordInput}
                                         placeholder="Confirm Password"
-                                        placeholderTextColor={Colors.black}
+                                        placeholderTextColor={Colors.inactive}
                                         secureTextEntry={!showConfirmPassword}
+                                        value={confirmPassword}
+                                        onChangeText={setConfirmPassword}
                                    />
                                    <TouchableOpacity
                                         style={styles.eyeIcon}
@@ -261,4 +313,4 @@ const styles = StyleSheet.create({
           color: Colors.primary,
           fontWeight: 'bold',
      },
-}); 
+});
