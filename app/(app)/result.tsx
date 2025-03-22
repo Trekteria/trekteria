@@ -56,9 +56,12 @@ export default function Result() {
                try {
                     // Get recommendations, summary, and any error
                     const [recommendationsValue, summaryValue, errorValue] = await Promise.all([
-                         AsyncStorage.getItem('trailRecommendations'),
-                         AsyncStorage.getItem('trailSummary'),
-                         AsyncStorage.getItem('trailError')
+                         // AsyncStorage.getItem('trailRecommendations'),
+                         // AsyncStorage.getItem('trailSummary'),
+                         // AsyncStorage.getItem('trailError')
+                         Promise.resolve("#Mount Tamalpais State Park!Mill Valley, CA@Panoramic Views, Coastal Trails, Wildflowers%Campgrounds, Picnic Areas, Parking#Mount Diablo State Park!Concord, CA@Scenic Views, Hiking Trails, Wildlife%Visitor Center, Restrooms, Parking#Mount Diablo State Park!Concord, CA@Scenic Views, Hiking Trails, Wildlife%Visitor Center, Restrooms, Parking"),
+                         Promise.resolve("Based on your preferences, we've selected these beautiful trails in the Bay Area that offer a mix of scenic views, moderate difficulty, and good facilities."),
+                         Promise.resolve(null)
                     ]);
 
                     if (summaryValue) {
@@ -107,13 +110,20 @@ export default function Result() {
                .catch((err: any) => console.error("Error clearing error state:", err));
      };
 
+     const handleTrailPress = (trail: Trail) => {
+          router.push({
+               pathname: '/trip',
+               params: { trail: JSON.stringify(trail) }
+          });
+     };
+
      // Render a trail card for each parsed trail
      const renderTrailCard = (trail: Trail, index: number) => {
           // Use a placeholder image from our array, cycling through them
           const backgroundImage = trailImages[index % trailImages.length];
 
           return (
-               <TouchableOpacity key={index} style={styles.trailCard}>
+               <TouchableOpacity key={index} style={styles.trailCard} onPress={() => handleTrailPress(trail)}>
                     <ImageBackground
                          source={{ uri: backgroundImage }}
                          style={{ width: '100%', height: '100%', justifyContent: 'flex-end' }}
