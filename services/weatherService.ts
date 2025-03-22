@@ -1,9 +1,14 @@
 import { fetchWeatherApi } from "openmeteo";
 
-export const fetchWeatherData = async (startDate: string, endDate: string) => {
+export const fetchWeatherData = async (
+  startDate: string,
+  endDate: string,
+  latitude: number,
+  longitude: number
+) => {
   const params = {
-    latitude: 52.52,
-    longitude: 13.41,
+    latitude: latitude,
+    longitude: longitude,
     daily: [
       "apparent_temperature_max",
       "temperature_2m_max",
@@ -31,8 +36,6 @@ export const fetchWeatherData = async (startDate: string, endDate: string) => {
   const utcOffsetSeconds = response.utcOffsetSeconds();
   const timezone = response.timezone();
   const timezoneAbbreviation = response.timezoneAbbreviation();
-  const latitude = response.latitude();
-  const longitude = response.longitude();
 
   const daily = response.daily()!;
 
@@ -46,8 +49,8 @@ export const fetchWeatherData = async (startDate: string, endDate: string) => {
       ).map((t) => new Date((t + utcOffsetSeconds) * 1000)),
       apparentTemperatureMax: daily.variables(0)!.valuesArray()!,
       temperature2mMax: daily.variables(1)!.valuesArray()!,
-      sunrise: daily.variables(2)!.valuesArray()!,
-      sunset: daily.variables(3)!.valuesArray()!,
+      // sunrise: daily.variables(2)!.valuesArray()!,
+      // sunset: daily.variables(3)!.valuesArray()!,
     },
   };
 

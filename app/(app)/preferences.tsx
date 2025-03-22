@@ -191,7 +191,7 @@ export default function Preferences() {
           router.back();
      };
 
-     const handleNext = () => {
+     const handleNext = async () => {
           if (currentQuestion < formData.length - 1) {
                slideAnimation.value = withTiming(-1, {
                     duration: 200,
@@ -207,175 +207,182 @@ export default function Preferences() {
           } else {
                // Submit form
                setLoading(true);
-               const formattedData = formData.map((question) => {
-                    if (question.type === 'select' && question.value === 'Other') {
-                         return {
-                              ...question,
-                              value: question.otherValue
-                         };
-                    }
-                    if (question.type === 'multiselect' && question.value.includes('Other')) {
-                         const otherValues = [...question.value.filter((v: string) => v !== 'Other')];
-                         if (question.otherValue) {
-                              otherValues.push(question.otherValue);
+
+               try {
+                    const formattedData = formData.map((question) => {
+                         if (question.type === 'select' && question.value === 'Other') {
+                              return {
+                                   ...question,
+                                   value: question.otherValue
+                              };
                          }
-                         return {
-                              ...question,
-                              value: otherValues
-                         };
-                    }
-                    return question;
-               });
+                         if (question.type === 'multiselect' && question.value.includes('Other')) {
+                              const otherValues = [...question.value.filter((v: string) => v !== 'Other')];
+                              if (question.otherValue) {
+                                   otherValues.push(question.otherValue);
+                              }
+                              return {
+                                   ...question,
+                                   value: otherValues
+                              };
+                         }
+                         return question;
+                    });
 
-               // Format the data into a readable string
-               const formatFormData = async () => {
-                    let summary = '';
+                    // Format the data into a readable string
+                    const formatFormData = async () => {
+                         let summary = '';
 
-                    // Location and radius (Question 1)
-                    const locationData = formattedData[0].value;
-                    if (locationData.location) {
-                         summary += `I would like to go within ${locationData.radius} miles of ${locationData.location}`;
-                    }
+                         // Location and radius (Question 1)
+                         const locationData = formattedData[0].value;
+                         if (locationData.location) {
+                              summary += `I would like to go within ${locationData.radius} miles of ${locationData.location}`;
+                         }
 
-                    // Date range (Question 2)
-                    const dateInfo = formattedData[1].value;
-                    if (dateInfo.startDate && dateInfo.endDate) {
-                         const startDate = new Date(dateInfo.startDate).toLocaleDateString();
-                         const endDate = new Date(dateInfo.endDate).toLocaleDateString();
-                         summary += ` from ${startDate} to ${endDate}.`;
-                    } else {
-                         summary += '.';
-                    }
+                         // Date range (Question 2)
+                         const dateInfo = formattedData[1].value;
+                         if (dateInfo.startDate && dateInfo.endDate) {
+                              const startDate = new Date(dateInfo.startDate).toLocaleDateString();
+                              const endDate = new Date(dateInfo.endDate).toLocaleDateString();
+                              summary += ` from ${startDate} to ${endDate}.`;
+                         } else {
+                              summary += '.';
+                         }
 
-                    // Group composition (Question 3)
-                    const groupInfo = formattedData[2].value;
-                    const groupParts = [];
+                         // Group composition (Question 3)
+                         const groupInfo = formattedData[2].value;
+                         const groupParts = [];
 
-                    if (groupInfo.adults > 0) {
-                         groupParts.push(`${groupInfo.adults} adult${groupInfo.adults > 1 ? 's' : ''}`);
-                    }
-                    if (groupInfo.olderkids > 0) {
-                         groupParts.push(`${groupInfo.olderkids} older kid${groupInfo.olderkids > 1 ? 's' : ''}`);
-                    }
-                    if (groupInfo.youngkids > 0) {
-                         groupParts.push(`${groupInfo.youngkids} young kid${groupInfo.youngkids > 1 ? 's' : ''}`);
-                    }
-                    if (groupInfo.toddlers > 0) {
-                         groupParts.push(`${groupInfo.toddlers} toddler${groupInfo.toddlers > 1 ? 's' : ''}`);
-                    }
-                    if (groupInfo.pets > 0) {
-                         groupParts.push(`${groupInfo.pets} pet${groupInfo.pets > 1 ? 's' : ''}`);
-                    }
+                         if (groupInfo.adults > 0) {
+                              groupParts.push(`${groupInfo.adults} adult${groupInfo.adults > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.olderkids > 0) {
+                              groupParts.push(`${groupInfo.olderkids} older kid${groupInfo.olderkids > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.youngkids > 0) {
+                              groupParts.push(`${groupInfo.youngkids} young kid${groupInfo.youngkids > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.toddlers > 0) {
+                              groupParts.push(`${groupInfo.toddlers} toddler${groupInfo.toddlers > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.pets > 0) {
+                              groupParts.push(`${groupInfo.pets} pet${groupInfo.pets > 1 ? 's' : ''}`);
+                         }
 
-                    if (groupParts.length > 0) {
-                         summary += ` There will be ${groupParts.join(', ')}.`;
-                    }
+                         if (groupParts.length > 0) {
+                              summary += ` There will be ${groupParts.join(', ')}.`;
+                         }
 
-                    // Experience level (Question 4)
-                    const experience = formattedData[3].value;
-                    if (experience) {
-                         summary += ` My hiking experience is: ${experience}.`;
-                    }
+                         // Experience level (Question 4)
+                         const experience = formattedData[3].value;
+                         if (experience) {
+                              summary += ` My hiking experience is: ${experience}.`;
+                         }
 
-                    // Difficulty preference (Question 5)
-                    const difficulty = formattedData[4].value;
-                    if (difficulty) {
-                         const difficultyLevel = difficulty.split(' - ')[0];
-                         summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
-                    }
+                         // Difficulty preference (Question 5)
+                         const difficulty = formattedData[4].value;
+                         if (difficulty) {
+                              const difficultyLevel = difficulty.split(' - ')[0];
+                              summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
+                         }
 
-                    // Hike duration (Question 6)
-                    const duration = formattedData[5].value;
-                    if (duration) {
-                         summary += ` I want to hike for ${duration}.`;
-                    }
+                         // Hike duration (Question 6)
+                         const duration = formattedData[5].value;
+                         if (duration) {
+                              summary += ` I want to hike for ${duration}.`;
+                         }
 
-                    // Scenery preferences (Question 7)
-                    const scenery = formattedData[6].value;
-                    if (scenery && scenery.length > 0) {
-                         summary += ` I enjoy ${scenery.join(', ')} scenery.`;
-                    }
+                         // Scenery preferences (Question 7)
+                         const scenery = formattedData[6].value;
+                         if (scenery && scenery.length > 0) {
+                              summary += ` I enjoy ${scenery.join(', ')} scenery.`;
+                         }
 
-                    // Terrain preference (Question 8)
-                    const terrain = formattedData[7].value;
-                    if (terrain) {
-                         summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
-                    }
+                         // Terrain preference (Question 8)
+                         const terrain = formattedData[7].value;
+                         if (terrain) {
+                              summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
+                         }
 
-                    // Trail features (Question 9)
-                    const features = formattedData[8].value;
-                    if (features && features.length > 0) {
-                         summary += ` I'm looking for trails with ${features.join(', ')}.`;
-                    }
+                         // Trail features (Question 9)
+                         const features = formattedData[8].value;
+                         if (features && features.length > 0) {
+                              summary += ` I'm looking for trails with ${features.join(', ')}.`;
+                         }
 
-                    // Must-haves (Question 10)
-                    const mustHaves = formattedData[9].value;
-                    if (mustHaves && mustHaves.length > 0) {
-                         summary += ` My trail must-haves are: ${mustHaves.join(', ')}.`;
-                    }
+                         // Must-haves (Question 10)
+                         const mustHaves = formattedData[9].value;
+                         if (mustHaves && mustHaves.length > 0) {
+                              summary += ` My trail must-haves are: ${mustHaves.join(', ')}.`;
+                         }
 
-                    // Time of day (Question 11)
-                    const timeOfDay = formattedData[10].value;
-                    if (timeOfDay) {
-                         const preferredTime = timeOfDay.split(' - ')[0];
-                         summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
-                    }
+                         // Time of day (Question 11)
+                         const timeOfDay = formattedData[10].value;
+                         if (timeOfDay) {
+                              const preferredTime = timeOfDay.split(' - ')[0];
+                              summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
+                         }
 
-                    // Weather information - properly handle async data
-                    // try {
-                    //      const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
-                    //      if (weatherInfo) {
-                    //           summary += ` The weather forecast shows: ${weatherInfo}`;
-                    //      }
-                    // } catch (error) {
-                    //      console.error("Error fetching weather data:", error);
-                    // }
+                         // Weather information - properly handle async data
+                         // try {
+                         //      const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
+                         //      if (weatherInfo) {
+                         //           summary += ` The weather forecast shows: ${weatherInfo}`;
+                         //      }
+                         // } catch (error) {
+                         //      console.error("Error fetching weather data:", error);
+                         // }
 
-                    return summary;
-               };
+                         return summary;
+                    };
 
-               // Handle the async formatFormData function
-               formatFormData().then(async formattedSummary => {
-                    console.log('Form summary:', formattedSummary);
+                    // Handle the async formatFormData function
+                    formatFormData().then(async formattedSummary => {
+                         console.log('Form summary:', formattedSummary);
 
-                    try {
-                         // Generate trail recommendations here
-                         const recommendations = await generateTrailRecommendations(formattedSummary);
+                         try {
+                              // Generate trail recommendations here
+                              const recommendations = await generateTrailRecommendations(formattedSummary);
 
-                         // Store recommendations in AsyncStorage to avoid passing complex data via URL
-                         await AsyncStorage.setItem('trailRecommendations', recommendations);
-                         await AsyncStorage.setItem('trailSummary', formattedSummary);
+                              // Store recommendations in AsyncStorage to avoid passing complex data via URL
+                              await AsyncStorage.setItem('trailRecommendations', recommendations);
+                              await AsyncStorage.setItem('trailSummary', formattedSummary);
 
-                         setSuccess(true);
+                              setSuccess(true);
 
-                         // Navigate to results page
-                         router.push({
-                              pathname: '/(app)/result'
-                         });
-                    } catch (error: any) {
-                         console.error("Error generating recommendations:", error);
-                         // Store the error and summary in AsyncStorage
-                         await AsyncStorage.setItem('trailSummary', formattedSummary);
-                         await AsyncStorage.setItem('trailError',
-                              error.toString().includes("429") || error.toString().includes("quota")
-                                   ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
-                                   : "Failed to generate trail recommendations. Please try again."
-                         );
+                              // Navigate to results page
+                              router.push({
+                                   pathname: '/(app)/result'
+                              });
+                         } catch (error: any) {
+                              console.error("Error generating recommendations:", error);
+                              // Store the error and summary in AsyncStorage
+                              await AsyncStorage.setItem('trailSummary', formattedSummary);
+                              await AsyncStorage.setItem('trailError',
+                                   error.toString().includes("429") || error.toString().includes("quota")
+                                        ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
+                                        : "Failed to generate trail recommendations. Please try again."
+                              );
 
-                         // Navigate to results page
-                         router.push({
-                              pathname: '/(app)/result'
-                         });
-                    } finally {
+                              // Navigate to results page
+                              router.push({
+                                   pathname: '/(app)/result'
+                              });
+                         } finally {
+                              setLoading(false);
+                         }
+                    }).catch(async (error: any) => {
+                         console.error("Error formatting form data:", error);
+                         // Store the error in AsyncStorage
+                         await AsyncStorage.setItem('trailError', "Failed to format your preferences. Please try again.");
                          setLoading(false);
-                    }
-               }).catch(async (error: any) => {
-                    console.error("Error formatting form data:", error);
-                    // Store the error in AsyncStorage
-                    await AsyncStorage.setItem('trailError', "Failed to format your preferences. Please try again.");
+                         router.push('/(app)/result');
+                    });
+               } catch (error) {
+                    console.error("Error processing form:", error);
                     setLoading(false);
                     router.push('/(app)/result');
-               });
+               }
           }
      };
 
@@ -541,7 +548,10 @@ export default function Preferences() {
                                    style={styles.input}
                                    value={question.value.location}
                                    onChangeText={(text) => {
-                                        const newValue = { ...question.value, location: text };
+                                        const newValue = {
+                                             ...question.value,
+                                             location: text
+                                        };
                                         updateValue(newValue);
                                    }}
                                    placeholder="Enter city, region, or park name"

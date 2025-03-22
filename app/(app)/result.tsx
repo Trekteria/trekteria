@@ -12,26 +12,77 @@ interface Trail {
      location: string;
      keyFeatures: string;
      facilities: string;
+     latitude?: number;
+     longitude?: number;
 }
 
+// Function to fetch coordinates from OpenStreetMap
+const fetchCoordinates = async (name: string, location: string): Promise<{ latitude: number; longitude: number } | null> => {
+     try {
+          console.log('Fetching coordinates for:', name + ', ' + location);
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(name + ', ' + location)}`);
+          const data = await response.json();
+          if (data && data[0]) {
+               return {
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon)
+               };
+          } else {
+               const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+               const data = await response.json();
+               if (data && data[0]) {
+                    return {
+                         latitude: parseFloat(data[0].lat),
+                         longitude: parseFloat(data[0].lon)
+                    };
+               }
+          }
+          return null;
+     } catch (error) {
+          console.error('Error fetching coordinates:', error);
+          return null;
+     }
+};
+
 // Parse the recommendation string into structured data
-const parseRecommendations = (recommendationsString: string): Trail[] => {
+const parseRecommendations = async (recommendationsString: string): Promise<Trail[]> => {
      if (!recommendationsString) return [];
+
+     // Check if the string contains valid trail data (should contain '#' and '!')
+     if (!recommendationsString.includes('#') || !recommendationsString.includes('!')) {
+          console.error('Invalid recommendations format:', recommendationsString);
+          return [];
+     }
 
      // Split the string by '#' to get individual trails (ignoring empty first element if string starts with #)
      const trailStrings = recommendationsString.split('#').filter(Boolean);
 
-     return trailStrings.map(trailString => {
+     // Process each trail and fetch coordinates
+     const trails = await Promise.all(trailStrings.map(async (trailString) => {
           // Split each trail string by the delimiters
           const parts = trailString.split(/[!@%]/);
+          const name = parts[0] || '';
+          const location = parts[1] || '';
+          // Skip if this is an error message
+          if (name.toLowerCase().includes('sorry') || name.toLowerCase().includes('error')) {
+               console.error('Skipping invalid trail data:', name);
+               return null;
+          }
+
+          // Fetch coordinates for the location
+          const coordinates = await fetchCoordinates(name, location);
 
           return {
-               name: parts[0] || '',
-               location: parts[1] || '',
+               name: name,
+               location: location,
                keyFeatures: parts[2] || '',
-               facilities: parts[3] || ''
+               facilities: parts[3] || '',
+               ...coordinates
           };
-     });
+     }));
+
+     // Filter out any null entries from invalid trails
+     return trails.filter((trail): trail is Trail => trail !== null);
 };
 
 // Sample trail images - in a real app, these could come from an API or be specific to each trail
@@ -43,7 +94,7 @@ const trailImages = [
 
 export default function Result() {
      const router = useRouter();
-     const [loading, setLoading] = useState(true); // Start with loading state
+     const [loading, setLoading] = useState(true);
      const [recommendationsString, setRecommendationsString] = useState<string | null>(null);
      const [parsedTrails, setParsedTrails] = useState<Trail[]>([]);
      const [summary, setSummary] = useState<string | null>(null);
@@ -56,13 +107,16 @@ export default function Result() {
                try {
                     // Get recommendations, summary, and any error
                     const [recommendationsValue, summaryValue, errorValue] = await Promise.all([
-                         // AsyncStorage.getItem('trailRecommendations'),
-                         // AsyncStorage.getItem('trailSummary'),
-                         // AsyncStorage.getItem('trailError')
-                         Promise.resolve("#Mount Tamalpais State Park!Mill Valley, CA@Panoramic Views, Coastal Trails, Wildflowers%Campgrounds, Picnic Areas, Parking#Mount Diablo State Park!Concord, CA@Scenic Views, Hiking Trails, Wildlife%Visitor Center, Restrooms, Parking#Mount Diablo State Park!Concord, CA@Scenic Views, Hiking Trails, Wildlife%Visitor Center, Restrooms, Parking"),
-                         Promise.resolve("Based on your preferences, we've selected these beautiful trails in the Bay Area that offer a mix of scenic views, moderate difficulty, and good facilities."),
-                         Promise.resolve(null)
+                         AsyncStorage.getItem('trailRecommendations'),
+                         AsyncStorage.getItem('trailSummary'),
+                         AsyncStorage.getItem('trailError')
                     ]);
+
+                    if (errorValue) {
+                         setError(errorValue);
+                         setLoading(false);
+                         return;
+                    }
 
                     if (summaryValue) {
                          setSummary(summaryValue);
@@ -70,16 +124,18 @@ export default function Result() {
 
                     if (recommendationsValue) {
                          setRecommendationsString(recommendationsValue);
-                         // Parse the recommendations string into structured data
-                         const trails = parseRecommendations(recommendationsValue);
-                         setParsedTrails(trails);
+                         // Parse the recommendations string into structured data with coordinates
+                         const trails = await parseRecommendations(recommendationsValue);
 
-                         // Store the parsed JSON in AsyncStorage for potential use elsewhere
-                         await AsyncStorage.setItem('parsedTrails', JSON.stringify(trails));
-                    }
-
-                    if (errorValue) {
-                         setError(errorValue);
+                         if (trails.length === 0) {
+                              setError("No valid trail recommendations found. Please try again.");
+                         } else {
+                              setParsedTrails(trails);
+                              // Store the parsed JSON in AsyncStorage for potential use elsewhere
+                              await AsyncStorage.setItem('parsedTrails', JSON.stringify(trails));
+                         }
+                    } else {
+                         setError("No trail recommendations found. Please try again.");
                     }
                } catch (err) {
                     console.error("Error loading data from AsyncStorage:", err);

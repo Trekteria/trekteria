@@ -12,10 +12,10 @@ function Trip() {
      const router = useRouter();
      const trailData = JSON.parse(trail as string);
 
-     // Default coordinates (you might want to replace these with actual trail coordinates)
+     // Use the actual coordinates from the trail data, or fallback to default coordinates
      const initialRegion = {
-          latitude: 37.7749,
-          longitude: -122.4194,
+          latitude: trailData.latitude || 37.7749,
+          longitude: trailData.longitude || -122.4194,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
      };
@@ -48,8 +48,8 @@ function Trip() {
                     >
                          <Marker
                               coordinate={{
-                                   latitude: initialRegion.latitude,
-                                   longitude: initialRegion.longitude,
+                                   latitude: trailData.latitude || initialRegion.latitude,
+                                   longitude: trailData.longitude || initialRegion.longitude
                               }}
                               title={trailData.name}
                               description={trailData.location}
