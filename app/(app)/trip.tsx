@@ -65,6 +65,7 @@ function Trip() {
 
                          <TouchableOpacity
                               style={styles.trailNameContainer}
+                              onPress={() => router.back()}
                          >
                               <Text style={styles.trailName}>{trailData.name}</Text>
                          </TouchableOpacity>
