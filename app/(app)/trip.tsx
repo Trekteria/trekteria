@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform } from "react-native";
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform, Animated } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
@@ -20,6 +20,17 @@ function Trip() {
      const trailData = JSON.parse(trail as string);
      const actionSheetRef = useRef<ActionSheetRef>(null);
      const [activeTab, setActiveTab] = useState<string>('info');
+     const tabWidth = Dimensions.get('window').width / 5; // Width for each tab
+     const animatedValue = useRef(new Animated.Value(0)).current;
+
+     // Update animation when activeTab changes
+     useEffect(() => {
+          const tabIndex = ['info', 'navigation', 'packing', 'mission', 'chat'].indexOf(activeTab);
+          Animated.spring(animatedValue, {
+               toValue: tabIndex * tabWidth / 1.23,
+               useNativeDriver: true,
+          }).start();
+     }, [activeTab]);
 
      // Use the actual coordinates from the trail data, or fallback to default coordinates
      const initialRegion = {
@@ -113,60 +124,74 @@ function Trip() {
                          containerStyle={styles.actionSheet}
                          overlayColor="transparent"
                          gestureEnabled
-                         snapPoints={[50, 70]}
+                         snapPoints={[70, 100]}
                     >
                          <View style={styles.sheetContent}>
                               <View style={styles.tabContainer}>
-                                   <TouchableOpacity
-                                        style={[styles.tabButton, activeTab === 'info' && styles.activeTab]}
-                                        onPress={() => setActiveTab('info')}
-                                   >
-                                        <Ionicons
-                                             name="information-circle"
-                                             size={35}
-                                             color={Colors.primary}
-                                        />
-                                   </TouchableOpacity>
-                                   <TouchableOpacity
-                                        style={[styles.tabButton, activeTab === 'navigation' && styles.activeTab]}
-                                        onPress={() => setActiveTab('navigation')}
-                                   >
-                                        <Ionicons
-                                             name="compass"
-                                             size={35}
-                                             color={Colors.primary}
-                                        />
-                                   </TouchableOpacity>
-                                   <TouchableOpacity
-                                        style={[styles.tabButton, activeTab === 'packing' && styles.activeTab]}
-                                        onPress={() => setActiveTab('packing')}
-                                   >
-                                        <Ionicons
-                                             name="bag"
-                                             size={35}
-                                             color={Colors.primary}
-                                        />
-                                   </TouchableOpacity>
-                                   <TouchableOpacity
-                                        style={[styles.tabButton, activeTab === 'mission' && styles.activeTab]}
-                                        onPress={() => setActiveTab('mission')}
-                                   >
-                                        <Ionicons
-                                             name="trophy"
-                                             size={35}
-                                             color={Colors.primary}
-                                        />
-                                   </TouchableOpacity>
-                                   <TouchableOpacity
-                                        style={[styles.tabButton, activeTab === 'chat' && styles.activeTab]}
-                                        onPress={() => setActiveTab('chat')}
-                                   >
-                                        <Ionicons
-                                             name="chatbubble-ellipses"
-                                             size={35}
-                                             color={Colors.primary}
-                                        />
-                                   </TouchableOpacity>
+                                   <View style={styles.tabButtonsContainer}>
+                                        <TouchableOpacity
+                                             style={styles.tabButton}
+                                             onPress={() => setActiveTab('info')}
+                                        >
+                                             <Ionicons
+                                                  name="information-circle"
+                                                  size={35}
+                                                  color={activeTab === 'info' ? Colors.primary : '#999'}
+                                             />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                             style={styles.tabButton}
+                                             onPress={() => setActiveTab('navigation')}
+                                        >
+                                             <Ionicons
+                                                  name="compass"
+                                                  size={35}
+                                                  color={activeTab === 'navigation' ? Colors.primary : '#999'}
+                                             />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                             style={styles.tabButton}
+                                             onPress={() => setActiveTab('packing')}
+                                        >
+                                             <Ionicons
+                                                  name="bag"
+                                                  size={35}
+                                                  color={activeTab === 'packing' ? Colors.primary : '#999'}
+                                             />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                             style={styles.tabButton}
+                                             onPress={() => setActiveTab('mission')}
+                                        >
+                                             <Ionicons
+                                                  name="trophy"
+                                                  size={35}
+                                                  color={activeTab === 'mission' ? Colors.primary : '#999'}
+                                             />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                             style={styles.tabButton}
+                                             onPress={() => setActiveTab('chat')}
+                                        >
+                                             <Ionicons
+                                                  name="chatbubble-ellipses"
+                                                  size={35}
+                                                  color={activeTab === 'chat' ? Colors.primary : '#999'}
+                                             />
+                                        </TouchableOpacity>
+                                   </View>
+                                   <View style={styles.tabIndicatorContainer}>
+                                        <Animated.View
+                                             style={[
+                                                  styles.tabIndicator,
+                                                  {
+                                                       transform: [{ translateX: animatedValue }]
+                                                  }
+                                             ]}
+                                        >
+                                             <View style={styles.tabIndicatorSmall} />
+                                        </Animated.View>
+                                   </View>
                               </View>
                               <View style={styles.tabContent}>
                                    {renderTabContent()}
@@ -275,33 +300,13 @@ const styles = StyleSheet.create({
           borderTopLeftRadius: 40,
           borderTopRightRadius: 40,
           padding: 20,
-          // boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
      },
      sheetContent: {
-          paddingBottom: 40,
-     },
-     sheetTitle: {
-          ...Typography.text.h2,
-          color: Colors.primary,
-          marginBottom: 20,
-     },
-     infoRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 15,
-     },
-     infoText: {
-          ...Typography.text.body,
-          color: Colors.black,
-     },
-     description: {
-          ...Typography.text.body,
-          color: Colors.black,
-          marginTop: 20,
+          display: 'flex',
+          flexDirection: 'column',
      },
      tabContainer: {
-          position: 'sticky',
+          position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
@@ -310,21 +315,50 @@ const styles = StyleSheet.create({
           boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
           borderRadius: 50,
           display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          height: 70,
+     },
+     tabButtonsContainer: {
+          display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          height: '100%',
+          width: '100%',
      },
      tabButton: {
-          color: Colors.primary,
-          padding: 15,
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
           height: '100%',
      },
-     activeTab: {
-          borderBottomColor: Colors.primary,
-          borderBottomWidth: 4,
+     tabIndicatorContainer: {
+          width: '100%',
+          height: '10%',
+          display: 'flex',
+     },
+     tabIndicator: {
+          position: 'absolute',
+          bottom: 7,
+          height: 7,
+          width: '20%',
+          backgroundColor: 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+     },
+     tabIndicatorSmall: {
+          width: '70%',
+          height: 7,
+          backgroundColor: Colors.primary,
+          borderTopRightRadius: 20,
+          borderTopLeftRadius: 20,
      },
      tabContent: {
           padding: 20,
+          height: '80%',
+          borderBlockColor: 'black',
+          borderWidth: 1,
      },
 });
 
