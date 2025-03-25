@@ -1,9 +1,9 @@
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, DateData } from 'react-native-calendars';
 import { MarkedDates } from 'react-native-calendars/src/types';
 import Animated, {
@@ -16,6 +16,9 @@ import Animated, {
      Easing,
      runOnJS
 } from 'react-native-reanimated';
+import { fetchWeatherData } from '@/services/weatherService';
+import { generateTrailRecommendations } from '@/services/geminiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TravelerGroup = {
      label: string;
@@ -42,16 +45,26 @@ type DateRange = {
 export default function Preferences() {
      const router = useRouter();
      const [currentQuestion, setCurrentQuestion] = useState(0);
+     const [loading, setLoading] = useState(false);
+     const [success, setSuccess] = useState(false);
      const [dateRange, setDateRange] = useState<DateRange>({
           startDate: null,
           endDate: null,
      });
+
+     // Clear previous storage data when component mounts
+     useEffect(() => {
+          // Clear any previous recommendations, summary, and errors
+          AsyncStorage.multiRemove(['trailRecommendations', 'trailSummary', 'trailError'])
+               .catch((err: any) => console.error("Error clearing previous data:", err));
+     }, []);
+
      const [formData, setFormData] = useState<Question[]>([
           {
                id: 1,
                type: 'text',
                question: 'Where would you like to go?',
-               value: '',
+               value: { location: '', radius: 25 },
                icon: 'location-outline',
           },
           {
@@ -87,7 +100,7 @@ export default function Preferences() {
                question: "What's your hiking experience?",
                options: ['First-timer', 'Done a few trails', 'Regular hiker', 'Trail expert'],
                value: '',
-               icon: 'compass-outline',
+               icon: 'footsteps-outline',
           },
           {
                id: 5,
@@ -178,7 +191,7 @@ export default function Preferences() {
           router.back();
      };
 
-     const handleNext = () => {
+     const handleNext = async () => {
           if (currentQuestion < formData.length - 1) {
                slideAnimation.value = withTiming(-1, {
                     duration: 200,
@@ -193,27 +206,183 @@ export default function Preferences() {
                });
           } else {
                // Submit form
-               const formattedData = formData.map((question) => {
-                    if (question.type === 'select' && question.value === 'Other') {
-                         return {
-                              ...question,
-                              value: question.otherValue
-                         };
-                    }
-                    if (question.type === 'multiselect' && question.value.includes('Other')) {
-                         const otherValues = [...question.value.filter((v: string) => v !== 'Other')];
-                         if (question.otherValue) {
-                              otherValues.push(question.otherValue);
+               setLoading(true);
+
+               try {
+                    const formattedData = formData.map((question) => {
+                         if (question.type === 'select' && question.value === 'Other') {
+                              return {
+                                   ...question,
+                                   value: question.otherValue
+                              };
                          }
-                         return {
-                              ...question,
-                              value: otherValues
-                         };
-                    }
-                    return question;
-               });
-               console.log('Form submitted:', formattedData.map((question) => question.value));
-               router.push('/(app)/result');
+                         if (question.type === 'multiselect' && question.value.includes('Other')) {
+                              const otherValues = [...question.value.filter((v: string) => v !== 'Other')];
+                              if (question.otherValue) {
+                                   otherValues.push(question.otherValue);
+                              }
+                              return {
+                                   ...question,
+                                   value: otherValues
+                              };
+                         }
+                         return question;
+                    });
+
+                    // Format the data into a readable string
+                    const formatFormData = async () => {
+                         let summary = '';
+
+                         // Location and radius (Question 1)
+                         const locationData = formattedData[0].value;
+                         if (locationData.location) {
+                              summary += `I would like to go within ${locationData.radius} miles of ${locationData.location}`;
+                         }
+
+                         // Date range (Question 2)
+                         const dateInfo = formattedData[1].value;
+                         if (dateInfo.startDate && dateInfo.endDate) {
+                              const startDate = new Date(dateInfo.startDate).toLocaleDateString();
+                              const endDate = new Date(dateInfo.endDate).toLocaleDateString();
+                              summary += ` from ${startDate} to ${endDate}.`;
+                         } else {
+                              summary += '.';
+                         }
+
+                         // Group composition (Question 3)
+                         const groupInfo = formattedData[2].value;
+                         const groupParts = [];
+
+                         if (groupInfo.adults > 0) {
+                              groupParts.push(`${groupInfo.adults} adult${groupInfo.adults > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.olderkids > 0) {
+                              groupParts.push(`${groupInfo.olderkids} older kid${groupInfo.olderkids > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.youngkids > 0) {
+                              groupParts.push(`${groupInfo.youngkids} young kid${groupInfo.youngkids > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.toddlers > 0) {
+                              groupParts.push(`${groupInfo.toddlers} toddler${groupInfo.toddlers > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.pets > 0) {
+                              groupParts.push(`${groupInfo.pets} pet${groupInfo.pets > 1 ? 's' : ''}`);
+                         }
+
+                         if (groupParts.length > 0) {
+                              summary += ` There will be ${groupParts.join(', ')}.`;
+                         }
+
+                         // Experience level (Question 4)
+                         const experience = formattedData[3].value;
+                         if (experience) {
+                              summary += ` My hiking experience is: ${experience}.`;
+                         }
+
+                         // Difficulty preference (Question 5)
+                         const difficulty = formattedData[4].value;
+                         if (difficulty) {
+                              const difficultyLevel = difficulty.split(' - ')[0];
+                              summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
+                         }
+
+                         // Hike duration (Question 6)
+                         const duration = formattedData[5].value;
+                         if (duration) {
+                              summary += ` I want to hike for ${duration}.`;
+                         }
+
+                         // Scenery preferences (Question 7)
+                         const scenery = formattedData[6].value;
+                         if (scenery && scenery.length > 0) {
+                              summary += ` I enjoy ${scenery.join(', ')} scenery.`;
+                         }
+
+                         // Terrain preference (Question 8)
+                         const terrain = formattedData[7].value;
+                         if (terrain) {
+                              summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
+                         }
+
+                         // Trail features (Question 9)
+                         const features = formattedData[8].value;
+                         if (features && features.length > 0) {
+                              summary += ` I'm looking for trails with ${features.join(', ')}.`;
+                         }
+
+                         // Must-haves (Question 10)
+                         const mustHaves = formattedData[9].value;
+                         if (mustHaves && mustHaves.length > 0) {
+                              summary += ` My trail must-haves are: ${mustHaves.join(', ')}.`;
+                         }
+
+                         // Time of day (Question 11)
+                         const timeOfDay = formattedData[10].value;
+                         if (timeOfDay) {
+                              const preferredTime = timeOfDay.split(' - ')[0];
+                              summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
+                         }
+
+                         // Weather information - properly handle async data
+                         // try {
+                         //      const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
+                         //      if (weatherInfo) {
+                         //           summary += ` The weather forecast shows: ${weatherInfo}`;
+                         //      }
+                         // } catch (error) {
+                         //      console.error("Error fetching weather data:", error);
+                         // }
+
+                         return summary;
+                    };
+
+                    // Handle the async formatFormData function
+                    formatFormData().then(async formattedSummary => {
+                         console.log('Form summary:', formattedSummary);
+
+                         try {
+                              // Generate trail recommendations here
+                              const recommendations = await generateTrailRecommendations(formattedSummary);
+
+                              // Store recommendations in AsyncStorage to avoid passing complex data via URL
+                              await AsyncStorage.setItem('trailRecommendations', recommendations);
+                              await AsyncStorage.setItem('trailSummary', formattedSummary);
+
+                              setSuccess(true);
+
+                              // Navigate to results page
+                              router.push({
+                                   pathname: '/(app)/result'
+                              });
+                         } catch (error: any) {
+                              console.error("Error generating recommendations:", error);
+                              // Store the error and summary in AsyncStorage
+                              await AsyncStorage.setItem('trailSummary', formattedSummary);
+                              await AsyncStorage.setItem('trailError',
+                                   error.toString().includes("429") || error.toString().includes("quota")
+                                        ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
+                                        : "Failed to generate trail recommendations. Please try again."
+                              );
+
+                              // Navigate to results page
+                              router.push({
+                                   pathname: '/(app)/result'
+                              });
+                         } finally {
+                              setLoading(false);
+                         }
+                    }).catch(async (error: any) => {
+                         console.error("Error formatting form data:", error);
+                         // Store the error in AsyncStorage
+                         await AsyncStorage.setItem('trailError', "Failed to format your preferences. Please try again.");
+                         setLoading(false);
+                         router.push('/(app)/result');
+                    });
+               } catch (error) {
+                    console.error("Error processing form:", error);
+                    setLoading(false);
+                    router.push('/(app)/result');
+               }
           }
      };
 
@@ -374,13 +543,49 @@ export default function Preferences() {
           switch (question.type) {
                case 'text':
                     return (
-                         <TextInput
-                              style={styles.input}
-                              value={question.value}
-                              onChangeText={updateValue}
-                              placeholder="Enter city, region, or park name"
-                              placeholderTextColor={Colors.inactive}
-                         />
+                         <View style={styles.locationContainer}>
+                              <TextInput
+                                   style={styles.input}
+                                   value={question.value.location}
+                                   onChangeText={(text) => {
+                                        const newValue = {
+                                             ...question.value,
+                                             location: text
+                                        };
+                                        updateValue(newValue);
+                                   }}
+                                   placeholder="Enter city, region, or park name"
+                                   placeholderTextColor={Colors.inactive}
+                              />
+                              <View style={styles.radiusContainer}>
+                                   <Text style={styles.radiusLabel}>Search radius:</Text>
+                                   <View style={styles.radiusInputContainer}>
+                                        <TouchableOpacity
+                                             style={styles.numberButton}
+                                             onPress={() => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       radius: Math.max(5, question.value.radius - 5)
+                                                  };
+                                                  updateValue(newValue);
+                                             }}>
+                                             <Ionicons name="remove" size={18} color={Colors.black} />
+                                        </TouchableOpacity>
+                                        <Text style={styles.numberText}>{question.value.radius} miles</Text>
+                                        <TouchableOpacity
+                                             style={styles.numberButton}
+                                             onPress={() => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       radius: question.value.radius + 5
+                                                  };
+                                                  updateValue(newValue);
+                                             }}>
+                                             <Ionicons name="add" size={18} color={Colors.black} />
+                                        </TouchableOpacity>
+                                   </View>
+                              </View>
+                         </View>
                     );
                case 'date':
                     return renderDateRange();
@@ -539,6 +744,7 @@ export default function Preferences() {
                     return value.length > 0;
                }
                if ('startDate' in value && 'endDate' in value) return !!value.startDate && !!value.endDate;
+               if ('location' in value) return !!value.location.trim();
                // For the groups/number question, check if any count is > 0
                const values = Object.values(value);
                return values.some(v => typeof v === 'number' ? v > 0 : !!v);
@@ -546,8 +752,9 @@ export default function Preferences() {
           return !!value;
      };
 
-     const getProgressSegmentStyle = (index: number) => {
-          return useAnimatedStyle(() => {
+     // Pre-compute all animated styles for progress segments
+     const progressSegmentStyles = formData.map((_, index) =>
+          useAnimatedStyle(() => {
                const backgroundColor = interpolateColor(
                     progressSegments[index].value,
                     [0, 1],
@@ -560,94 +767,103 @@ export default function Preferences() {
                     borderRadius: 2,
                     backgroundColor,
                };
-          });
-     };
+          })
+     );
 
      return (
-          <SafeAreaView style={styles.safeArea}>
-               <KeyboardAvoidingView
-                    style={styles.keyboardAvoidingView}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-               >
-                    <View style={styles.container}>
-                         <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-                              <Ionicons name="close" size={35} color={Colors.black} />
-                         </TouchableOpacity>
-
-                         <View style={styles.progressContainer}>
-                              <Animated.View
-                                   style={[
-                                        styles.progressBar,
-                                        {
-                                             width: withSpring(
-                                                  `${((currentQuestion + 1) / formData.length) * 100}%`,
-                                                  {
-                                                       damping: 20,
-                                                       stiffness: 90,
-                                                  }
-                                             ),
-                                        },
-                                   ]}
-                              />
-                              {formData.map((_, index) => (
-                                   <Animated.View
-                                        key={index}
-                                        style={getProgressSegmentStyle(index)}
-                                   />
-                              ))}
-                         </View>
-
-                         <ScrollView
-                              style={styles.scrollView}
-                              contentContainerStyle={styles.scrollViewContent}
-                              keyboardShouldPersistTaps="handled"
-                              showsVerticalScrollIndicator={false}
-                         >
-                              <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
-                                   <View style={styles.iconContainer}>
-                                        <Ionicons
-                                             name={formData[currentQuestion].icon}
-                                             size={40}
-                                             color={Colors.primary}
-                                        />
-                                   </View>
-                                   <Text style={styles.questionText}>{formData[currentQuestion].question}</Text>
-                                   <View style={styles.questionContainer}>
-                                        {renderQuestion()}
-                                   </View>
-
-                                   <View style={[
-                                        styles.navigationContainer,
-                                        currentQuestion === 0 && styles.navigationContainerFirstQuestion
-                                   ]}>
-                                        {currentQuestion > 0 && (
-                                             <TouchableOpacity style={styles.navButton} onPress={handlePrevious}>
-                                                  <Text style={styles.navButtonText}>Back</Text>
-                                             </TouchableOpacity>
-                                        )}
-                                        <TouchableOpacity
-                                             style={[
-                                                  styles.navButton,
-                                                  currentQuestion === 0 && styles.navButtonFirstQuestion
-                                             ]}
-                                             onPress={handleNext}
-                                        >
-                                             <Text style={styles.navButtonText}>
-                                                  {currentQuestion === formData.length - 1
-                                                       ? 'Finish'
-                                                       : hasValue(formData[currentQuestion].value, formData[currentQuestion].otherValue)
-                                                            ? 'Next'
-                                                            : 'Skip'
-                                                  }
-                                             </Text>
-                                        </TouchableOpacity>
-                                   </View>
-                              </Animated.View>
-                         </ScrollView>
+          <>
+               {loading ? (
+                    <View style={styles.loadingContainer}>
+                         <ActivityIndicator size="large" color={Colors.primary} />
+                         <Text style={styles.loadingText}>Finding the perfect trails{'\n'}for your adventure... Hold tight!</Text>
                     </View>
-               </KeyboardAvoidingView>
-          </SafeAreaView>
+               ) : (
+                    <SafeAreaView style={styles.safeArea}>
+                         <KeyboardAvoidingView
+                              style={styles.keyboardAvoidingView}
+                              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                         >
+                              <View style={styles.container}>
+                                   <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                                        <Ionicons name="close" size={35} color={Colors.black} />
+                                   </TouchableOpacity>
+
+                                   <View style={styles.progressContainer}>
+                                        <Animated.View
+                                             style={[
+                                                  styles.progressBar,
+                                                  {
+                                                       width: withSpring(
+                                                            `${((currentQuestion + 1) / formData.length) * 100}%`,
+                                                            {
+                                                                 damping: 20,
+                                                                 stiffness: 90,
+                                                            }
+                                                       ),
+                                                  },
+                                             ]}
+                                        />
+                                        {formData.map((_, index) => (
+                                             <Animated.View
+                                                  key={index}
+                                                  style={progressSegmentStyles[index]}
+                                             />
+                                        ))}
+                                   </View>
+
+                                   <ScrollView
+                                        style={styles.scrollView}
+                                        contentContainerStyle={styles.scrollViewContent}
+                                        keyboardShouldPersistTaps="handled"
+                                        showsVerticalScrollIndicator={false}
+                                   >
+                                        <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
+                                             <View style={styles.iconContainer}>
+                                                  <Ionicons
+                                                       name={formData[currentQuestion].icon}
+                                                       size={40}
+                                                       color={Colors.primary}
+                                                  />
+                                             </View>
+                                             <Text style={styles.questionText}>{formData[currentQuestion].question}</Text>
+                                             <View style={styles.questionContainer}>
+                                                  {renderQuestion()}
+                                             </View>
+
+                                             <View style={[
+                                                  styles.navigationContainer,
+                                                  currentQuestion === 0 && styles.navigationContainerFirstQuestion
+                                             ]}>
+                                                  {currentQuestion > 0 && (
+                                                       <TouchableOpacity style={styles.navButton} onPress={handlePrevious}>
+                                                            <Text style={styles.navButtonText}>Back</Text>
+                                                       </TouchableOpacity>
+                                                  )}
+                                                  <TouchableOpacity
+                                                       style={[
+                                                            styles.navButton,
+                                                            currentQuestion === 0 && styles.navButtonFirstQuestion
+                                                       ]}
+                                                       onPress={handleNext}
+                                                  >
+                                                       <Text style={styles.navButtonText}>
+                                                            {currentQuestion === formData.length - 1
+                                                                 ? 'Finish'
+                                                                 : hasValue(formData[currentQuestion].value, formData[currentQuestion].otherValue)
+                                                                      ? 'Next'
+                                                                      : 'Skip'
+                                                            }
+                                                       </Text>
+                                                  </TouchableOpacity>
+                                             </View>
+                                        </Animated.View>
+                                   </ScrollView>
+                              </View>
+                         </KeyboardAvoidingView>
+                    </SafeAreaView>
+               )}
+          </>
      );
 }
 
@@ -857,5 +1073,40 @@ const styles = StyleSheet.create({
      },
      scrollViewContent: {
           flexGrow: 1,
+     },
+     loadingContainer: {
+          backgroundColor: 'white',
+          flex: 1,
+          height: '100%',
+          width: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 20,
+          padding: 20,
+     },
+     loadingText: {
+          ...Typography.text.h3,
+          lineHeight: 30,
+          color: Colors.primary,
+          textAlign: 'center',
+     },
+     locationContainer: {
+          width: '100%',
+          gap: 15,
+     },
+     radiusContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 5,
+     },
+     radiusLabel: {
+          ...Typography.text.body,
+          color: Colors.black,
+     },
+     radiusInputContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 15,
      },
 }); 
