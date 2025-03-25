@@ -10,14 +10,14 @@ const drafts = [
           name: 'Beach Day',
           location: 'Santa Cruz',
           date: 'Mar 29, 2025',
-          image: require('/Users/aungaung/Desktop/trail-mate/assets/images/icon.png'),
+          image: require('../../assets/images/icon.png'),
      },
      {
           id: '2',
           name: 'Mountain Hike',
           location: 'Lake Tahoe',
           date: 'Apr 3, 2025',
-          image: require('/Users/aungaung/Desktop/trail-mate/assets/images/icon.png'),
+          image: require('../../assets/images/icon.png'),
      },
 ];
 
@@ -27,14 +27,14 @@ const previousTrips = [
           name: 'City Tour',
           location: 'San Francisco',
           date: 'Feb 10, 2025',
-          image: require('/Users/aungaung/Desktop/trail-mate/assets/images/icon.png'),
+          image: require('../../assets/images/icon.png'),
      },
      {
           id: '4',
           name: 'Wine Country',
           location: 'Napa Valley',
           date: 'Jan 15, 2025',
-          image: require('/Users/aungaung/Desktop/trail-mate/assets/images/icon.png'),
+          image: require('../../assets/images/icon.png'),
      },
 ];
 
@@ -48,18 +48,18 @@ export default function Home() {
 
      const renderTripBox = ({ item }: any) => (
           <TouchableOpacity style={styles.tripBox} onPress={() => goToTrip(item.id)}>
-            <Image source={item.image} style={styles.tripImage} />
-            <View style={styles.tripOverlay} />
-            <View style={styles.tripInfo}>
-              <Text style={styles.tripName}>{item.name}</Text>
-              <View style={styles.tripMetaRow}>
-                <Text style={styles.tripDetails}>{item.location}</Text>=
-                <Text style={styles.tripDetails}>{item.date}</Text>
-              </View>
-            </View>
+               <Image source={item.image} style={styles.tripImage} />
+               <View style={styles.tripOverlay} />
+               <View style={styles.tripInfo}>
+                    <Text style={styles.tripName}>{item.name}</Text>
+                    <View style={styles.tripMetaRow}>
+                         <Text style={styles.tripDetails}>{item.location}</Text>
+                         <Text style={styles.tripDetails}>{item.date}</Text>
+                    </View>
+               </View>
           </TouchableOpacity>
-        );
-        
+     );
+
 
      return (
           <ScrollView contentContainerStyle={styles.container}>
@@ -74,19 +74,19 @@ export default function Home() {
                               <Text style={styles.ecoPoints}>Eco-Points: </Text>
                               <Text style={styles.ecoPointsNum}>150</Text>
                          </View>
-                         
+
                     </View>
                     <TouchableOpacity onPress={goToSettings}>
-                         <Ionicons name="settings-outline" size={28} color ={'dark'} />
+                         <Ionicons name="settings-outline" size={28} color={'dark'} />
                     </TouchableOpacity>
                </View>
 
                {/* Plan a Trip Button */}
                <TouchableOpacity style={styles.planButton} onPress={goToTripPlanning}>
                     <View style={styles.planButtonContent}>
-                    <Ionicons name="map-outline" size={19} color="#444" style={styles.planButtonIcon} />
-                    <Text style={styles.planButtonText}>Plan a Trip</Text>
-                    </View> . 
+                         <Ionicons name="map-outline" size={19} color="#444" style={styles.planButtonIcon} />
+                         <Text style={styles.planButtonText}>Plan a Trip</Text>
+                    </View>
                </TouchableOpacity>
 
                {/* Drafts Section */}
@@ -100,10 +100,10 @@ export default function Home() {
                     contentContainerStyle={{ paddingLeft: 5 }}
                />
 
-               <Text style = {styles.sectionTitle}>Your Trips</Text>
-               <FlatList 
+               <Text style={styles.sectionTitle}>Your Trips</Text>
+               <FlatList
                     horizontal
-                    data ={previousTrips}
+                    data={previousTrips}
                     keyExtractor={(item) => item.id}
                     renderItem={renderTripBox}
                     showsHorizontalScrollIndicator={false}
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
           justifyContent: 'center',
           alignItems: 'center',
      },
- 
+
      infoPanel: {
           flexDirection: 'row',
           justifyContent: 'space-between',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
      nameRow: {
           flexDirection: 'row',
           alignItems: 'center',
-        },
+     },
 
      username: {
           ...Typography.text.h2,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
           fontSize: 15,
      },
      ecoPointsNum: {
-     
+
           color: 'green',
           marginTop: 5,
           fontSize: 15,
@@ -167,27 +167,27 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           marginBottom: 25,
           width: '90%',
-        
+
           // Shadow for iOS
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.15,
           shadowRadius: 8,
-        
+
           // Shadow for Android
           elevation: 5,
-        },
+     },
 
-        planButtonContent: {
+     planButtonContent: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-        },
-        
-        planButtonIcon: {
+     },
+
+     planButtonIcon: {
           marginRight: 8, // spacing between text and icon
-        },
-        
+     },
+
      planButtonText: {
           ...Typography.text.button,
           color: '#444', // dark gray text
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
           borderRadius: 15,
           overflow: 'hidden',
           backgroundColor: 'lightGray',
-     
+
      },
      tripImage: {
           width: '100%',
@@ -234,9 +234,9 @@ const styles = StyleSheet.create({
           justifyContent: 'space-between',
           alignItems: 'center',
           marginTop: 2,
-        },
-        
-        
+     },
+
+
      tripName: {
           ...Typography.text.h3,
           color: 'white',
