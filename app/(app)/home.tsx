@@ -42,7 +42,7 @@ export default function Home() {
      const router = useRouter();
 
      const goToSettings = () => router.push('/(app)/settings');
-     const goToTripPlanning = () => router.push('/(app)/result');
+     const goToTripPlanning = () => router.push('/(app)/preferences');
      const goToTrip = (id: string) => router.push(`/(app)/result`);
 
 
@@ -137,10 +137,8 @@ const styles = StyleSheet.create({
      },
 
      username: {
-          ...Typography.text.h2,
+          ...Typography.text.h1,
           color: Colors.primary,
-          fontSize: 35,
-          fontWeight: '600',
      },
      ecoPointsRow: {
           flexDirection: 'row',
@@ -162,7 +160,7 @@ const styles = StyleSheet.create({
 
      planButton: {
           backgroundColor: 'white',
-          paddingVertical: 15,
+          paddingVertical: 20,
           borderRadius: 100,
           alignItems: 'center',
           marginBottom: 25,
