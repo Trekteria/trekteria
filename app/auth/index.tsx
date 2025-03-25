@@ -2,17 +2,62 @@ import { StyleSheet, View, Text, TextInput, TouchableOpacity, Image } from 'reac
 import { Link, useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
+import { signInWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "../../constants/firebaseConfig";
+import * as Google from "expo-auth-session/providers/google";
 
 export default function AuthIndex() {
      const router = useRouter();
      const [showPassword, setShowPassword] = useState(false);
+     const [email, setEmail] = useState('');
+     const [password, setPassword] = useState('');
 
-     const handleLogin = () => {
-          // In a real app, you would validate credentials here
-          router.replace('/(app)/home');
+     const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+          clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+          redirectUri: "https://auth.expo.io/@aungbobo/trail-mate",
+     });
+
+     console.log("Redirect URI:", request?.redirectUri);
+
+     useEffect(() => {
+          if (response?.type === "success") {
+               const { id_token } = response.params;
+
+               // Create a Firebase credential with the Google ID token
+               const credential = GoogleAuthProvider.credential(id_token);
+
+               // Sign in with Firebase
+               signInWithCredential(auth, credential)
+                    .then((userCredential) => {
+                         console.log("Google Sign-In successful:", userCredential.user);
+                         router.replace("/(app)/home");
+                    })
+                    .catch((error) => {
+                         console.error("Error with Google Sign-In:", error.message);
+                         alert(error.message);
+                    });
+          }
+     }, [response]);
+
+     const handleLogin = async () => {
+          if (!email || !password) {
+               alert("Please enter both email and password.");
+               return;
+          }
+
+          try {
+               console.log("Attempting to log in with email:", email);
+               const userCredential = await signInWithEmailAndPassword(auth, email, password);
+               const user = userCredential.user;
+
+               console.log("User logged in:", user);
+               router.replace("/(app)/home");
+          } catch (error) {
+               handleFirebaseError(error);
+          }
      };
 
      const handleSignup = () => {
@@ -39,9 +84,11 @@ export default function AuthIndex() {
                          <TextInput
                               style={styles.input}
                               placeholder="Email"
-                              placeholderTextColor={Colors.black}
+                              placeholderTextColor={Colors.inactive}
                               keyboardType="email-address"
                               autoCapitalize="none"
+                              value={email}
+                              onChangeText={setEmail}
                          />
                     </View>
 
@@ -50,8 +97,10 @@ export default function AuthIndex() {
                               <TextInput
                                    style={styles.passwordInput}
                                    placeholder="Password"
-                                   placeholderTextColor={Colors.black}
+                                   placeholderTextColor={Colors.inactive}
                                    secureTextEntry={!showPassword}
+                                   value={password}
+                                   onChangeText={setPassword}
                               />
                               <TouchableOpacity
                                    style={styles.eyeIcon}
@@ -80,7 +129,7 @@ export default function AuthIndex() {
                          <View style={styles.divider} />
                     </View>
 
-                    <TouchableOpacity style={styles.socialButton}>
+                    <TouchableOpacity style={styles.socialButton} onPress={() => promptAsync()}>
                          <FontAwesome name="google" size={24} color={Colors.black} style={styles.socialIcon} />
                          <Text style={styles.socialButtonText}>Continue with Google</Text>
                     </TouchableOpacity>
@@ -101,6 +150,16 @@ export default function AuthIndex() {
           </View>
      );
 }
+
+const handleFirebaseError = (error: any) => {
+    if (error.code === "auth/invalid-email") {
+        alert("Invalid email format.");
+    } else if (error.code === "auth/invalid-credential") {
+        alert("Invalid credentials. Please check your email and password.");
+    } else {
+        alert(error.message);
+    }
+};
 
 const styles = StyleSheet.create({
      container: {
@@ -223,4 +282,4 @@ const styles = StyleSheet.create({
           ...Typography.text.body,
           color: Colors.primary,
      },
-}); 
+});
