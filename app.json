@@ -2,6 +2,7 @@
   "expo": {
     "name": "trail-mate",
     "slug": "trail-mate",
+    "owner": "aungbobo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
