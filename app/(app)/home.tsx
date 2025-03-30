@@ -1,9 +1,9 @@
 import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { auth, db } from '../../constants/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -45,19 +45,22 @@ export default function Home() {
      const router = useRouter();
      const [userName, setUserName] = useState('');
 
-     useEffect(() => {
-          const fetchUserName = async () => {
-               const user = auth.currentUser;
-               if (user) {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists()) {
-                         const userData = userDoc.data();
-                         setUserName(userData.firstname);
-                    }
+     const fetchUserName = async () => {
+          const user = auth.currentUser;
+          if (user) {
+               const userDoc = await getDoc(doc(db, "users", user.uid));
+               if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setUserName(userData.firstname);
                }
-          };
-          fetchUserName();
-     }, []);
+          }
+     };
+
+     useFocusEffect(
+          useCallback(() => {
+               fetchUserName();
+          }, [])
+     );
 
      const goToSettings = () => router.push('/(app)/settings');
      const goToTripPlanning = () => router.push('/(app)/preferences');

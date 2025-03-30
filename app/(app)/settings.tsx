@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
         {/* Account Section */}
         <Text style={styles.sectionHeader}>Account</Text>
-        <TouchableOpacity style={styles.row} onPress={() => router.push('/result')}>
+        <TouchableOpacity style={styles.row} onPress={() => router.push('/(app)/settings/change-name')}>
           <Text style={styles.label}>Change name</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.row} onPress={() => router.push('/result')}>
