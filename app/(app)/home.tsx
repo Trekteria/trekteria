@@ -13,14 +13,14 @@ const drafts = [
           name: 'Beach Day',
           location: 'Santa Cruz',
           date: 'Mar 29, 2025',
-          image: require('../../assets/images/icon.png'),
+          image: 'https://images.unsplash.com/photo-1647714851930-706e02436822?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
      },
      {
           id: '2',
           name: 'Mountain Hike',
           location: 'Lake Tahoe',
           date: 'Apr 3, 2025',
-          image: require('../../assets/images/icon.png'),
+          image: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&q=80&w=1000',
      },
 ];
 
@@ -30,14 +30,14 @@ const previousTrips = [
           name: 'City Tour',
           location: 'San Francisco',
           date: 'Feb 10, 2025',
-          image: require('../../assets/images/icon.png'),
+          image: 'https://images.unsplash.com/photo-1615289644696-4f9eb914f3bb?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
      },
      {
           id: '4',
           name: 'Wine Country',
           location: 'Napa Valley',
           date: 'Jan 15, 2025',
-          image: require('../../assets/images/icon.png'),
+          image: 'https://images.unsplash.com/photo-1726142346171-fe754a65da8d?q=80&w=3270&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
      },
 ];
 
@@ -69,7 +69,7 @@ export default function Home() {
 
      const renderTripBox = ({ item }: any) => (
           <TouchableOpacity style={styles.tripBox} onPress={() => goToTrip(item.id)}>
-               <Image source={item.image} style={styles.tripImage} />
+               <Image source={{ uri: item.image }} style={styles.tripImage} />
                <View style={styles.tripOverlay} />
                <View style={styles.tripInfo}>
                     <Text style={styles.tripName}>{item.name}</Text>
