@@ -6,14 +6,26 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
+import { auth } from '../../constants/firebaseConfig';
+import { signOut } from 'firebase/auth';
 
 export default function SettingsPage() {
   const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/auth');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -64,7 +76,7 @@ export default function SettingsPage() {
         </TouchableOpacity>
 
         {/* Log Out Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/result')}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
 
