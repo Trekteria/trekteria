@@ -110,21 +110,21 @@ export default function Home() {
                     </View>
                </TouchableOpacity>
 
-               {/* Drafts Section */}
-               <Text style={styles.sectionTitle}>Drafts</Text>
+               {/* Your Trips Section */}
+               <Text style={styles.sectionTitle}>Your Trips</Text>
                <FlatList
                     horizontal
-                    data={drafts}
+                    data={previousTrips}
                     keyExtractor={(item) => item.id}
                     renderItem={renderTripBox}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ paddingLeft: 5 }}
                />
 
-               <Text style={styles.sectionTitle}>Your Trips</Text>
+               <Text style={styles.sectionTitle}>Drafts</Text>
                <FlatList
                     horizontal
-                    data={previousTrips}
+                    data={drafts}
                     keyExtractor={(item) => item.id}
                     renderItem={renderTripBox}
                     showsHorizontalScrollIndicator={false}
