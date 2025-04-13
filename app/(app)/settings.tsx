@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
-import { auth } from '../../constants/firebaseConfig';
+import { auth } from '../../services/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
 export default function SettingsPage() {

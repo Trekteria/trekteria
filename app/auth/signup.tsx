@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../constants/firebaseConfig";
+import { auth, db } from "../../services/firebaseConfig";
 
 export default function Signup() {
      const router = useRouter();
@@ -55,7 +55,7 @@ export default function Signup() {
                     alert("An unknown error occurred."); // Fallback for unknown error types
                }
           }
-          
+
      };
 
      const handleBackToLogin = () => {

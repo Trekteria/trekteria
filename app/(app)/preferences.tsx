@@ -19,6 +19,8 @@ import Animated, {
 import { fetchWeatherData } from '@/services/weatherService';
 import { generateTrailRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { processRecommendations } from '@/services/recommendationService';
+import { auth } from '@/services/firebaseConfig';
 
 type TravelerGroup = {
      label: string;
@@ -344,9 +346,14 @@ export default function Preferences() {
                               // Generate trail recommendations here
                               const recommendations = await generateTrailRecommendations(formattedSummary);
 
-                              // Store recommendations in AsyncStorage to avoid passing complex data via URL
-                              await AsyncStorage.setItem('trailRecommendations', recommendations);
-                              await AsyncStorage.setItem('trailSummary', formattedSummary);
+                              // Get current user ID
+                              const userId = auth.currentUser?.uid;
+                              if (!userId) {
+                                   throw new Error("User not authenticated");
+                              }
+
+                              // Process recommendations and save to Firestore and AsyncStorage
+                              await processRecommendations(userId, formattedData, formattedSummary, recommendations);
 
                               setSuccess(true);
 

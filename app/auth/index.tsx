@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { signInWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
-import { auth } from "../../constants/firebaseConfig";
+import { auth } from "../../services/firebaseConfig";
 import * as Google from "expo-auth-session/providers/google";
 
 export default function AuthIndex() {
@@ -152,13 +152,13 @@ export default function AuthIndex() {
 }
 
 const handleFirebaseError = (error: any) => {
-    if (error.code === "auth/invalid-email") {
-        alert("Invalid email format.");
-    } else if (error.code === "auth/invalid-credential") {
-        alert("Invalid credentials. Please check your email and password.");
-    } else {
-        alert(error.message);
-    }
+     if (error.code === "auth/invalid-email") {
+          alert("Invalid email format.");
+     } else if (error.code === "auth/invalid-credential") {
+          alert("Invalid credentials. Please check your email and password.");
+     } else {
+          alert(error.message);
+     }
 };
 
 const styles = StyleSheet.create({

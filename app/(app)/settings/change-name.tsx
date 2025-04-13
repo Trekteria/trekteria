@@ -3,7 +3,7 @@ import { useRouter, Stack } from 'expo-router';
 import { Colors } from '../../../constants/Colors';
 import { Typography } from '../../../constants/Typography';
 import { useState, useEffect } from 'react';
-import { auth, db } from '../../../constants/firebaseConfig';
+import { auth, db } from '../../../services/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 

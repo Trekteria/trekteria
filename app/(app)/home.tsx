@@ -4,7 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
-import { auth, db } from '../../constants/firebaseConfig';
+import { auth, db } from '../../services/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
 const drafts = [
