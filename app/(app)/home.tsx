@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 import { auth, db } from '../../services/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
-const drafts = [
+const yourTrails = [
      {
           id: '1',
           name: 'Beach Day',
@@ -24,7 +24,7 @@ const drafts = [
      },
 ];
 
-const previousTrips = [
+const yourTrips = [
      {
           id: '3',
           name: 'City Tour',
@@ -66,13 +66,25 @@ export default function Home() {
      const goToTripPlanning = () => router.push('/(app)/preferences');
      const goToTrip = (id: string) => router.push(`/(app)/result`);
 
+     const renderTrailBox = ({ item }: any) => (
+          <TouchableOpacity style={styles.tripBox} onPress={() => goToTrip(item.id)}>
+               <Image source={{ uri: item.image }} style={styles.tripImage} />
+               <View style={styles.tripOverlay} />
+               <View style={styles.tripInfo}>
+                    <Text style={styles.tripName}>{item.name}</Text>
+                    <View style={styles.tripMetaRow}>
+                         <Text style={styles.tripDetails}>{item.location}</Text>
+                         <Text style={styles.tripDetails}>{item.date}</Text>
+                    </View>
+               </View>
+          </TouchableOpacity>
+     );
 
      const renderTripBox = ({ item }: any) => (
           <TouchableOpacity style={styles.tripBox} onPress={() => goToTrip(item.id)}>
                <Image source={{ uri: item.image }} style={styles.tripImage} />
                <View style={styles.tripOverlay} />
                <View style={styles.tripInfo}>
-                    <Text style={styles.tripName}>{item.name}</Text>
                     <View style={styles.tripMetaRow}>
                          <Text style={styles.tripDetails}>{item.location}</Text>
                          <Text style={styles.tripDetails}>{item.date}</Text>
@@ -98,7 +110,7 @@ export default function Home() {
 
                     </View>
                     <TouchableOpacity onPress={goToSettings}>
-                         <Ionicons name="settings-outline" size={28} color={'dark'} />
+                         <Ionicons name="settings-outline" size={32} color={'dark'} />
                     </TouchableOpacity>
                </View>
 
@@ -110,21 +122,22 @@ export default function Home() {
                     </View>
                </TouchableOpacity>
 
-               {/* Your Trips Section */}
-               <Text style={styles.sectionTitle}>Your Trips</Text>
+               {/* Your Trails Section */}
+               <Text style={styles.sectionTitle}>Your Trails</Text>
                <FlatList
                     horizontal
-                    data={previousTrips}
+                    data={yourTrails}
                     keyExtractor={(item) => item.id}
-                    renderItem={renderTripBox}
+                    renderItem={renderTrailBox}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ paddingLeft: 5 }}
                />
 
-               <Text style={styles.sectionTitle}>Drafts</Text>
+               {/* Your Trips Section */}
+               <Text style={styles.sectionTitle}>Your Trips</Text>
                <FlatList
                     horizontal
-                    data={drafts}
+                    data={yourTrips}
                     keyExtractor={(item) => item.id}
                     renderItem={renderTripBox}
                     showsHorizontalScrollIndicator={false}
@@ -216,7 +229,7 @@ const styles = StyleSheet.create({
 
      sectionTitle: {
           ...Typography.text.h3,
-          marginBottom: 15,
+          marginBottom: 10,
           marginTop: 10,
           fontSize: 25,
           textAlign: 'left',
@@ -225,13 +238,13 @@ const styles = StyleSheet.create({
           width: '90%',
      },
      tripBox: {
-          width: 190,
-          height: 200,
+          width: 220,
+          height: 220,
           margin: 10,
           borderRadius: 15,
           overflow: 'hidden',
           backgroundColor: 'lightGray',
-
+          boxShadow: '0 8px 20px 0 rgba(0, 0, 0, 0.3)',
      },
      tripImage: {
           width: '100%',
