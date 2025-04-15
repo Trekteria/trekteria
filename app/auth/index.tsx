@@ -5,14 +5,18 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import { Typography } from "../../constants/Typography";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { auth, db } from "../../services/firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
 
@@ -54,6 +58,31 @@ export default function AuthIndex() {
       }
     } catch (error) {
       handleFirebaseError(error); // Handle Firebase errors
+    }
+  };
+
+  // Handles forgot password
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      alert("Please enter your email to reset your password.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail);
+      alert(
+        "A password reset email has been sent to your email address. Please check your inbox."
+      );
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error.message);
+      if (error.code === "auth/user-not-found") {
+        alert("No user found with this email address.");
+      } else if (error.code === "auth/invalid-email") {
+        alert("Invalid email format.");
+      } else {
+        alert("An error occurred. Please try again.");
+      }
     }
   };
 
@@ -119,7 +148,10 @@ export default function AuthIndex() {
         </View>
 
         {/* Forgot password link */}
-        <TouchableOpacity style={styles.forgotPassword}>
+        <TouchableOpacity
+          style={styles.forgotPassword}
+          onPress={handleForgotPassword}
+        >
           <Text style={styles.forgotPasswordText}>Forgot your Password?</Text>
         </TouchableOpacity>
 
