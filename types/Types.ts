@@ -55,5 +55,6 @@ export interface Trail {
   highlights?: string[];
   trailType?: string;
   terrain?: string;
+  createdAt: Timestamp; // Using Firestore Timestamp
   tripId: string; // reference to the trip this trail belongs to
 }

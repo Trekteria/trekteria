@@ -118,6 +118,7 @@ export const parseRecommendations = async (
         highlights: highlightsArr,
         trailType: "", // To be filled if available
         terrain: "", // To be filled if available
+        createdAt: Timestamp.now(), // Using Firestore Timestamp
         tripId: "", // This will be set later when saving to Firestore
       } as Trail;
     })
@@ -182,6 +183,7 @@ export const saveTrip = async (
         const trailWithTripId = {
           ...trail,
           tripId,
+          createdAt: Timestamp.now(), // Ensure fresh timestamp when saving
         };
         return await createTrail(trailWithTripId);
       })
