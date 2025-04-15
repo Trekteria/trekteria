@@ -120,7 +120,7 @@ export default function ChangeEmail() {
           style={styles.input}
           value={password}
           onChangeText={setPassword}
-          placeholder="Enter your password for verification"
+          placeholder="Enter your password"
           placeholderTextColor="#666"
           secureTextEntry
         />
