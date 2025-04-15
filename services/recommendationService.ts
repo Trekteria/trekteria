@@ -120,6 +120,7 @@ export const parseRecommendations = async (
         terrain: "", // To be filled if available
         createdAt: Timestamp.now(), // Using Firestore Timestamp
         tripId: "", // This will be set later when saving to Firestore
+        bookmarked: false, // Default value for bookmarked field
       } as Trail;
     })
   );
