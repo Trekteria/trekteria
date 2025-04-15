@@ -56,7 +56,7 @@ export default function SettingsPage() {
         <TouchableOpacity style={styles.row} onPress={() => router.push('/(app)/settings/change-name')}>
           <Text style={styles.label}>Change name</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row} onPress={() => router.push('/result')}>
+        <TouchableOpacity style={styles.row} onPress={() => router.push('/(app)/settings/change-email')}>
           <Text style={styles.label}>Change email</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.row} onPress={() => router.push('/result')}>
