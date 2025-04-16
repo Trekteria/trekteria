@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 15,
     textAlign: "center",
+    fontSize: 16,
   },
   divider: {
     height: 1,
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
   },
   missionText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 15,
     color: "#333",
   },
   missionCompleted: {

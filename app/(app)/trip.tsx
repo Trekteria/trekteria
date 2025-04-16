@@ -357,8 +357,10 @@ const styles = StyleSheet.create({
      tabContent: {
           padding: 20,
           height: '80%',
-          borderBlockColor: 'black',
           borderWidth: 1,
+          borderBlockColor: 'white',
+          borderColor: 'white',
+   
      },
 });
 

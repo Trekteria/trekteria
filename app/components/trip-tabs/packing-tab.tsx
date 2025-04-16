@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 15,
     textAlign: "center",
+    fontSize: 16,
   },
   divider: {
     height: 1,
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
   },
   packingText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 14,
     color: "#333",
   },
   packingCompleted: {
