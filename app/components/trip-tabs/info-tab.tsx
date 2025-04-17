@@ -1,6 +1,8 @@
+
 import { View, Text } from "react-native";
 
 function InfoTab() {
+
      return (
           <View>
                <Text>Info Tab</Text>
@@ -9,3 +11,4 @@ function InfoTab() {
 }
 
 export default InfoTab;
+
