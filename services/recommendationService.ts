@@ -50,10 +50,12 @@ export const fetchCoordinates = async (
 /**
  * Parse the recommendation string into structured trail data
  * @param recommendationsString Raw string from Gemini API
+ * @param userId Current user's ID
  * @returns Array of parsed Trail objects
  */
 export const parseRecommendations = async (
-  recommendationsString: string
+  recommendationsString: string,
+  userId: string
 ): Promise<Trail[]> => {
   if (!recommendationsString) return [];
 
@@ -118,7 +120,10 @@ export const parseRecommendations = async (
         highlights: highlightsArr,
         trailType: "", // To be filled if available
         terrain: "", // To be filled if available
+        createdAt: Timestamp.now(), // Using Firestore Timestamp
         tripId: "", // This will be set later when saving to Firestore
+        bookmarked: false, // Default value for bookmarked field
+        userId, // Set the userId
       } as Trail;
     })
   );
@@ -182,6 +187,8 @@ export const saveTrip = async (
         const trailWithTripId = {
           ...trail,
           tripId,
+          userId,
+          createdAt: Timestamp.now(),
         };
         return await createTrail(trailWithTripId);
       })
@@ -190,10 +197,16 @@ export const saveTrip = async (
     // Update the trip with the trail IDs
     await updateTrip(tripId, { trailIds });
 
-    // Save to AsyncStorage as well
-    await AsyncStorage.setItem("trailRecommendations", JSON.stringify(trails));
+    // Save only the summary to AsyncStorage
+    // This is non-Firestore data that we still need to persist
     await AsyncStorage.setItem("trailSummary", formattedSummary);
-    await AsyncStorage.setItem("parsedTrails", JSON.stringify(trails));
+
+    // No need to store trails in AsyncStorage as Firestore persistence will handle this
+    // Removed: await AsyncStorage.setItem("trailRecommendations", JSON.stringify(trails));
+    // Removed: await AsyncStorage.setItem("parsedTrails", JSON.stringify(trails));
+
+    // Instead, store a reference to the trip ID for easy access
+    await AsyncStorage.setItem("lastTripId", tripId);
 
     return tripId;
   } catch (error) {
@@ -218,7 +231,7 @@ export const processRecommendations = async (
 ): Promise<string> => {
   try {
     // Parse the recommendations
-    const trails = await parseRecommendations(recommendationsString);
+    const trails = await parseRecommendations(recommendationsString, userId);
 
     if (trails.length === 0) {
       throw new Error("No valid trail recommendations found");

@@ -1,11 +1,13 @@
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, ViewStyle, TextStyle, ImageBackground, ImageStyle } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Trail as FirestoreTrail } from '@/types/Types';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { db, auth } from '../../services/firebaseConfig';
 
 // Define the Trail interface for type safety
 interface Trail {
@@ -15,6 +17,8 @@ interface Trail {
      facilities: string;
      latitude?: number;
      longitude?: number;
+     id?: string;
+     bookmarked?: boolean;
 }
 
 // Sample trail images - in a real app, these could come from an API or be specific to each trail
@@ -26,21 +30,21 @@ const trailImages = [
 
 export default function Result() {
      const router = useRouter();
+     const { tripId: routeTripId } = useLocalSearchParams();
      const [loading, setLoading] = useState(true);
      const [parsedTrails, setParsedTrails] = useState<Trail[]>([]);
      const [summary, setSummary] = useState<string | null>(null);
      const [error, setError] = useState<string | null>(null);
 
      useEffect(() => {
-          // Retrieve data from AsyncStorage
           const loadData = async () => {
                setLoading(true);
                try {
-                    // Get summary, error, and parsed trails from AsyncStorage
-                    const [summaryValue, errorValue, parsedTrailsValue] = await Promise.all([
+                    // Get summary and error from AsyncStorage (these are still valid use cases for AsyncStorage)
+                    const [summaryValue, errorValue, lastTripId] = await Promise.all([
                          AsyncStorage.getItem('trailSummary'),
                          AsyncStorage.getItem('trailError'),
-                         AsyncStorage.getItem('parsedTrails')
+                         AsyncStorage.getItem('lastTripId')
                     ]);
 
                     if (errorValue) {
@@ -53,18 +57,38 @@ export default function Result() {
                          setSummary(summaryValue);
                     }
 
-                    if (parsedTrailsValue) {
-                         // Parse the JSON string into an array of Trail objects
-                         const firestoreTrails = JSON.parse(parsedTrailsValue) as FirestoreTrail[];
+                    // Determine which tripId to use - from route params or from AsyncStorage
+                    const targetTripId = routeTripId ? String(routeTripId) : lastTripId;
+
+                    // Fetch trails from Firestore
+                    if (targetTripId) {
+                         const user = auth.currentUser;
+                         if (!user) {
+                              setError("You must be logged in to view recommendations");
+                              setLoading(false);
+                              return;
+                         }
+
+                         // Query trails related to this trip
+                         const trailsCollection = collection(db, "trails");
+                         const trailsQuery = query(trailsCollection, where("tripId", "==", targetTripId));
+                         const trailsSnapshot = await getDocs(trailsQuery);
+
+                         const firestoreTrails: FirestoreTrail[] = [];
+                         trailsSnapshot.forEach(doc => {
+                              firestoreTrails.push({ id: doc.id, ...doc.data() } as FirestoreTrail);
+                         });
 
                          // Convert Firestore trail format to the format expected by this component
                          const trailsForDisplay = firestoreTrails.map(trail => ({
+                              id: trail.id,
                               name: trail.name,
                               location: trail.location,
                               keyFeatures: trail.highlights?.join(', ') || '',
                               facilities: trail.amenities?.join(', ') || '',
                               latitude: trail.coordinates?.latitude,
-                              longitude: trail.coordinates?.longitude
+                              longitude: trail.coordinates?.longitude,
+                              bookmarked: trail.bookmarked || false
                          }));
 
                          if (trailsForDisplay.length === 0) {
@@ -76,7 +100,7 @@ export default function Result() {
                          setError("No trail recommendations found. Please try again.");
                     }
                } catch (err) {
-                    console.error("Error loading data from AsyncStorage:", err);
+                    console.error("Error loading data:", err);
                     setError("Failed to load recommendations. Please try again.");
                } finally {
                     setLoading(false);
@@ -84,7 +108,7 @@ export default function Result() {
           };
 
           loadData();
-     }, []);
+     }, [routeTripId]);
 
      const handleClose = () => {
           router.push('/(app)/home');
@@ -107,6 +131,40 @@ export default function Result() {
           });
      };
 
+     const handleBookmarkPress = async (trail: Trail, index: number) => {
+          try {
+               const user = auth.currentUser;
+               if (!user) {
+                    console.error("User must be logged in to bookmark trails");
+                    return;
+               }
+
+               if (!trail.id) {
+                    console.error("Trail ID is missing");
+                    return;
+               }
+
+               // Get current bookmark state
+               const isCurrentlyBookmarked = trail.bookmarked || false;
+
+               // Update the trail document in Firestore
+               const trailRef = doc(db, "trails", trail.id);
+               await updateDoc(trailRef, {
+                    bookmarked: !isCurrentlyBookmarked
+               });
+
+               // Update local state
+               const updatedTrails = [...parsedTrails];
+               updatedTrails[index] = {
+                    ...trail,
+                    bookmarked: !isCurrentlyBookmarked
+               };
+               setParsedTrails(updatedTrails);
+          } catch (error) {
+               console.error("Error updating bookmark status:", error);
+          }
+     };
+
      // Render a trail card for each parsed trail
      const renderTrailCard = (trail: Trail, index: number) => {
           // Use a placeholder image from our array, cycling through them
@@ -120,6 +178,17 @@ export default function Result() {
                          imageStyle={{ borderRadius: 15 }}
                     >
                          <View style={styles.cardOverlay}>
+
+                              <View style={styles.bookmarkContainer}>
+                                   <TouchableOpacity onPress={() => handleBookmarkPress(trail, index)}>
+                                        <Ionicons
+                                             name={trail.bookmarked ? "heart" : "heart-outline"}
+                                             size={30}
+                                             color="white"
+                                        />
+                                   </TouchableOpacity>
+                              </View>
+
                               <Text style={styles.trailName}>{trail.name}</Text>
 
                               <View style={styles.detailsContainer}>
@@ -151,8 +220,17 @@ export default function Result() {
                          <Ionicons name="close" size={40} color={Colors.black} />
                     </TouchableOpacity>
 
-                    <Text style={styles.title}>Handpicked for you -</Text>
-                    <Text style={styles.secondTitle}>Select Your Trail!</Text>
+                    {routeTripId ? (
+                         <>
+                              <Text style={styles.title}>Your Saved Trip</Text>
+                              <Text style={styles.secondTitle}>Trail Details</Text>
+                         </>
+                    ) : (
+                         <>
+                              <Text style={styles.title}>Handpicked for you -</Text>
+                              <Text style={styles.secondTitle}>Select Your Trail!</Text>
+                         </>
+                    )}
 
                     <ScrollView
                          style={styles.scrollView}
@@ -287,6 +365,15 @@ const styles = StyleSheet.create({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
+          position: 'relative',
+     } as ViewStyle,
+     bookmarkContainer: {
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          padding: 5,
+          borderRadius: 10,
+          zIndex: 10,
      } as ViewStyle,
      trailName: {
           ...Typography.text.h2,
@@ -306,5 +393,20 @@ const styles = StyleSheet.create({
           color: 'white',
           fontSize: 14,
           marginLeft: 10,
+     } as TextStyle,
+     dateContainer: {
+          position: 'absolute',
+          top: 10,
+          left: 10,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          paddingVertical: 4,
+          paddingHorizontal: 8,
+          borderRadius: 6,
+          zIndex: 10,
+     } as ViewStyle,
+     dateText: {
+          color: 'white',
+          fontSize: 12,
+          fontWeight: '500',
      } as TextStyle,
 }); 

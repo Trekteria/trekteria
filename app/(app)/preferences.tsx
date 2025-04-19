@@ -57,7 +57,7 @@ export default function Preferences() {
      // Clear previous storage data when component mounts
      useEffect(() => {
           // Clear any previous recommendations, summary, and errors
-          AsyncStorage.multiRemove(['trailRecommendations', 'trailSummary', 'trailError'])
+          AsyncStorage.multiRemove(['trailSummary', 'trailError', 'lastTripId'])
                .catch((err: any) => console.error("Error clearing previous data:", err));
      }, []);
 
@@ -365,11 +365,12 @@ export default function Preferences() {
                               console.error("Error generating recommendations:", error);
                               // Store the error and summary in AsyncStorage
                               await AsyncStorage.setItem('trailSummary', formattedSummary);
-                              await AsyncStorage.setItem('trailError',
-                                   error.toString().includes("429") || error.toString().includes("quota")
-                                        ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
-                                        : "Failed to generate trail recommendations. Please try again."
-                              );
+                              const errorMessage = error.toString().includes("429") || error.toString().includes("quota")
+                                   ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
+                                   : "Failed to generate trail recommendations. Please try again.";
+                              await AsyncStorage.setItem('trailError', errorMessage);
+                              // Clear any previous trip ID as this request failed
+                              await AsyncStorage.removeItem('lastTripId');
 
                               // Navigate to results page
                               router.push({
