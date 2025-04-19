@@ -29,6 +29,24 @@ export default function Home() {
      const [trails, setTrails] = useState<Trail[]>([]);
      const [trailDates, setTrailDates] = useState<{ [trailId: string]: string }>({});
 
+     const handleTrailPress = (trail: Trail) => {
+          router.push({
+               pathname: '/(app)/trip',
+               params: {
+                    trail: JSON.stringify({
+                         id: trail.id,
+                         name: trail.name,
+                         location: trail.location,
+                         keyFeatures: trail.highlights?.join(', ') || '',
+                         facilities: trail.amenities?.join(', ') || '',
+                         latitude: trail.coordinates?.latitude,
+                         longitude: trail.coordinates?.longitude,
+                         bookmarked: trail.bookmarked || false
+                    })
+               }
+          });
+     };
+
      const fetchUserName = async () => {
           const user = auth.currentUser;
           if (user) {
@@ -45,7 +63,9 @@ export default function Home() {
                const user = auth.currentUser;
                if (user) {
                     const tripsCollection = collection(db, "trips");
-                    const tripsSnapshot = await getDocs(tripsCollection);
+                    // Only fetch trips associated with the current user
+                    const userTripsQuery = query(tripsCollection, where("userId", "==", user.uid));
+                    const tripsSnapshot = await getDocs(userTripsQuery);
                     const tripsList = tripsSnapshot.docs.map(doc => ({
                          id: doc.id,
                          ...doc.data(),
@@ -70,10 +90,14 @@ export default function Home() {
           try {
                const user = auth.currentUser;
                if (user) {
-                    // Fetch only bookmarked trails
+                    // Fetch trails that are bookmarked AND belong to the current user
                     const trailsCollection = collection(db, "trails");
-                    const bookmarkedQuery = query(trailsCollection, where("bookmarked", "==", true));
-                    const trailsSnapshot = await getDocs(bookmarkedQuery);
+                    const bookmarkedTrailsQuery = query(
+                         trailsCollection,
+                         where("bookmarked", "==", true),
+                         where("userId", "==", user.uid)
+                    );
+                    const trailsSnapshot = await getDocs(bookmarkedTrailsQuery);
 
                     const trailsList = trailsSnapshot.docs.map(doc => ({
                          id: doc.id,
@@ -81,10 +105,13 @@ export default function Home() {
                          image: placeholderImage // Using placeholder image
                     })) as Trail[];
 
+                    console.log("Bookmarked Trails:", trailsList);
+
                     // Fetch dates for trails from trips collection
                     const dates: { [trailId: string]: string } = {};
                     const tripsCollection = collection(db, "trips");
-                    const tripsSnapshot = await getDocs(tripsCollection);
+                    const userTripsQuery = query(tripsCollection, where("userId", "==", user.uid));
+                    const tripsSnapshot = await getDocs(userTripsQuery);
 
                     tripsSnapshot.docs.forEach(tripDoc => {
                          const tripData = tripDoc.data();
@@ -106,6 +133,7 @@ export default function Home() {
                     });
 
                     setTrails(sortedTrails);
+                    console.log("Sorted Trails:", sortedTrails);
                }
           } catch (error) {
                console.error("Error fetching trails:", error);
@@ -122,7 +150,10 @@ export default function Home() {
 
      const goToSettings = () => router.push('/(app)/settings');
      const goToTripPlanning = () => router.push('/(app)/preferences');
-     const goToTrip = (id: string) => router.push(`/(app)/result`);
+     const goToTrip = (id: string) => router.push({
+          pathname: '/(app)/result',
+          params: { tripId: id }
+     });
 
      const EmptyTripsComponent = () => (
           <View style={styles.emptyContainer}>
@@ -151,7 +182,7 @@ export default function Home() {
           }
 
           return (
-               <TouchableOpacity style={styles.tripBox} onPress={() => goToTrip(item.id || '')}>
+               <TouchableOpacity style={styles.tripBox} onPress={() => handleTrailPress(item)}>
                     <Image source={{ uri: item.image }} style={styles.tripImage} />
                     <LinearGradient
                          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,1)']}
@@ -409,7 +440,7 @@ const styles = StyleSheet.create({
           padding: 5,
      },
      dateText: {
-          color: Colors.primary,
+          color: 'black',
           fontSize: 12,
           fontWeight: '500',
      },

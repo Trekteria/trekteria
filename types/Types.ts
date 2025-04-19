@@ -58,4 +58,5 @@ export interface Trail {
   createdAt: Timestamp; // Using Firestore Timestamp
   tripId: string; // reference to the trip this trail belongs to
   bookmarked?: boolean;
+  userId: string;
 }
