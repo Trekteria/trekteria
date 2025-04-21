@@ -66,14 +66,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: "white",
   },
-//   dottedLine: {
-//     width: 1,
-//     flex: 1,
-//     borderStyle: "dotted",
-//     borderLeftWidth: 1,
-//     borderColor: "#aaa",
-//     backgroundColor: "black",
-//   },
+
      dottedLine: {
           flex: 1,
           borderLeftWidth: 1,
