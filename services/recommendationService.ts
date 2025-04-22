@@ -2,7 +2,7 @@ import { Trip } from "../types/Types";
 import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Timestamp } from "firebase/firestore";
-import { generateTrailMissions } from "./geminiService";
+import { generateTripMissions } from "./geminiService";
 
 /**
  * Fetch coordinates from OpenStreetMap API
@@ -106,32 +106,77 @@ export const parseRecommendations = async (
         .map((item) => item.trim())
         .filter(Boolean);
 
-      // Generate missions based on the trail name
-      const missionsString = await generateTrailMissions(name);
-      const missionsArr = missionsString
-        .split("#")
-        .map((mission) => mission.trim());
+      // Generate missions based on the trip name
+      const missionsString = await generateTripMissions(name);
+      const missionsArr = missionsString.split("#").map((mission) => ({
+        task: mission.trim(),
+        completed: false,
+      }));
 
       // Create a structured trip object
       return {
+        createdAt: Timestamp.now(),
+        planId: "",
+        bookmarked: false,
+        userId,
         name: name.trim(),
         location: location.trim(),
-        description: `${keyFeatures}. Amenities include: ${facilities}`,
-        difficulty: "", // To be filled if available
-        length: 0, // To be filled if available
-        elevation: 0, // To be filled if available
-        estimatedTime: "", // To be filled if available
-        activities: [], // To be filled if available
-        amenities: amenitiesArr,
         coordinates,
+        description: `${keyFeatures}. Amenities include: ${facilities}`,
+        dateRange: {
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: new Date().toISOString().split("T")[0],
+        },
+        groupSize: 1,
+        hikingLevel: "",
+        amenities: amenitiesArr,
         highlights: highlightsArr,
-        tripType: "", // To be filled if available
-        terrain: "", // To be filled if available
-        createdAt: Timestamp.now(), // Using Firestore Timestamp
-        planId: "", // This will be set later when saving to Firestore
-        bookmarked: false, // Default value for bookmarked field
-        userId, // Set the userId
+        parkWebsite: "",
+        cellService: "",
+        parkContact: "",
+
+        schedule: [
+          {
+            day: 1,
+            date: new Date().toISOString().split("T")[0],
+            activities: [
+              {
+                time: "9:00 AM",
+                activity: "Start hiking",
+                description: "Begin your adventure",
+                trailDetails: {
+                  trailName: name.trim(),
+                  distance: 0,
+                  elevation: 0,
+                  difficulty: "Moderate",
+                  coordinates: coordinates || { latitude: 0, longitude: 0 },
+                  estimatedTime: "2 hours",
+                  features: highlightsArr,
+                  trailType: "Loop",
+                  duration: "2 hours",
+                },
+              },
+            ],
+          },
+        ],
+
+        packingChecklist: [
+          {
+            item: "Water bottle",
+            checked: false,
+          },
+          {
+            item: "Hiking boots",
+            checked: false,
+          },
+          {
+            item: "Sunscreen",
+            checked: false,
+          },
+        ],
         missions: missionsArr,
+        warnings: [],
+        thingsToKnow: [],
       } as Trip;
     })
   );

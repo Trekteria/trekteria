@@ -62,36 +62,40 @@ export interface Trip {
   cellService?: string;
   parkContact?: string;
 
-  schedule: [
-    {
-      day: number;
-      date: string;
-      activities: [
-        {
-          time: string;
-          activity: string;
-          description: string;
-          trailDetails?: {
-            trailName: string;
-            distance: number;
-            elevation: number;
-            difficulty: string;
-            coordinates: {
-              latitude: number;
-              longitude: number;
-            };
-            estimatedTime: string;
-            features: string[];
-            trailType: string;
-            duration: string;
+  schedule: {
+    day: number;
+    date: string;
+    activities: [
+      {
+        time: string;
+        activity: string;
+        description: string;
+        trailDetails?: {
+          trailName: string;
+          distance: number;
+          elevation: number;
+          difficulty: string;
+          coordinates: {
+            latitude: number;
+            longitude: number;
           };
-        }
-      ];
-    }
-  ];
+          estimatedTime: string;
+          features: string[];
+          trailType: string;
+          duration: string;
+        };
+      }
+    ];
+  }[];
 
-  packingChecklist: string[];
-  missions: string[];
+  packingChecklist: {
+    item: string;
+    checked: boolean;
+  }[];
+  missions: {
+    task: string;
+    completed: boolean;
+  }[];
   warnings?: string[];
   thingsToKnow?: string[];
 }

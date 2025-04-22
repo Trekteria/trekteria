@@ -60,7 +60,6 @@ export const generateTripRecommendations = async (
 
     console.log("Response from Gemini:", response);
 
-
     return response;
   } catch (error) {
     console.error("Error generating trip recommendations:", error);
@@ -68,9 +67,8 @@ export const generateTripRecommendations = async (
   }
 };
 
-
-export const generateTrailMissions = async (
-  trailName: string,
+export const generateTripMissions = async (
+  tripName: string
 ): Promise<string> => {
   try {
     // Initialize chat session
@@ -86,28 +84,23 @@ export const generateTrailMissions = async (
     - Help the traveler learn about or contribute to the local environment
     - Be easy, achievable and engaging
     - Include a short, engaging emoji at the start
-    - Be unique and not repetitive based on the trail
+    - Be unique and not repetitive based on the trip
     - Be formatted as a simple, direct instruction (e.g. "🗑️ Pick up 3 pieces of litter and log it.")
     Return ONLY a string with 5 missions, seperated by #. Do not return anything else.
     Example format: mission1#mission2#mission3#mission4#mission5;
     ---
-    For context, here is my trail name: ${trailName}
+    For context, here is my trip name: ${tripName}
     `;
 
     // Send the prompt to Gemini
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
-    console.log(`Trail Missions from Gemini for trail "${trailName}":`, response);
-
-
-
-
-
+    console.log(`Trip Missions from Gemini for trip "${tripName}":`, response);
 
     return response;
   } catch (error) {
-    console.error("Error generating trail missions:", error);
-    return "Sorry, I couldn't generate trail missions at this time. Please try again later.";
+    console.error("Error generating trip missions:", error);
+    return "Sorry, I couldn't generate trip missions at this time. Please try again later.";
   }
-}
+};
