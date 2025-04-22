@@ -59,4 +59,5 @@ export interface Trail {
   tripId: string; // reference to the trip this trail belongs to
   bookmarked?: boolean;
   userId: string;
+  missions?: string[]; // Array of mission IDs or descriptions
 }

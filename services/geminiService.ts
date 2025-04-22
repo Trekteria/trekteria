@@ -58,9 +58,56 @@ export const generateTrailRecommendations = async (
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
+    console.log("Response from Gemini:", response);
+
+
     return response;
   } catch (error) {
     console.error("Error generating trail recommendations:", error);
     return "Sorry, I couldn't generate trail recommendations at this time. Please try again later.";
   }
 };
+
+
+export const generateTrailMissions = async (
+  trailName: string,
+): Promise<string> => {
+  try {
+    // Initialize chat session
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+
+    // Construct the prompt with the form summary
+    const prompt = `
+    I want a list of the best 5 missions that match my preferences. Each mission should:
+    - Be related to the environmental science
+    - Help the traveler learn about or contribute to the local environment
+    - Be easy, achievable and engaging
+    - Include a short, engaging emoji at the start
+    - Be unique and not repetitive based on the trail
+    - Be formatted as a simple, direct instruction (e.g. "🗑️ Pick up 3 pieces of litter and log it.")
+    Return ONLY a string with 5 missions, seperated by #. Do not return anything else.
+    Example format: mission1#mission2#mission3#mission4#mission5;
+    ---
+    For context, here is my trail name: ${trailName}
+    `;
+
+    // Send the prompt to Gemini
+    const result = await chatSession.sendMessage(prompt);
+    const response = result.response.text();
+
+    console.log(`Trail Missions from Gemini for trail "${trailName}":`, response);
+
+
+
+
+
+
+    return response;
+  } catch (error) {
+    console.error("Error generating trail missions:", error);
+    return "Sorry, I couldn't generate trail missions at this time. Please try again later.";
+  }
+}
