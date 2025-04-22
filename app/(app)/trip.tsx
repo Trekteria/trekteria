@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform, Animated } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform, Animated, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
@@ -7,12 +7,39 @@ import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import ActionSheet, { ActionSheetRef } from 'react-native-actions-sheet';
+import { TabView, SceneMap } from 'react-native-tab-view';
 
 import InfoTab from '../components/trip-tabs/info-tab';
 import NavigationTab from '../components/trip-tabs/navigation-tab';
 import PackingTab from '../components/trip-tabs/packing-tab';
 import MissionTab from '../components/trip-tabs/mission-tab';
 import ChatTab from '../components/trip-tabs/chat-tab';
+
+const renderScene = SceneMap({
+     info: InfoTab,
+     navigation: NavigationTab,
+     packing: PackingTab,
+     mission: MissionTab,
+     chat: ChatTab,
+});
+
+// Simple routes with titles
+const routes = [
+     { key: 'info', title: 'Info' },
+     { key: 'navigation', title: 'Navigation' },
+     { key: 'packing', title: 'Packing' },
+     { key: 'mission', title: 'Mission' },
+     { key: 'chat', title: 'Chat' },
+];
+
+// Icon mapping with proper typing for Ionicons
+const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
+     info: 'information',
+     navigation: 'navigate',
+     packing: 'bag',
+     mission: 'trophy',
+     chat: 'chatbubble-ellipses'
+};
 
 function Trip() {
      const { trail } = useLocalSearchParams();
@@ -22,6 +49,8 @@ function Trip() {
      const [activeTab, setActiveTab] = useState<string>('info');
      const tabWidth = Dimensions.get('window').width / 5; // Width for each tab
      const animatedValue = useRef(new Animated.Value(0)).current;
+     const layout = useWindowDimensions();
+     const [index, setIndex] = useState(0);
 
      // Update animation when activeTab changes
      useEffect(() => {
@@ -65,21 +94,28 @@ function Trip() {
           Linking.openURL(url!);
      };
 
-     const renderTabContent = () => {
-          switch (activeTab) {
-               case 'info':
-                    return <InfoTab />;
-               case 'navigation':
-                    return <NavigationTab />;
-               case 'packing':
-                    return <PackingTab />;
-               case 'mission':
-                    return <MissionTab />;
-               case 'chat':
-                    return <ChatTab />;
-               default:
-                    return <InfoTab />;
-          }
+     // Custom TabBar renderer with just icons
+     const renderTabBar = (props: any) => {
+          return (
+               <View style={styles.customTabBar}>
+                    {props.navigationState.routes.map((route: any, i: number) => {
+                         const isActive = props.navigationState.index === i;
+                         return (
+                              <TouchableOpacity
+                                   key={route.key}
+                                   style={[styles.tabButton, isActive && { backgroundColor: Colors.primary }]}
+                                   onPress={() => setIndex(i)}
+                              >
+                                   <Ionicons
+                                        name={iconMap[route.key]}
+                                        size={24}
+                                        color={isActive ? Colors.white : '#999'}
+                                   />
+                              </TouchableOpacity>
+                         );
+                    })}
+               </View>
+          );
      };
 
      return (
@@ -138,7 +174,7 @@ function Trip() {
                          backgroundInteractionEnabled={true}
                     >
                          <View style={styles.sheetContent}>
-                              <View style={styles.tabContainer}>
+                              {/* <View style={styles.tabContainer}>
                                    <View style={styles.tabButtonsContainer}>
                                         <TouchableOpacity
                                              style={[styles.tabButton, activeTab === 'info' && { backgroundColor: Colors.primary }]}
@@ -191,7 +227,7 @@ function Trip() {
                                              />
                                         </TouchableOpacity>
                                    </View>
-                                   {/* <View style={styles.tabIndicatorContainer}>
+                                   <View style={styles.tabIndicatorContainer}>
                                         <Animated.View
                                              style={[
                                                   styles.tabIndicator,
@@ -202,10 +238,16 @@ function Trip() {
                                         >
                                              <View style={styles.tabIndicatorSmall} />
                                         </Animated.View>
-                                   </View> */}
-                              </View>
+                                   </View> 
+                              </View> */}
                               <View style={styles.tabContent}>
-                                   {renderTabContent()}
+                                   <TabView
+                                        renderScene={renderScene}
+                                        navigationState={{ index, routes }}
+                                        onIndexChange={setIndex}
+                                        initialLayout={{ width: layout.width }}
+                                        renderTabBar={renderTabBar}
+                                   />
                               </View>
                          </View>
                     </ActionSheet>
@@ -273,7 +315,8 @@ const styles = StyleSheet.create({
           textAlign: 'center',
           color: Colors.primary,
      },
-     bottomButtonsContainer: {
+     // Commenting out unused styles for bottom buttons
+     /* bottomButtonsContainer: {
           position: 'absolute',
           bottom: 40,
           left: 20,
@@ -304,7 +347,7 @@ const styles = StyleSheet.create({
           ...Typography.text.h4,
           color: 'white',
           fontWeight: 'bold',
-     },
+     }, */
      actionSheet: {
           flex: 1,
           backgroundColor: 'white',
@@ -316,7 +359,8 @@ const styles = StyleSheet.create({
           display: 'flex',
           flexDirection: 'column',
      },
-     tabContainer: {
+     // Commenting out unused tabContainer styles
+     /* tabContainer: {
           backgroundColor: 'white',
           // boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
           // borderRadius: 50,
@@ -324,25 +368,18 @@ const styles = StyleSheet.create({
           flexDirection: 'column',
           justifyContent: 'space-between',
           height: 70,
-     },
-     tabButtonsContainer: {
+     }, */
+     // Commenting out unused tabButtonsContainer styles
+     /* tabButtonsContainer: {
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
           width: '100%',
-     },
-     tabButton: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '70%',
-          backgroundColor: '#f2f2f2',
-          borderRadius: 15,
-          marginHorizontal: 5,
-     },
-     tabIndicatorContainer: {
+     }, */
+     // Commenting out unused tabIndicator styles
+     /* tabIndicatorContainer: {
           width: '100%',
           height: '10%',
           display: 'flex',
@@ -362,15 +399,36 @@ const styles = StyleSheet.create({
           backgroundColor: Colors.primary,
           borderTopRightRadius: 20,
           borderTopLeftRadius: 20,
-     },
+     }, */
      tabContent: {
           padding: 5,
-          height: '80%',
+          height: '100%',
           borderWidth: 1,
           borderBlockColor: 'white',
           borderColor: 'white',
-
      },
+     customTabBar: {
+          flexDirection: 'row',
+          backgroundColor: 'white',
+          justifyContent: 'space-around',
+          paddingVertical: 10,
+          height: 70,
+          marginBottom: 20,
+     },
+     tabButton: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          backgroundColor: '#f2f2f2',
+          borderRadius: 15,
+          marginHorizontal: 5,
+     },
+     // Commenting out unused customTabIndicator
+     /* customTabIndicator: {
+          backgroundColor: Colors.primary,
+          height: 3,
+     }, */
 });
 
 export default Trip;

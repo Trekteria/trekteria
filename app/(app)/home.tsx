@@ -8,6 +8,7 @@ import { auth, db } from '../../services/firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import { Trip as TripType, Trail as TrailType } from '../../types/Types';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 // Define types for the data
 interface Trail extends TrailType {
@@ -467,7 +468,10 @@ export default function Home() {
                {/* Your Trails Section */}
                <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Favorite Trips</Text>
-                    <TouchableOpacity onPress={() => setIsTrailsEditing(!isTrailsEditing)}>
+                    <TouchableOpacity onPress={() => {
+                         setIsTrailsEditing(!isTrailsEditing);
+                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}>
                          <Text style={styles.editButtonText}>{isTrailsEditing ? 'Done' : 'Edit'}</Text>
                     </TouchableOpacity>
                </View>
@@ -493,7 +497,10 @@ export default function Home() {
                {/* Your Trips Section */}
                <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Your Plans</Text>
-                    <TouchableOpacity onPress={() => setIsTripsEditing(!isTripsEditing)}>
+                    <TouchableOpacity onPress={() => {
+                         setIsTripsEditing(!isTripsEditing);
+                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}>
                          <Text style={styles.editButtonText}>{isTripsEditing ? 'Done' : 'Edit'}</Text>
                     </TouchableOpacity>
                </View>
