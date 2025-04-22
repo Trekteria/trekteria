@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
+import { Typography } from "../../../constants/Typography";
 
 export default function PackingTab() {
   const [packingItems, setPackingItems] = useState([
@@ -35,7 +36,7 @@ export default function PackingTab() {
   };
 
   return (
-    <View>
+    <View style={{ paddingHorizontal: 20 }}>
       <Text style={styles.title}>Packing Checklist</Text>
       <View style={styles.divider} />
       <FlatList
@@ -66,6 +67,7 @@ export default function PackingTab() {
 
 const styles = StyleSheet.create({
   title: {
+    ...Typography.text.h3,
     marginBottom: 15,
     textAlign: "center",
     fontSize: 16,
@@ -78,27 +80,24 @@ const styles = StyleSheet.create({
   packingItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 20,
   },
   checkboxCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#555",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
   },
   checkmark: {
-    fontSize: 10,
+    fontSize: 13,
     color: "#4CAF50",
     fontWeight: "bold",
   },
   packingText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
+    ...Typography.text.body,
   },
   packingCompleted: {
     textDecorationLine: "line-through",
