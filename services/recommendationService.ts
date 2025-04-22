@@ -2,6 +2,7 @@ import { Trip } from "../types/Types";
 import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Timestamp } from "firebase/firestore";
+import { generateTrailMissions } from "./geminiService";
 
 /**
  * Fetch coordinates from OpenStreetMap API
@@ -105,6 +106,12 @@ export const parseRecommendations = async (
         .map((item) => item.trim())
         .filter(Boolean);
 
+      // Generate missions based on the trail name
+      const missionsString = await generateTrailMissions(name);
+      const missionsArr = missionsString
+        .split("#")
+        .map((mission) => mission.trim());
+
       // Create a structured trip object
       return {
         name: name.trim(),
@@ -124,6 +131,7 @@ export const parseRecommendations = async (
         planId: "", // This will be set later when saving to Firestore
         bookmarked: false, // Default value for bookmarked field
         userId, // Set the userId
+        missions: missionsArr,
       } as Trip;
     })
   );
