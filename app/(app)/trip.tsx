@@ -42,9 +42,9 @@ const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
 };
 
 function Trip() {
-     const { trail } = useLocalSearchParams();
+     const { trip } = useLocalSearchParams();
      const router = useRouter();
-     const trailData = JSON.parse(trail as string);
+     const tripData = JSON.parse(trip as string);
      const actionSheetRef = useRef<ActionSheetRef>(null);
      const [activeTab, setActiveTab] = useState<string>('info');
      const tabWidth = Dimensions.get('window').width / 5; // Width for each tab
@@ -71,17 +71,17 @@ function Trip() {
           return () => clearTimeout(timer);
      }, []);
 
-     // Use the actual coordinates from the trail data, or fallback to default coordinates
+     // Use the actual coordinates from the trip data, or fallback to default coordinates
      const initialRegion = {
-          latitude: trailData.latitude || 37.7749,
-          longitude: trailData.longitude || -122.4194,
+          latitude: tripData.latitude || 37.7749,
+          longitude: tripData.longitude || -122.4194,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
      };
 
      const openDirections = () => {
           const { latitude, longitude } = initialRegion;
-          const label = encodeURIComponent(trailData.name);
+          const label = encodeURIComponent(tripData.name);
 
           const scheme = Platform.select({
                ios: 'maps:',
@@ -132,11 +132,11 @@ function Trip() {
                     >
                          <Marker
                               coordinate={{
-                                   latitude: trailData.latitude || initialRegion.latitude,
-                                   longitude: trailData.longitude || initialRegion.longitude
+                                   latitude: tripData.latitude || initialRegion.latitude,
+                                   longitude: tripData.longitude || initialRegion.longitude
                               }}
-                              title={trailData.name}
-                              description={trailData.location}
+                              title={tripData.name}
+                              description={tripData.location}
                          />
                     </MapView>
                     <View style={styles.topBar}>
@@ -148,10 +148,10 @@ function Trip() {
                          </TouchableOpacity>
 
                          <TouchableOpacity
-                              style={styles.trailNameContainer}
+                              style={styles.tripNameContainer}
                               onPress={() => router.back()}
                          >
-                              <Text style={styles.trailName}>{trailData.name}</Text>
+                              <Text style={styles.tripName}>{tripData.name}</Text>
                          </TouchableOpacity>
                     </View>
 
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
           shadowRadius: 3.84,
           elevation: 5,
      },
-     trailNameContainer: {
+     tripNameContainer: {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
           shadowRadius: 3.84,
           elevation: 5,
      },
-     trailName: {
+     tripName: {
           ...Typography.text.h4,
           textAlign: 'center',
           color: Colors.primary,

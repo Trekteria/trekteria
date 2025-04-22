@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, FlatList, Animated, Easing, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, FlatList, Animated, Easing, Alert, BackHandler } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -6,21 +6,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { auth, db } from '../../services/firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, where, deleteDoc } from 'firebase/firestore';
-import { Trip as TripType, Trail as TrailType } from '../../types/Types';
+import { Plan as PlanType, Trip as TripType } from '../../types/Types';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
 // Define types for the data
-interface Trail extends TrailType {
-     image: string;
-}
-
-// Extend Trip type to include the image we'll add
 interface Trip extends TripType {
      image: string;
 }
 
-// Placeholder image for trips and trails
+// Extend Plan type to include the image we'll add
+interface Plan extends PlanType {
+     image: string;
+}
+
+// Placeholder image for plans and trips
 const placeholderImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop';
 
 // --- Reusable Jiggle Animation Hook ---
@@ -99,30 +99,30 @@ const useJiggleAnimation = (isEditing: boolean, maxDelayMs: number = 0) => {
      return animatedStyle;
 };
 
-// --- TrailBox Component ---
-interface TrailBoxProps {
-     item: Trail;
-     trailDate: string;
+// --- TripBox Component ---
+interface TripBoxProps {
+     item: Trip;
+     tripDate: string;
      isEditing: boolean;
-     onPress: (item: Trail) => void;
+     onPress: (item: Trip) => void;
      onDelete: (id: string) => void;
      animationDelay?: number;
 }
 
-const TrailBox: React.FC<TrailBoxProps> = ({ item, trailDate, isEditing, onPress, onDelete, animationDelay = 0 }) => {
+const TripBox: React.FC<TripBoxProps> = ({ item, tripDate, isEditing, onPress, onDelete, animationDelay = 0 }) => {
      const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
 
      let dateText = 'No date';
-     if (trailDate) {
+     if (tripDate) {
           try {
-               const dateObj = new Date(trailDate);
+               const dateObj = new Date(tripDate);
                dateText = dateObj.toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric'
                });
           } catch (error) {
-               dateText = trailDate; // Fallback to the raw date string if parsing fails
+               dateText = tripDate; // Fallback to the raw date string if parsing fails
           }
      }
 
@@ -136,20 +136,20 @@ const TrailBox: React.FC<TrailBoxProps> = ({ item, trailDate, isEditing, onPress
                          <Ionicons name="remove-outline" size={28} color={Colors.black} />
                     </TouchableOpacity>
                )}
-               <TouchableOpacity style={styles.tripBox} onPress={() => onPress(item)} disabled={isEditing}>
-                    <Image source={{ uri: item.image }} style={styles.tripImage} />
+               <TouchableOpacity style={styles.planBox} onPress={() => onPress(item)} disabled={isEditing}>
+                    <Image source={{ uri: item.image }} style={styles.planImage} />
                     <LinearGradient
                          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,1)']}
-                         style={styles.tripOverlay}
+                         style={styles.planOverlay}
                          locations={[0, 0.4, 1]}
                     />
                     <View style={styles.dateContainer}>
                          <Text style={styles.dateText}>{dateText}</Text>
                     </View>
-                    <View style={styles.tripInfo}>
-                         <Text style={styles.tripName}>{item.name}</Text>
-                         <View style={styles.tripMetaRow}>
-                              <Text style={styles.tripDetails}>{item.location}</Text>
+                    <View style={styles.planInfo}>
+                         <Text style={styles.planName}>{item.name}</Text>
+                         <View style={styles.planMetaRow}>
+                              <Text style={styles.planDetails}>{item.location}</Text>
                          </View>
                     </View>
                </TouchableOpacity>
@@ -157,16 +157,16 @@ const TrailBox: React.FC<TrailBoxProps> = ({ item, trailDate, isEditing, onPress
      );
 };
 
-// --- TripBox Component ---
-interface TripBoxProps {
-     item: Trip;
+// --- PlanBox Component ---
+interface PlanBoxProps {
+     item: Plan;
      isEditing: boolean;
      onPress: (id: string) => void;
      onDelete: (id: string) => void;
      animationDelay?: number;
 }
 
-const TripBox: React.FC<TripBoxProps> = ({ item, isEditing, onPress, onDelete, animationDelay = 0 }) => {
+const PlanBox: React.FC<PlanBoxProps> = ({ item, isEditing, onPress, onDelete, animationDelay = 0 }) => {
      const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
 
      const location = item.preferences?.location || 'No location';
@@ -194,19 +194,19 @@ const TripBox: React.FC<TripBoxProps> = ({ item, isEditing, onPress, onDelete, a
                          <Ionicons name="remove-outline" size={28} color={Colors.black} />
                     </TouchableOpacity>
                )}
-               <TouchableOpacity style={styles.tripBox} onPress={() => onPress(item.id || '')} disabled={isEditing}>
-                    <Image source={{ uri: item.image }} style={styles.tripImage} />
+               <TouchableOpacity style={styles.planBox} onPress={() => onPress(item.id || '')} disabled={isEditing}>
+                    <Image source={{ uri: item.image }} style={styles.planImage} />
                     <LinearGradient
                          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,1)']}
-                         style={styles.tripOverlay}
+                         style={styles.planOverlay}
                          locations={[0, 0.5, 1]}
                     />
                     <View style={styles.dateContainer}>
                          <Text style={styles.dateText}>{dateText}</Text>
                     </View>
-                    <View style={styles.tripInfo}>
-                         <View style={styles.tripMetaRow}>
-                              <Text style={styles.tripLocation}>{location}</Text>
+                    <View style={styles.planInfo}>
+                         <View style={styles.planMetaRow}>
+                              <Text style={styles.planLocation}>{location}</Text>
                          </View>
                     </View>
                </TouchableOpacity>
@@ -218,25 +218,25 @@ const TripBox: React.FC<TripBoxProps> = ({ item, isEditing, onPress, onDelete, a
 export default function Home() {
      const router = useRouter();
      const [userName, setUserName] = useState('');
+     const [plans, setPlans] = useState<Plan[]>([]);
      const [trips, setTrips] = useState<Trip[]>([]);
-     const [trails, setTrails] = useState<Trail[]>([]);
-     const [trailDates, setTrailDates] = useState<{ [trailId: string]: string }>({});
-     const [isTrailsEditing, setIsTrailsEditing] = useState(false);
+     const [tripDates, setTripDates] = useState<{ [tripId: string]: string }>({});
+     const [isPlansEditing, setIsPlansEditing] = useState(false);
      const [isTripsEditing, setIsTripsEditing] = useState(false);
 
-     const handleTrailPress = (trail: Trail) => {
+     const handleTripPress = (trip: Trip) => {
           router.push({
                pathname: '/(app)/trip',
                params: {
-                    trail: JSON.stringify({
-                         id: trail.id,
-                         name: trail.name,
-                         location: trail.location,
-                         keyFeatures: trail.highlights?.join(', ') || '',
-                         facilities: trail.amenities?.join(', ') || '',
-                         latitude: trail.coordinates?.latitude,
-                         longitude: trail.coordinates?.longitude,
-                         bookmarked: trail.bookmarked || false
+                    trip: JSON.stringify({
+                         id: trip.id,
+                         name: trip.name,
+                         location: trip.location,
+                         keyFeatures: trip.highlights?.join(', ') || '',
+                         facilities: trip.amenities?.join(', ') || '',
+                         latitude: trip.coordinates?.latitude,
+                         longitude: trip.coordinates?.longitude,
+                         bookmarked: trip.bookmarked || false
                     })
                }
           });
@@ -253,85 +253,86 @@ export default function Home() {
           }
      };
 
+     const fetchPlans = async () => {
+          try {
+               const user = auth.currentUser;
+               if (user) {
+                    const plansCollection = collection(db, "plans");
+                    // Only fetch plans associated with the current user
+                    const userPlansQuery = query(plansCollection, where("userId", "==", user.uid));
+                    const plansSnapshot = await getDocs(userPlansQuery);
+                    const plansList = plansSnapshot.docs.map(doc => ({
+                         id: doc.id,
+                         ...doc.data(),
+                         image: placeholderImage // Using placeholder image
+                    })) as Plan[];
+
+                    // Sort plans by date (newest first)
+                    const sortedPlans = plansList.sort((a, b) => {
+                         const dateA = a.preferences?.dateRange?.startDate ? new Date(a.preferences.dateRange.startDate).getTime() : 0;
+                         const dateB = b.preferences?.dateRange?.startDate ? new Date(b.preferences.dateRange.startDate).getTime() : 0;
+                         return dateB - dateA; // Descending order (newest first)
+                    });
+
+                    setPlans(sortedPlans);
+               }
+          } catch (error) {
+               console.error("Error fetching plans:", error);
+          }
+     };
+
      const fetchTrips = async () => {
           try {
                const user = auth.currentUser;
                if (user) {
+                    // Fetch trips that are bookmarked AND belong to the current user
                     const tripsCollection = collection(db, "trips");
-                    // Only fetch trips associated with the current user
-                    const userTripsQuery = query(tripsCollection, where("userId", "==", user.uid));
-                    const tripsSnapshot = await getDocs(userTripsQuery);
+                    const bookmarkedTripsQuery = query(
+                         tripsCollection,
+                         where("bookmarked", "==", true),
+                         where("userId", "==", user.uid)
+                    );
+                    const tripsSnapshot = await getDocs(bookmarkedTripsQuery);
+
                     const tripsList = tripsSnapshot.docs.map(doc => ({
                          id: doc.id,
                          ...doc.data(),
                          image: placeholderImage // Using placeholder image
                     })) as Trip[];
 
-                    // Sort trips by date (newest first)
-                    const sortedTrips = tripsList.sort((a, b) => {
-                         const dateA = a.preferences?.dateRange?.startDate ? new Date(a.preferences.dateRange.startDate).getTime() : 0;
-                         const dateB = b.preferences?.dateRange?.startDate ? new Date(b.preferences.dateRange.startDate).getTime() : 0;
-                         return dateB - dateA; // Descending order (newest first)
-                    });
+                    console.log("Bookmarked Trips:", tripsList);
 
-                    setTrips(sortedTrips);
-               }
-          } catch (error) {
-               console.error("Error fetching trips:", error);
-          }
-     };
+                    // Fetch dates for trips from plans collection
+                    const dates: { [tripId: string]: string } = {};
+                    const plansCollection = collection(db, "plans");
+                    const userPlansQuery = query(plansCollection, where("userId", "==", user.uid));
+                    const plansSnapshot = await getDocs(userPlansQuery);
 
-     const fetchTrails = async () => {
-          try {
-               const user = auth.currentUser;
-               if (user) {
-                    // Fetch trails that are bookmarked AND belong to the current user
-                    const trailsCollection = collection(db, "trails");
-                    const bookmarkedTrailsQuery = query(
-                         trailsCollection,
-                         where("bookmarked", "==", true),
-                         where("userId", "==", user.uid)
-                    );
-                    const trailsSnapshot = await getDocs(bookmarkedTrailsQuery);
-
-                    const trailsList = trailsSnapshot.docs.map(doc => ({
-                         id: doc.id,
-                         ...doc.data(),
-                         image: placeholderImage // Using placeholder image
-                    })) as Trail[];
-
-                    console.log("Bookmarked Trails:", trailsList);
-
-                    // Fetch dates for trails from trips collection
-                    const dates: { [trailId: string]: string } = {};
-                    const tripsCollection = collection(db, "trips");
-                    const userTripsQuery = query(tripsCollection, where("userId", "==", user.uid));
-                    const tripsSnapshot = await getDocs(userTripsQuery);
-
-                    tripsSnapshot.docs.forEach(tripDoc => {
-                         const tripData = tripDoc.data();
-                         if (tripData.trailIds && tripData.preferences?.dateRange?.startDate) {
-                              // For each trail ID in this trip
-                              tripData.trailIds.forEach((trailId: string) => {
-                                   dates[trailId] = tripData.preferences.dateRange.startDate;
+                    plansSnapshot.docs.forEach(planDoc => {
+                         const planData = planDoc.data();
+                         if (planData.tripIds && planData.preferences?.dateRange?.startDate) {
+                              // For each trip ID in this plan
+                              planData.tripIds.forEach((tripId: string) => {
+                                   dates[tripId] = planData.preferences.dateRange.startDate;
                               });
                          }
                     });
 
-                    setTrailDates(dates);
+                    setTripDates(dates);
 
-                    // Sort trails by date (newest first)
-                    const sortedTrails = trailsList.sort((a, b) => {
+                    // Sort trips by date (newest first)
+                    const sortedTrips = tripsList.sort((a, b) => {
                          const dateA = dates[a.id || ''] ? new Date(dates[a.id || '']).getTime() : 0;
                          const dateB = dates[b.id || ''] ? new Date(dates[b.id || '']).getTime() : 0;
                          return dateB - dateA; // Descending order (newest first)
                     });
 
-                    setTrails(sortedTrails);
-                    console.log("Sorted Trails:", sortedTrails);
+                    setTrips(sortedTrips);
+                    console.log("Sorted Trips:", sortedTrips);
                }
           } catch (error) {
-               console.error("Error fetching trails:", error);
+               console.error("Error fetching trips:", error);
+               console.error("Error fetching plans:", error);
           }
      };
 
@@ -339,9 +340,9 @@ export default function Home() {
           useCallback(() => {
                fetchUserName();
                fetchTrips();
-               fetchTrails();
+               fetchPlans();
                // Reset edit modes when screen focuses
-               setIsTrailsEditing(false);
+               setIsPlansEditing(false);
                setIsTripsEditing(false);
           }, [])
      );
@@ -350,79 +351,28 @@ export default function Home() {
      const goToTripPlanning = () => router.push('/(app)/preferences');
      const goToTrip = (id: string) => router.push({
           pathname: '/(app)/result',
-          params: { tripId: id }
+          params: { planId: id }
      });
 
      // --- Deletion Handlers ---
-     const handleDeleteTrail = async (trailId: string) => {
-          Alert.alert(
-               "Delete Trail",
-               "Are you sure you want to delete this bookmarked trail?",
-               [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                         text: "Delete", style: "destructive", onPress: async () => {
-                              try {
-                                   // Delete the trail document (or update bookmarked status)
-                                   // Assuming deletion for now, adjust if only bookmark should be removed
-                                   await deleteDoc(doc(db, "trails", trailId));
-                                   setTrails(prevTrails => prevTrails.filter(trail => trail.id !== trailId));
-                                   // Optionally, update trailDates if needed
-                              } catch (error) {
-                                   console.error("Error deleting trail:", error);
-                                   Alert.alert("Error", "Could not delete trail.");
-                              }
-                         }
-                    }
-               ]
-          );
-     };
-
      const handleDeleteTrip = async (tripId: string) => {
           Alert.alert(
                "Delete Trip",
-               "Are you sure you want to delete this trip and its associated trails? This action cannot be undone.",
+               "Are you sure you want to delete this trip? This action cannot be undone.",
                [
                     { text: "Cancel", style: "cancel" },
                     {
                          text: "Delete", style: "destructive", onPress: async () => {
                               try {
-                                   // 1. Fetch the trip document to get trailIds
+                                   // Delete only the trip document
                                    const tripDocRef = doc(db, "trips", tripId);
-                                   const tripDocSnap = await getDoc(tripDocRef);
-
-                                   if (tripDocSnap.exists()) {
-                                        const tripData = tripDocSnap.data();
-                                        const trailIdsToDelete = tripData.trailIds as string[] | undefined;
-
-                                        // 2. Delete associated trails if they exist
-                                        if (trailIdsToDelete && Array.isArray(trailIdsToDelete)) {
-                                             const deletePromises = trailIdsToDelete.map(trailId =>
-                                                  deleteDoc(doc(db, "trails", trailId))
-                                             );
-                                             await Promise.all(deletePromises);
-
-                                             // 3. Update local trails state
-                                             setTrails(prevTrails =>
-                                                  prevTrails.filter(trail => !trailIdsToDelete.includes(trail.id || ''))
-                                             );
-                                             // Also update trailDates if necessary (though deleted trails won't have dates anymore)
-                                             setTrailDates(prevDates => {
-                                                  const newDates = { ...prevDates };
-                                                  trailIdsToDelete.forEach(id => delete newDates[id]);
-                                                  return newDates;
-                                             });
-                                        }
-                                   }
-
-                                   // 4. Delete the trip document itself
                                    await deleteDoc(tripDocRef);
 
-                                   // 5. Update local trips state
+                                   // Update local trips state
                                    setTrips(prevTrips => prevTrips.filter(trip => trip.id !== tripId));
                               } catch (error) {
-                                   console.error("Error deleting trip and associated trails:", error);
-                                   Alert.alert("Error", "Could not delete trip or its trails.");
+                                   console.error("Error deleting trip:", error);
+                                   Alert.alert("Error", "Could not delete trip.");
                               }
                          }
                     }
@@ -430,7 +380,54 @@ export default function Home() {
           );
      };
 
-     const EmptyTripsComponent = () => (
+     // --- Plan Deletion Handler ---
+     const handleDeletePlan = async (planId: string) => {
+          Alert.alert(
+               "Delete Plan",
+               "Are you sure you want to delete this plan and its associated trips? This action cannot be undone.",
+               [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                         text: "Delete", style: "destructive", onPress: async () => {
+                              try {
+                                   // 1. Fetch the plan document to get tripIds
+                                   const planDocRef = doc(db, "plans", planId);
+                                   const planDocSnap = await getDoc(planDocRef);
+
+                                   if (planDocSnap.exists()) {
+                                        const planData = planDocSnap.data();
+                                        const tripIdsToDelete = planData.tripIds as string[] | undefined;
+
+                                        // 2. Delete associated trips if they exist
+                                        if (tripIdsToDelete && Array.isArray(tripIdsToDelete)) {
+                                             const deletePromises = tripIdsToDelete.map(tripId =>
+                                                  deleteDoc(doc(db, "trips", tripId))
+                                             );
+                                             await Promise.all(deletePromises);
+
+                                             // 3. Update local trips state
+                                             setTrips(prevTrips =>
+                                                  prevTrips.filter(trip => !tripIdsToDelete.includes(trip.id || ''))
+                                             );
+                                        }
+                                   }
+
+                                   // 4. Delete the plan document itself
+                                   await deleteDoc(planDocRef);
+
+                                   // 5. Update local plans state
+                                   setPlans(prevPlans => prevPlans.filter(plan => plan.id !== planId));
+                              } catch (error) {
+                                   console.error("Error deleting plan and associated trips:", error);
+                                   Alert.alert("Error", "Could not delete plan or its trips.");
+                              }
+                         }
+                    }
+               ]
+          );
+     };
+
+     const EmptyPlansComponent = () => (
           <View style={styles.emptyContainer}>
                <Ionicons name="map-outline" size={35} color={Colors.inactive} style={styles.emptyIcon} />
                <Text style={styles.emptyText}>No items found</Text>
@@ -465,38 +462,9 @@ export default function Home() {
                     </View>
                </TouchableOpacity>
 
-               {/* Your Trails Section */}
-               <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Favorite Trips</Text>
-                    <TouchableOpacity onPress={() => {
-                         setIsTrailsEditing(!isTrailsEditing);
-                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }}>
-                         <Text style={styles.editButtonText}>{isTrailsEditing ? 'Done' : 'Edit'}</Text>
-                    </TouchableOpacity>
-               </View>
-               <FlatList
-                    horizontal
-                    data={trails}
-                    keyExtractor={(item) => item.id || String(Math.random())}
-                    renderItem={({ item }) => ( // Use the new TrailBox component
-                         <TrailBox
-                              item={item}
-                              trailDate={trailDates[item.id || '']}
-                              isEditing={isTrailsEditing}
-                              onPress={handleTrailPress}
-                              onDelete={handleDeleteTrail}
-                              animationDelay={300} // Max 300ms random delay
-                         />
-                    )}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.tripList}
-                    ListEmptyComponent={EmptyTripsComponent}
-               />
-
                {/* Your Trips Section */}
                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Your Plans</Text>
+                    <Text style={styles.sectionTitle}>Favorite Trips</Text>
                     <TouchableOpacity onPress={() => {
                          setIsTripsEditing(!isTripsEditing);
                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -511,15 +479,44 @@ export default function Home() {
                     renderItem={({ item }) => ( // Use the new TripBox component
                          <TripBox
                               item={item}
+                              tripDate={tripDates[item.id || '']}
                               isEditing={isTripsEditing}
-                              onPress={goToTrip}
+                              onPress={handleTripPress}
                               onDelete={handleDeleteTrip}
                               animationDelay={300} // Max 300ms random delay
                          />
                     )}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.tripList}
-                    ListEmptyComponent={EmptyTripsComponent}
+                    ListEmptyComponent={EmptyPlansComponent}
+               />
+
+               {/* Your Plans Section */}
+               <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Your Plans</Text>
+                    <TouchableOpacity onPress={() => {
+                         setIsPlansEditing(!isPlansEditing);
+                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}>
+                         <Text style={styles.editButtonText}>{isPlansEditing ? 'Done' : 'Edit'}</Text>
+                    </TouchableOpacity>
+               </View>
+               <FlatList
+                    horizontal
+                    data={plans}
+                    keyExtractor={(item) => item.id || String(Math.random())}
+                    renderItem={({ item }) => ( // Use the new PlanBox component
+                         <PlanBox
+                              item={item}
+                              isEditing={isPlansEditing}
+                              onPress={goToTrip}
+                              onDelete={handleDeletePlan}
+                              animationDelay={300} // Max 300ms random delay
+                         />
+                    )}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tripList}
+                    ListEmptyComponent={EmptyPlansComponent}
                />
           </ScrollView>
      );
@@ -630,46 +627,46 @@ const styles = StyleSheet.create({
           shadowRadius: 10,
           elevation: 10,
      },
-     tripBox: {
+     planBox: {
           width: 240,
           height: 240,
           borderRadius: 15,
           overflow: 'hidden',
           backgroundColor: 'lightGray',
      },
-     tripImage: {
+     planImage: {
           width: '100%',
           height: '100%',
           position: 'absolute',
      },
-     tripOverlay: {
+     planOverlay: {
           ...StyleSheet.absoluteFillObject,
      },
-     tripInfo: {
+     planInfo: {
           position: 'absolute',
           bottom: 15,
           left: 15,
           right: 15,
      },
-     tripMetaRow: {
+     planMetaRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginTop: 2,
      },
-     tripLocation: {
+     planLocation: {
           ...Typography.text.h2,
           color: 'white',
           fontSize: 18,
           fontWeight: '600',
      },
-     tripName: {
+     planName: {
           ...Typography.text.h3,
           color: 'white',
           marginBottom: 5,
           fontWeight: '600',
      },
-     tripDetails: {
+     planDetails: {
           ...Typography.text.caption,
           color: 'rgba(255, 255, 255, 0.9)',
           fontSize: 13,

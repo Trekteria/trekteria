@@ -6,6 +6,7 @@ export default function AppLayout() {
                <Stack.Screen
                     name="home"
                     options={{
+                         gestureEnabled: false,
                          title: 'Home',
                          headerShown: false,
                     }}

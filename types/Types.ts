@@ -6,7 +6,7 @@ export interface User {
   // Add other user properties as needed
 }
 
-export interface Trip {
+export interface Plan {
   id?: string;
   createdAt: Timestamp; // Using Firestore Timestamp instead of number
   preferences: {
@@ -30,14 +30,14 @@ export interface Trip {
     sceneryPreferences?: string[];
     terrainPreference?: string;
     timeOfDay?: string;
-    trailFeatures?: string[];
+    tripFeatures?: string[];
   };
   summary: string;
-  trailIds: string[]; // references to trail documents
+  tripIds: string[]; // references to trip documents
   userId: string;
 }
 
-export interface Trail {
+export interface Trip {
   id?: string;
   name: string;
   location: string;
@@ -53,10 +53,10 @@ export interface Trail {
     longitude: number;
   };
   highlights?: string[];
-  trailType?: string;
+  tripType?: string;
   terrain?: string;
   createdAt: Timestamp; // Using Firestore Timestamp
-  tripId: string; // reference to the trip this trail belongs to
+  planId: string; // reference to the plan this trip belongs to
   bookmarked?: boolean;
   userId: string;
 }

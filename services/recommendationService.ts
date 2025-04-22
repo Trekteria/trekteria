@@ -1,12 +1,12 @@
-import { Trail } from "../types/Types";
-import { createTrip, createTrail, updateTrip } from "./firestoreService";
+import { Trip } from "../types/Types";
+import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Timestamp } from "firebase/firestore";
 
 /**
  * Fetch coordinates from OpenStreetMap API
- * @param name Trail name
- * @param location Trail location
+ * @param name Trip name
+ * @param location Trip location
  * @returns Object with latitude and longitude or null
  */
 export const fetchCoordinates = async (
@@ -48,18 +48,18 @@ export const fetchCoordinates = async (
 };
 
 /**
- * Parse the recommendation string into structured trail data
+ * Parse the recommendation string into structured trip data
  * @param recommendationsString Raw string from Gemini API
  * @param userId Current user's ID
- * @returns Array of parsed Trail objects
+ * @returns Array of parsed Trip objects
  */
 export const parseRecommendations = async (
   recommendationsString: string,
   userId: string
-): Promise<Trail[]> => {
+): Promise<Trip[]> => {
   if (!recommendationsString) return [];
 
-  // Check if the string contains valid trail data (should contain '#' and '!')
+  // Check if the string contains valid trip data (should contain '#' and '!')
   if (
     !recommendationsString.includes("#") ||
     !recommendationsString.includes("!")
@@ -68,14 +68,14 @@ export const parseRecommendations = async (
     return [];
   }
 
-  // Split the string by '#' to get individual trails (ignoring empty first element if string starts with #)
-  const trailStrings = recommendationsString.split("#").filter(Boolean);
+  // Split the string by '#' to get individual trips (ignoring empty first element if string starts with #)
+  const tripStrings = recommendationsString.split("#").filter(Boolean);
 
-  // Process each trail and fetch coordinates
-  const trails = await Promise.all(
-    trailStrings.map(async (trailString) => {
-      // Split each trail string by the delimiters
-      const parts = trailString.split(/[!@%]/);
+  // Process each trip and fetch coordinates
+  const trips = await Promise.all(
+    tripStrings.map(async (tripString) => {
+      // Split each trip string by the delimiters
+      const parts = tripString.split(/[!@%]/);
       const name = parts[0] || "";
       const location = parts[1] || "";
 
@@ -84,7 +84,7 @@ export const parseRecommendations = async (
         name.toLowerCase().includes("sorry") ||
         name.toLowerCase().includes("error")
       ) {
-        console.error("Skipping invalid trail data:", name);
+        console.error("Skipping invalid trip data:", name);
         return null;
       }
 
@@ -105,7 +105,7 @@ export const parseRecommendations = async (
         .map((item) => item.trim())
         .filter(Boolean);
 
-      // Create a structured trail object
+      // Create a structured trip object
       return {
         name: name.trim(),
         location: location.trim(),
@@ -118,33 +118,33 @@ export const parseRecommendations = async (
         amenities: amenitiesArr,
         coordinates,
         highlights: highlightsArr,
-        trailType: "", // To be filled if available
+        tripType: "", // To be filled if available
         terrain: "", // To be filled if available
         createdAt: Timestamp.now(), // Using Firestore Timestamp
-        tripId: "", // This will be set later when saving to Firestore
+        planId: "", // This will be set later when saving to Firestore
         bookmarked: false, // Default value for bookmarked field
         userId, // Set the userId
-      } as Trail;
+      } as Trip;
     })
   );
 
-  // Filter out any null entries from invalid trails
-  return trails.filter((trail): trail is Trail => trail !== null);
+  // Filter out any null entries from invalid trips
+  return trips.filter((trip): trip is Trip => trip !== null);
 };
 
 /**
- * Save a trip and its trails to Firestore and AsyncStorage
+ * Save a plan and its trips to Firestore and AsyncStorage
  * @param userId The ID of the current user
  * @param formData Form data from preferences
  * @param formattedSummary Text summary of preferences
- * @param trails Array of parsed trails
- * @returns The ID of the created trip
+ * @param trips Array of parsed trips
+ * @returns The ID of the created plan
  */
-export const saveTrip = async (
+export const savePlan = async (
   userId: string,
   formData: any,
   formattedSummary: string,
-  trails: Trail[]
+  trips: Trip[]
 ): Promise<string> => {
   try {
     // Format the preferences data structure to match Firestore
@@ -166,51 +166,51 @@ export const saveTrip = async (
       sceneryPreferences: formData[6]?.value || [],
       terrainPreference: formData[7]?.value || "",
       timeOfDay: formData[10]?.value?.split(" - ")[0] || "",
-      trailFeatures: formData[8]?.value || [],
+      tripFeatures: formData[8]?.value || [],
     };
 
-    // Create a new trip in Firestore
-    const tripData = {
+    // Create a new plan in Firestore
+    const planData = {
       createdAt: Timestamp.now(),
       preferences,
       summary: formattedSummary,
       userId,
-      trailIds: [],
+      tripIds: [],
     };
 
-    // Save the trip to Firestore
-    const tripId = await createTrip(tripData);
+    // Save the plan to Firestore
+    const planId = await createPlan(planData);
 
-    // Save each trail to Firestore with the tripId
-    const trailIds = await Promise.all(
-      trails.map(async (trail) => {
-        const trailWithTripId = {
-          ...trail,
-          tripId,
+    // Save each trip to Firestore with the planId
+    const tripIds = await Promise.all(
+      trips.map(async (trip) => {
+        const tripWithPlanId = {
+          ...trip,
+          planId,
           userId,
           createdAt: Timestamp.now(),
         };
-        return await createTrail(trailWithTripId);
+        return await createTrip(tripWithPlanId);
       })
     );
 
-    // Update the trip with the trail IDs
-    await updateTrip(tripId, { trailIds });
+    // Update the plan with the trip IDs
+    await updatePlan(planId, { tripIds });
 
     // Save only the summary to AsyncStorage
     // This is non-Firestore data that we still need to persist
-    await AsyncStorage.setItem("trailSummary", formattedSummary);
+    await AsyncStorage.setItem("tripSummary", formattedSummary);
 
-    // No need to store trails in AsyncStorage as Firestore persistence will handle this
-    // Removed: await AsyncStorage.setItem("trailRecommendations", JSON.stringify(trails));
-    // Removed: await AsyncStorage.setItem("parsedTrails", JSON.stringify(trails));
+    // No need to store trips in AsyncStorage as Firestore persistence will handle this
+    // Removed: await AsyncStorage.setItem("tripRecommendations", JSON.stringify(trips));
+    // Removed: await AsyncStorage.setItem("parsedTrips", JSON.stringify(trips));
 
-    // Instead, store a reference to the trip ID for easy access
-    await AsyncStorage.setItem("lastTripId", tripId);
+    // Instead, store a reference to the plan ID for easy access
+    await AsyncStorage.setItem("lastPlanId", planId);
 
-    return tripId;
+    return planId;
   } catch (error) {
-    console.error("Error saving trip and trails:", error);
+    console.error("Error saving plan and trips:", error);
     throw error;
   }
 };
@@ -221,7 +221,7 @@ export const saveTrip = async (
  * @param formData Raw form data
  * @param formattedSummary User's preferences summary (text)
  * @param recommendationsString Raw recommendations from Gemini API
- * @returns The ID of the created trip
+ * @returns The ID of the created plan
  */
 export const processRecommendations = async (
   userId: string,
@@ -231,16 +231,16 @@ export const processRecommendations = async (
 ): Promise<string> => {
   try {
     // Parse the recommendations
-    const trails = await parseRecommendations(recommendationsString, userId);
+    const trips = await parseRecommendations(recommendationsString, userId);
 
-    if (trails.length === 0) {
-      throw new Error("No valid trail recommendations found");
+    if (trips.length === 0) {
+      throw new Error("No valid trip recommendations found");
     }
 
-    // Save the trip and trails to Firestore and AsyncStorage
-    const tripId = await saveTrip(userId, formData, formattedSummary, trails);
+    // Save the plan and trips to Firestore and AsyncStorage
+    const planId = await savePlan(userId, formData, formattedSummary, trips);
 
-    return tripId;
+    return planId;
   } catch (error) {
     console.error("Error processing recommendations:", error);
     throw error;

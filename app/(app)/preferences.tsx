@@ -17,7 +17,7 @@ import Animated, {
      runOnJS
 } from 'react-native-reanimated';
 import { fetchWeatherData } from '@/services/weatherService';
-import { generateTrailRecommendations } from '@/services/geminiService';
+import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { processRecommendations } from '@/services/recommendationService';
 import { auth } from '@/services/firebaseConfig';
@@ -57,7 +57,7 @@ export default function Preferences() {
      // Clear previous storage data when component mounts
      useEffect(() => {
           // Clear any previous recommendations, summary, and errors
-          AsyncStorage.multiRemove(['trailSummary', 'trailError', 'lastTripId'])
+          AsyncStorage.multiRemove(['tripSummary', 'tripError', 'lastPlanId'])
                .catch((err: any) => console.error("Error clearing previous data:", err));
      }, []);
 
@@ -139,7 +139,7 @@ export default function Preferences() {
           {
                id: 9,
                type: 'multiselect',
-               question: 'Are you looking for trails with:',
+               question: 'Are you looking for trips with:',
                options: ['Camping areas', 'Mountain biking acccess', 'Snow trails', 'Other'],
                value: [],
                icon: 'trail-sign-outline',
@@ -147,7 +147,7 @@ export default function Preferences() {
           {
                id: 10,
                type: 'multiselect',
-               question: 'Any must-haves for your trail?',
+               question: 'Any must-haves for your trip?',
                options: ['Well-marked paths', 'Cell service', 'Easy parking', 'Restrooms nearby', 'Pet-friendly', 'Shaded trails', 'Other'],
                value: [],
                icon: 'shield-outline',
@@ -306,16 +306,16 @@ export default function Preferences() {
                               summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
                          }
 
-                         // Trail features (Question 9)
+                         // Trip features (Question 9)
                          const features = formattedData[8].value;
                          if (features && features.length > 0) {
-                              summary += ` I'm looking for trails with ${features.join(', ')}.`;
+                              summary += ` I'm looking for trips with ${features.join(', ')}.`;
                          }
 
                          // Must-haves (Question 10)
                          const mustHaves = formattedData[9].value;
                          if (mustHaves && mustHaves.length > 0) {
-                              summary += ` My trail must-haves are: ${mustHaves.join(', ')}.`;
+                              summary += ` My trip must-haves are: ${mustHaves.join(', ')}.`;
                          }
 
                          // Time of day (Question 11)
@@ -343,8 +343,8 @@ export default function Preferences() {
                          console.log('Form summary:', formattedSummary);
 
                          try {
-                              // Generate trail recommendations here
-                              const recommendations = await generateTrailRecommendations(formattedSummary);
+                              // Generate trip recommendations here
+                              const recommendations = await generateTripRecommendations(formattedSummary);
 
                               // Get current user ID
                               const userId = auth.currentUser?.uid;
@@ -364,13 +364,13 @@ export default function Preferences() {
                          } catch (error: any) {
                               console.error("Error generating recommendations:", error);
                               // Store the error and summary in AsyncStorage
-                              await AsyncStorage.setItem('trailSummary', formattedSummary);
+                              await AsyncStorage.setItem('tripSummary', formattedSummary);
                               const errorMessage = error.toString().includes("429") || error.toString().includes("quota")
-                                   ? "We're experiencing high demand right now. The trail recommendation service has reached its limit. Please try again later or contact support if this persists."
-                                   : "Failed to generate trail recommendations. Please try again.";
-                              await AsyncStorage.setItem('trailError', errorMessage);
-                              // Clear any previous trip ID as this request failed
-                              await AsyncStorage.removeItem('lastTripId');
+                                   ? "We're experiencing high demand right now. The trip recommendation service has reached its limit. Please try again later or contact support if this persists."
+                                   : "Failed to generate trip recommendations. Please try again.";
+                              await AsyncStorage.setItem('tripError', errorMessage);
+                              // Clear any previous plan ID as this request failed
+                              await AsyncStorage.removeItem('lastPlanId');
 
                               // Navigate to results page
                               router.push({
@@ -382,7 +382,7 @@ export default function Preferences() {
                     }).catch(async (error: any) => {
                          console.error("Error formatting form data:", error);
                          // Store the error in AsyncStorage
-                         await AsyncStorage.setItem('trailError', "Failed to format your preferences. Please try again.");
+                         await AsyncStorage.setItem('tripError', "Failed to format your preferences. Please try again.");
                          setLoading(false);
                          router.push('/(app)/result');
                     });
@@ -562,7 +562,7 @@ export default function Preferences() {
                                         };
                                         updateValue(newValue);
                                    }}
-                                   placeholder="Enter city, region, or park name"
+                                   placeholder="Enter city, or region name"
                                    placeholderTextColor={Colors.inactive}
                               />
                               <View style={styles.radiusContainer}>
@@ -783,7 +783,7 @@ export default function Preferences() {
                {loading ? (
                     <View style={styles.loadingContainer}>
                          <ActivityIndicator size="large" color={Colors.primary} />
-                         <Text style={styles.loadingText}>Finding the perfect trails{'\n'}for your adventure... Hold tight!</Text>
+                         <Text style={styles.loadingText}>Finding the perfect trips{'\n'}for your adventure... Hold tight!</Text>
                     </View>
                ) : (
                     <SafeAreaView style={styles.safeArea}>

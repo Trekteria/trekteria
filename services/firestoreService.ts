@@ -11,7 +11,40 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
-import { Trip, Trail } from "../types/Types";
+import { Plan, Trip } from "../types/Types";
+
+/**
+ * Create a new plan in Firestore
+ * @param plan The plan data to create
+ * @returns The ID of the created plan
+ */
+export const createPlan = async (plan: Omit<Plan, "id">): Promise<string> => {
+  try {
+    const planRef = await addDoc(collection(db, "plans"), plan);
+    return planRef.id;
+  } catch (error) {
+    console.error("Error creating plan:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing plan in Firestore
+ * @param planId The ID of the plan to update
+ * @param planData The plan data to update
+ */
+export const updatePlan = async (
+  planId: string,
+  planData: Partial<Plan>
+): Promise<void> => {
+  try {
+    const planRef = doc(db, "plans", planId);
+    await updateDoc(planRef, planData);
+  } catch (error) {
+    console.error("Error updating plan:", error);
+    throw error;
+  }
+};
 
 /**
  * Create a new trip in Firestore
@@ -29,71 +62,61 @@ export const createTrip = async (trip: Omit<Trip, "id">): Promise<string> => {
 };
 
 /**
- * Update an existing trip in Firestore
- * @param tripId The ID of the trip to update
- * @param tripData The trip data to update
+ * Get a plan by ID
+ * @param planId The ID of the plan to get
+ * @returns The plan data
  */
-export const updateTrip = async (
-  tripId: string,
-  tripData: Partial<Trip>
-): Promise<void> => {
+export const getPlan = async (planId: string): Promise<Plan | null> => {
   try {
-    const tripRef = doc(db, "trips", tripId);
-    await updateDoc(tripRef, tripData);
-  } catch (error) {
-    console.error("Error updating trip:", error);
-    throw error;
-  }
-};
+    const planRef = doc(db, "plans", planId);
+    const planSnap = await getDoc(planRef);
 
-/**
- * Create a new trail in Firestore
- * @param trail The trail data to create
- * @returns The ID of the created trail
- */
-export const createTrail = async (
-  trail: Omit<Trail, "id">
-): Promise<string> => {
-  try {
-    const trailRef = await addDoc(collection(db, "trails"), trail);
-    return trailRef.id;
-  } catch (error) {
-    console.error("Error creating trail:", error);
-    throw error;
-  }
-};
-
-/**
- * Get a trip by ID
- * @param tripId The ID of the trip to get
- * @returns The trip data
- */
-export const getTrip = async (tripId: string): Promise<Trip | null> => {
-  try {
-    const tripRef = doc(db, "trips", tripId);
-    const tripSnap = await getDoc(tripRef);
-
-    if (tripSnap.exists()) {
-      return { id: tripSnap.id, ...tripSnap.data() } as Trip;
+    if (planSnap.exists()) {
+      return { id: planSnap.id, ...planSnap.data() } as Plan;
     } else {
       return null;
     }
   } catch (error) {
-    console.error("Error getting trip:", error);
+    console.error("Error getting plan:", error);
     throw error;
   }
 };
 
 /**
- * Get all trips for a user
+ * Get all plans for a user
  * @param userId The ID of the user
+ * @returns Array of plans
+ */
+export const getUserPlans = async (userId: string): Promise<Plan[]> => {
+  try {
+    const plansQuery = query(
+      collection(db, "plans"),
+      where("userId", "==", userId)
+    );
+    const querySnapshot = await getDocs(plansQuery);
+
+    const plans: Plan[] = [];
+    querySnapshot.forEach((doc) => {
+      plans.push({ id: doc.id, ...doc.data() } as Plan);
+    });
+
+    return plans;
+  } catch (error) {
+    console.error("Error getting user plans:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all trips for a plan
+ * @param planId The ID of the plan
  * @returns Array of trips
  */
-export const getUserTrips = async (userId: string): Promise<Trip[]> => {
+export const getPlanTrips = async (planId: string): Promise<Trip[]> => {
   try {
     const tripsQuery = query(
       collection(db, "trips"),
-      where("userId", "==", userId)
+      where("planId", "==", planId)
     );
     const querySnapshot = await getDocs(tripsQuery);
 
@@ -104,59 +127,34 @@ export const getUserTrips = async (userId: string): Promise<Trip[]> => {
 
     return trips;
   } catch (error) {
-    console.error("Error getting user trips:", error);
+    console.error("Error getting plan trips:", error);
     throw error;
   }
 };
 
 /**
- * Get all trails for a trip
- * @param tripId The ID of the trip
- * @returns Array of trails
+ * Delete a plan and all its trips
+ * @param planId The ID of the plan to delete
  */
-export const getTripTrails = async (tripId: string): Promise<Trail[]> => {
+export const deletePlan = async (planId: string): Promise<void> => {
   try {
-    const trailsQuery = query(
-      collection(db, "trails"),
-      where("tripId", "==", tripId)
-    );
-    const querySnapshot = await getDocs(trailsQuery);
+    // First, get all trips associated with the plan
+    const trips = await getPlanTrips(planId);
 
-    const trails: Trail[] = [];
-    querySnapshot.forEach((doc) => {
-      trails.push({ id: doc.id, ...doc.data() } as Trail);
-    });
-
-    return trails;
-  } catch (error) {
-    console.error("Error getting trip trails:", error);
-    throw error;
-  }
-};
-
-/**
- * Delete a trip and all its trails
- * @param tripId The ID of the trip to delete
- */
-export const deleteTrip = async (tripId: string): Promise<void> => {
-  try {
-    // First, get all trails associated with the trip
-    const trails = await getTripTrails(tripId);
-
-    // Delete each trail
-    const trailDeletions = trails.map((trail) => {
-      if (trail.id) {
-        return deleteDoc(doc(db, "trails", trail.id));
+    // Delete each trip
+    const tripDeletions = trips.map((trip) => {
+      if (trip.id) {
+        return deleteDoc(doc(db, "trips", trip.id));
       }
     });
 
-    // Wait for all trail deletions to complete
-    await Promise.all(trailDeletions);
+    // Wait for all trip deletions to complete
+    await Promise.all(tripDeletions);
 
-    // Then delete the trip
-    await deleteDoc(doc(db, "trips", tripId));
+    // Then delete the plan
+    await deleteDoc(doc(db, "plans", planId));
   } catch (error) {
-    console.error("Error deleting trip:", error);
+    console.error("Error deleting plan:", error);
     throw error;
   }
 };

@@ -5,12 +5,12 @@ import { Typography } from '../../constants/Typography';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Trail as FirestoreTrail } from '@/types/Types';
+import { Trip as FirestoreTrip } from '@/types/Types';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../../services/firebaseConfig';
 
-// Define the Trail interface for type safety
-interface Trail {
+// Define the Trip interface for type safety
+interface Trip {
      name: string;
      location: string;
      keyFeatures: string;
@@ -21,8 +21,8 @@ interface Trail {
      bookmarked?: boolean;
 }
 
-// Sample trail images - in a real app, these could come from an API or be specific to each trail
-const trailImages = [
+// Sample trip images - in a real app, these could come from an API or be specific to each trip
+const tripImages = [
      'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80&w=1000',
      'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&q=80&w=1000',
      'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&q=80&w=1000'
@@ -30,9 +30,9 @@ const trailImages = [
 
 export default function Result() {
      const router = useRouter();
-     const { tripId: routeTripId } = useLocalSearchParams();
+     const { planId: routePlanId } = useLocalSearchParams();
      const [loading, setLoading] = useState(true);
-     const [parsedTrails, setParsedTrails] = useState<Trail[]>([]);
+     const [parsedTrips, setParsedTrips] = useState<Trip[]>([]);
      const [summary, setSummary] = useState<string | null>(null);
      const [error, setError] = useState<string | null>(null);
 
@@ -41,10 +41,10 @@ export default function Result() {
                setLoading(true);
                try {
                     // Get summary and error from AsyncStorage (these are still valid use cases for AsyncStorage)
-                    const [summaryValue, errorValue, lastTripId] = await Promise.all([
-                         AsyncStorage.getItem('trailSummary'),
-                         AsyncStorage.getItem('trailError'),
-                         AsyncStorage.getItem('lastTripId')
+                    const [summaryValue, errorValue, lastPlanId] = await Promise.all([
+                         AsyncStorage.getItem('tripSummary'),
+                         AsyncStorage.getItem('tripError'),
+                         AsyncStorage.getItem('lastPlanId')
                     ]);
 
                     if (errorValue) {
@@ -57,11 +57,11 @@ export default function Result() {
                          setSummary(summaryValue);
                     }
 
-                    // Determine which tripId to use - from route params or from AsyncStorage
-                    const targetTripId = routeTripId ? String(routeTripId) : lastTripId;
+                    // Determine which planId to use - from route params or from AsyncStorage
+                    const targetPlanId = routePlanId ? String(routePlanId) : lastPlanId;
 
-                    // Fetch trails from Firestore
-                    if (targetTripId) {
+                    // Fetch trips from Firestore
+                    if (targetPlanId) {
                          const user = auth.currentUser;
                          if (!user) {
                               setError("You must be logged in to view recommendations");
@@ -69,35 +69,35 @@ export default function Result() {
                               return;
                          }
 
-                         // Query trails related to this trip
-                         const trailsCollection = collection(db, "trails");
-                         const trailsQuery = query(trailsCollection, where("tripId", "==", targetTripId));
-                         const trailsSnapshot = await getDocs(trailsQuery);
+                         // Query trips related to this plan
+                         const tripsCollection = collection(db, "trips");
+                         const tripsQuery = query(tripsCollection, where("planId", "==", targetPlanId));
+                         const tripsSnapshot = await getDocs(tripsQuery);
 
-                         const firestoreTrails: FirestoreTrail[] = [];
-                         trailsSnapshot.forEach(doc => {
-                              firestoreTrails.push({ id: doc.id, ...doc.data() } as FirestoreTrail);
+                         const firestoreTrips: FirestoreTrip[] = [];
+                         tripsSnapshot.forEach(doc => {
+                              firestoreTrips.push({ id: doc.id, ...doc.data() } as FirestoreTrip);
                          });
 
-                         // Convert Firestore trail format to the format expected by this component
-                         const trailsForDisplay = firestoreTrails.map(trail => ({
-                              id: trail.id,
-                              name: trail.name,
-                              location: trail.location,
-                              keyFeatures: trail.highlights?.join(', ') || '',
-                              facilities: trail.amenities?.join(', ') || '',
-                              latitude: trail.coordinates?.latitude,
-                              longitude: trail.coordinates?.longitude,
-                              bookmarked: trail.bookmarked || false
+                         // Convert Firestore trip format to the format expected by this component
+                         const tripsForDisplay = firestoreTrips.map(trip => ({
+                              id: trip.id,
+                              name: trip.name,
+                              location: trip.location,
+                              keyFeatures: trip.highlights?.join(', ') || '',
+                              facilities: trip.amenities?.join(', ') || '',
+                              latitude: trip.coordinates?.latitude,
+                              longitude: trip.coordinates?.longitude,
+                              bookmarked: trip.bookmarked || false
                          }));
 
-                         if (trailsForDisplay.length === 0) {
-                              setError("No valid trail recommendations found. Please try again.");
+                         if (tripsForDisplay.length === 0) {
+                              setError("No valid trip recommendations found. Please try again.");
                          } else {
-                              setParsedTrails(trailsForDisplay);
+                              setParsedTrips(tripsForDisplay);
                          }
                     } else {
-                         setError("No trail recommendations found. Please try again.");
+                         setError("No trip recommendations found. Please try again.");
                     }
                } catch (err) {
                     console.error("Error loading data:", err);
@@ -108,7 +108,7 @@ export default function Result() {
           };
 
           loadData();
-     }, [routeTripId]);
+     }, [routePlanId]);
 
      const handleClose = () => {
           router.push('/(app)/home');
@@ -116,7 +116,7 @@ export default function Result() {
 
      const handleRetry = () => {
           // Clear any previous error before returning to preferences
-          AsyncStorage.removeItem('trailError')
+          AsyncStorage.removeItem('tripError')
                .then(() => {
                     // Return to preferences page to try again
                     router.push('/(app)/preferences');
@@ -124,54 +124,54 @@ export default function Result() {
                .catch((err: any) => console.error("Error clearing error state:", err));
      };
 
-     const handleTrailPress = (trail: Trail) => {
+     const handleTripPress = (trip: Trip) => {
           router.push({
                pathname: '/trip',
-               params: { trail: JSON.stringify(trail) }
+               params: { trip: JSON.stringify(trip) }
           });
      };
 
-     const handleBookmarkPress = async (trail: Trail, index: number) => {
+     const handleBookmarkPress = async (trip: Trip, index: number) => {
           try {
                const user = auth.currentUser;
                if (!user) {
-                    console.error("User must be logged in to bookmark trails");
+                    console.error("User must be logged in to bookmark trips");
                     return;
                }
 
-               if (!trail.id) {
-                    console.error("Trail ID is missing");
+               if (!trip.id) {
+                    console.error("Trip ID is missing");
                     return;
                }
 
                // Get current bookmark state
-               const isCurrentlyBookmarked = trail.bookmarked || false;
+               const isCurrentlyBookmarked = trip.bookmarked || false;
 
-               // Update the trail document in Firestore
-               const trailRef = doc(db, "trails", trail.id);
-               await updateDoc(trailRef, {
+               // Update the trip document in Firestore
+               const tripRef = doc(db, "trips", trip.id);
+               await updateDoc(tripRef, {
                     bookmarked: !isCurrentlyBookmarked
                });
 
                // Update local state
-               const updatedTrails = [...parsedTrails];
-               updatedTrails[index] = {
-                    ...trail,
+               const updatedTrips = [...parsedTrips];
+               updatedTrips[index] = {
+                    ...trip,
                     bookmarked: !isCurrentlyBookmarked
                };
-               setParsedTrails(updatedTrails);
+               setParsedTrips(updatedTrips);
           } catch (error) {
                console.error("Error updating bookmark status:", error);
           }
      };
 
-     // Render a trail card for each parsed trail
-     const renderTrailCard = (trail: Trail, index: number) => {
+     // Render a trip card for each parsed trip
+     const renderTripCard = (trip: Trip, index: number) => {
           // Use a placeholder image from our array, cycling through them
-          const backgroundImage = trailImages[index % trailImages.length];
+          const backgroundImage = tripImages[index % tripImages.length];
 
           return (
-               <TouchableOpacity key={index} style={styles.trailCard} onPress={() => handleTrailPress(trail)}>
+               <TouchableOpacity key={index} style={styles.tripCard} onPress={() => handleTripPress(trip)}>
                     <ImageBackground
                          source={{ uri: backgroundImage }}
                          style={{ width: '100%', height: '100%', justifyContent: 'flex-end' }}
@@ -180,31 +180,31 @@ export default function Result() {
                          <View style={styles.cardOverlay}>
 
                               <View style={styles.bookmarkContainer}>
-                                   <TouchableOpacity onPress={() => handleBookmarkPress(trail, index)}>
+                                   <TouchableOpacity onPress={() => handleBookmarkPress(trip, index)}>
                                         <Ionicons
-                                             name={trail.bookmarked ? "heart" : "heart-outline"}
+                                             name={trip.bookmarked ? "heart" : "heart-outline"}
                                              size={30}
                                              color="white"
                                         />
                                    </TouchableOpacity>
                               </View>
 
-                              <Text style={styles.trailName}>{trail.name}</Text>
+                              <Text style={styles.tripName}>{trip.name}</Text>
 
                               <View style={styles.detailsContainer}>
                                    <View style={styles.detailRow}>
                                         <Ionicons name="location-outline" size={18} color="white" />
-                                        <Text style={styles.detailText}>{trail.location}</Text>
+                                        <Text style={styles.detailText}>{trip.location}</Text>
                                    </View>
 
                                    <View style={styles.detailRow}>
                                         <Ionicons name="leaf-outline" size={18} color="white" />
-                                        <Text style={styles.detailText}>{trail.keyFeatures}</Text>
+                                        <Text style={styles.detailText}>{trip.keyFeatures}</Text>
                                    </View>
 
                                    <View style={styles.detailRow}>
                                         <Ionicons name="shield-checkmark-outline" size={18} color="white" />
-                                        <Text style={styles.detailText}>{trail.facilities}</Text>
+                                        <Text style={styles.detailText}>{trip.facilities}</Text>
                                    </View>
                               </View>
                          </View>
@@ -220,15 +220,15 @@ export default function Result() {
                          <Ionicons name="close" size={40} color={Colors.black} />
                     </TouchableOpacity>
 
-                    {routeTripId ? (
+                    {routePlanId ? (
                          <>
                               <Text style={styles.title}>Your Saved Trip</Text>
-                              <Text style={styles.secondTitle}>Trail Details</Text>
+                              <Text style={styles.secondTitle}>Trip Details</Text>
                          </>
                     ) : (
                          <>
                               <Text style={styles.title}>Handpicked for you -</Text>
-                              <Text style={styles.secondTitle}>Select Your Trail!</Text>
+                              <Text style={styles.secondTitle}>Select Your Trip!</Text>
                          </>
                     )}
 
@@ -241,7 +241,7 @@ export default function Result() {
                          {loading ? (
                               <View style={styles.loadingContainer}>
                                    <ActivityIndicator size="large" color={Colors.primary} />
-                                   <Text style={styles.loadingText}>Loading your trail recommendations...</Text>
+                                   <Text style={styles.loadingText}>Loading your trip recommendations...</Text>
                               </View>
                          ) : error ? (
                               <View style={styles.errorContainer}>
@@ -250,9 +250,9 @@ export default function Result() {
                                         <Text style={styles.retryButtonText}>Retry</Text>
                                    </TouchableOpacity>
                               </View>
-                         ) : parsedTrails.length > 0 ? (
-                              <View style={styles.trailsContainer}>
-                                   {parsedTrails.map(renderTrailCard)}
+                         ) : parsedTrips.length > 0 ? (
+                              <View style={styles.tripsContainer}>
+                                   {parsedTrips.map(renderTripCard)}
                               </View>
                          ) : summary ? (
                               <View style={styles.section}>
@@ -346,10 +346,10 @@ const styles = StyleSheet.create({
           ...Typography.text.button,
           color: 'white',
      } as TextStyle,
-     trailsContainer: {
+     tripsContainer: {
           marginBottom: 30,
      } as ViewStyle,
-     trailCard: {
+     tripCard: {
           marginBottom: 10,
           borderRadius: 20,
           overflow: 'hidden',
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
           borderRadius: 10,
           zIndex: 10,
      } as ViewStyle,
-     trailName: {
+     tripName: {
           ...Typography.text.h2,
           color: 'white',
      } as TextStyle,
