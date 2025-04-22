@@ -32,6 +32,16 @@ function Trip() {
           }).start();
      }, [activeTab]);
 
+     // Show ActionSheet at 45% when component mounts
+     useEffect(() => {
+          // Small delay to ensure component is fully rendered
+          const timer = setTimeout(() => {
+               actionSheetRef.current?.show(0); // Show at first snapPoint (45%)
+          }, 300);
+
+          return () => clearTimeout(timer);
+     }, []);
+
      // Use the actual coordinates from the trail data, or fallback to default coordinates
      const initialRegion = {
           latitude: trailData.latitude || 37.7749,
@@ -109,7 +119,7 @@ function Trip() {
                          </TouchableOpacity>
                     </View>
 
-                    <View style={styles.bottomButtonsContainer}>
+                    {/* <View style={styles.bottomButtonsContainer}>
                          <TouchableOpacity
                               style={[styles.directionsButton, { flex: 1 }]}
                               onPress={openDirections}
@@ -117,70 +127,71 @@ function Trip() {
                               <Ionicons name="navigate" size={24} color="white" />
                               <Text style={styles.buttonText}>Get Directions</Text>
                          </TouchableOpacity>
-                    </View>
+                    </View> */}
 
                     <ActionSheet
                          ref={actionSheetRef}
                          containerStyle={styles.actionSheet}
                          overlayColor="transparent"
                          gestureEnabled
-                         snapPoints={[70, 100]}
+                         snapPoints={[45, 100]}
+                         backgroundInteractionEnabled={true}
                     >
                          <View style={styles.sheetContent}>
                               <View style={styles.tabContainer}>
                                    <View style={styles.tabButtonsContainer}>
                                         <TouchableOpacity
-                                             style={styles.tabButton}
+                                             style={[styles.tabButton, activeTab === 'info' && { backgroundColor: Colors.primary }]}
                                              onPress={() => setActiveTab('info')}
                                         >
                                              <Ionicons
-                                                  name="information-circle"
-                                                  size={35}
-                                                  color={activeTab === 'info' ? Colors.primary : '#999'}
+                                                  name="information"
+                                                  size={25}
+                                                  color={activeTab === 'info' ? Colors.white : '#999'}
                                              />
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                             style={styles.tabButton}
+                                             style={[styles.tabButton, activeTab === 'navigation' && { backgroundColor: Colors.primary }]}
                                              onPress={() => setActiveTab('navigation')}
                                         >
                                              <Ionicons
-                                                  name="compass"
-                                                  size={35}
-                                                  color={activeTab === 'navigation' ? Colors.primary : '#999'}
+                                                  name="navigate"
+                                                  size={25}
+                                                  color={activeTab === 'navigation' ? Colors.white : '#999'}
                                              />
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                             style={styles.tabButton}
+                                             style={[styles.tabButton, activeTab === 'packing' && { backgroundColor: Colors.primary }]}
                                              onPress={() => setActiveTab('packing')}
                                         >
                                              <Ionicons
                                                   name="bag"
-                                                  size={35}
-                                                  color={activeTab === 'packing' ? Colors.primary : '#999'}
+                                                  size={25}
+                                                  color={activeTab === 'packing' ? Colors.white : '#999'}
                                              />
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                             style={styles.tabButton}
+                                             style={[styles.tabButton, activeTab === 'mission' && { backgroundColor: Colors.primary }]}
                                              onPress={() => setActiveTab('mission')}
                                         >
                                              <Ionicons
                                                   name="trophy"
-                                                  size={35}
-                                                  color={activeTab === 'mission' ? Colors.primary : '#999'}
+                                                  size={25}
+                                                  color={activeTab === 'mission' ? Colors.white : '#999'}
                                              />
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                             style={styles.tabButton}
+                                             style={[styles.tabButton, activeTab === 'chat' && { backgroundColor: Colors.primary }]}
                                              onPress={() => setActiveTab('chat')}
                                         >
                                              <Ionicons
                                                   name="chatbubble-ellipses"
-                                                  size={35}
-                                                  color={activeTab === 'chat' ? Colors.primary : '#999'}
+                                                  size={25}
+                                                  color={activeTab === 'chat' ? Colors.white : '#999'}
                                              />
                                         </TouchableOpacity>
                                    </View>
-                                   <View style={styles.tabIndicatorContainer}>
+                                   {/* <View style={styles.tabIndicatorContainer}>
                                         <Animated.View
                                              style={[
                                                   styles.tabIndicator,
@@ -191,7 +202,7 @@ function Trip() {
                                         >
                                              <View style={styles.tabIndicatorSmall} />
                                         </Animated.View>
-                                   </View>
+                                   </View> */}
                               </View>
                               <View style={styles.tabContent}>
                                    {renderTabContent()}
@@ -297,23 +308,18 @@ const styles = StyleSheet.create({
      actionSheet: {
           flex: 1,
           backgroundColor: 'white',
-          borderTopLeftRadius: 40,
-          borderTopRightRadius: 40,
-          padding: 20,
+          borderTopLeftRadius: 30,
+          borderTopRightRadius: 30,
+          padding: 5,
      },
      sheetContent: {
           display: 'flex',
           flexDirection: 'column',
      },
      tabContainer: {
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          paddingHorizontal: 20,
           backgroundColor: 'white',
-          boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
-          borderRadius: 50,
+          // boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
+          // borderRadius: 50,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -331,7 +337,10 @@ const styles = StyleSheet.create({
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          height: '100%',
+          height: '70%',
+          backgroundColor: '#f2f2f2',
+          borderRadius: 15,
+          marginHorizontal: 5,
      },
      tabIndicatorContainer: {
           width: '100%',
@@ -355,12 +364,12 @@ const styles = StyleSheet.create({
           borderTopLeftRadius: 20,
      },
      tabContent: {
-          padding: 20,
+          padding: 5,
           height: '80%',
           borderWidth: 1,
           borderBlockColor: 'white',
           borderColor: 'white',
-   
+
      },
 });
 

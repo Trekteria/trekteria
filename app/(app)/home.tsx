@@ -466,7 +466,7 @@ export default function Home() {
 
                {/* Your Trails Section */}
                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Your Trails</Text>
+                    <Text style={styles.sectionTitle}>Favorite Trips</Text>
                     <TouchableOpacity onPress={() => setIsTrailsEditing(!isTrailsEditing)}>
                          <Text style={styles.editButtonText}>{isTrailsEditing ? 'Done' : 'Edit'}</Text>
                     </TouchableOpacity>
@@ -492,7 +492,7 @@ export default function Home() {
 
                {/* Your Trips Section */}
                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Your Trips</Text>
+                    <Text style={styles.sectionTitle}>Your Plans</Text>
                     <TouchableOpacity onPress={() => setIsTripsEditing(!isTripsEditing)}>
                          <Text style={styles.editButtonText}>{isTripsEditing ? 'Done' : 'Edit'}</Text>
                     </TouchableOpacity>

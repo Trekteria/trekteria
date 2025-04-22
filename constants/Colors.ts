@@ -7,11 +7,13 @@ const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 const primaryColor = "#42643D"; // TrailMate primary green color
 const blackColor = "#232323"; // TrailMate black color (instead of pure black)
+const whiteColor = "#E6E6E6";
 const inactiveColor = "#A3A3A3";
 
 export const Colors = {
   primary: primaryColor, // Add primary color for easy access
   black: blackColor, // Add black color for easy access
+  white: whiteColor,
   inactive: inactiveColor,
   light: {
     text: blackColor, // Changed to use our custom black
