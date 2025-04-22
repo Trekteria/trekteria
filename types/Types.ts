@@ -39,24 +39,59 @@ export interface Plan {
 
 export interface Trip {
   id?: string;
-  name: string;
-  location: string;
-  description?: string;
-  difficulty?: string;
-  length?: number;
-  elevation?: number;
-  estimatedTime?: string;
-  activities?: string[];
-  amenities?: string[];
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-  highlights?: string[];
-  tripType?: string;
-  terrain?: string;
   createdAt: Timestamp; // Using Firestore Timestamp
   planId: string; // reference to the plan this trip belongs to
   bookmarked?: boolean;
   userId: string;
+  name: string;
+  location: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  description?: string;
+  dateRange?: {
+    startDate: string;
+    endDate: string;
+  };
+  groupSize?: number;
+  hikingLevel?: string;
+  amenities?: string[];
+  highlights?: string[];
+  parkWebsite?: string;
+  cellService?: string;
+  parkContact?: string;
+
+  schedule: [
+    {
+      day: number;
+      date: string;
+      activities: [
+        {
+          time: string;
+          activity: string;
+          description: string;
+          trailDetails?: {
+            trailName: string;
+            distance: number;
+            elevation: number;
+            difficulty: string;
+            coordinates: {
+              latitude: number;
+              longitude: number;
+            };
+            estimatedTime: string;
+            features: string[];
+            trailType: string;
+            duration: string;
+          };
+        }
+      ];
+    }
+  ];
+
+  packingChecklist: string[];
+  missions: string[];
+  warnings?: string[];
+  thingsToKnow?: string[];
 }

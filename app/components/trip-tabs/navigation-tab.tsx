@@ -16,7 +16,7 @@ function NavigationTab() {
   return (
     <View style={styles.container}>
       <Text style={styles.dateText}> {date}</Text>
-          <View style={styles.divider} />
+      <View style={styles.divider} />
 
       <FlatList
         data={steps}
@@ -45,20 +45,20 @@ function NavigationTab() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
-  
+    paddingHorizontal: 20,
   },
   dateText: {
     textAlign: "center",
-//     fontWeight: "400",
+    //     fontWeight: "400",
     fontSize: 16,
     marginBottom: 16,
   },
   stepContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
-     backgroundColor: "white",
-     width: "100%",
-     height: 50,
+    backgroundColor: "white",
+    width: "100%",
+    height: 50,
   },
   iconColumn: {
     alignItems: "center",
@@ -67,11 +67,11 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
 
-     dottedLine: {
-          flex: 1,
-          borderLeftWidth: 1,
-          backgroundColor: "black",
-     },
+  dottedLine: {
+    flex: 1,
+    borderLeftWidth: 1,
+    backgroundColor: "black",
+  },
   instructionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -92,10 +92,10 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   divider: {
-     height: 1,
-     backgroundColor: "#ccc",
-     marginBottom: 18,
-   },
+    height: 1,
+    backgroundColor: "#ccc",
+    marginBottom: 18,
+  },
 });
 
 
