@@ -106,6 +106,15 @@ export const parseRecommendations = async (
         .map((item) => item.trim())
         .filter(Boolean);
 
+      // Generate info based on the trip name
+      const infoString = await generateInfo(name);
+      const address = infoString.split("#")[1].trim();
+      const description = infoString.split("#")[2].trim();
+      const cellService = infoString.split("#")[3].trim();
+      const parkWebsite = infoString.split("#")[4].trim();
+      const parkContact = infoString.split("#")[5].trim();
+      const difficultyLevel = infoString.split("#")[6].trim();
+
       // Generate missions based on the trip name
       const missionsString = await generateTripMissions(name);
       const missionsArr = missionsString.split("#").map((mission) => ({
@@ -129,18 +138,19 @@ export const parseRecommendations = async (
         name: name.trim(),
         location: location.trim(),
         coordinates,
-        description: `${keyFeatures}. Amenities include: ${facilities}`,
+        address: address,
+        description: description,
         dateRange: {
           startDate: new Date().toISOString().split("T")[0],
           endDate: new Date().toISOString().split("T")[0],
         },
         groupSize: 1,
-        hikingLevel: "",
+        difficultyLevel: difficultyLevel,
         amenities: amenitiesArr,
         highlights: highlightsArr,
-        parkWebsite: "",
-        cellService: "",
-        parkContact: "",
+        parkWebsite: parkWebsite,
+        cellService: cellService,
+        parkContact: parkContact,
 
         schedule: [
           {

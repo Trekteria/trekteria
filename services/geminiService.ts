@@ -67,6 +67,39 @@ export const generateTripRecommendations = async (
   }
 };
 
+export const generateInfo = async (tripName: string): Promise<string> => {
+  try {
+    // Initialize chat session
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+
+    // Construct the prompt with the form summary
+    const prompt = `
+    Please provide me with some information about the trip ${tripName}.
+
+    Return the information in this format:
+    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel. Do not return anything else.
+
+    Example format:
+    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy.
+
+    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The address should be the address of the park and phone number, and website should be correct. If you are not sure about the info, return "N/A" for that field.
+    `;
+
+    const result = await chatSession.sendMessage(prompt);
+    const response = result.response.text();
+
+    console.log(`Trip Info from Gemini for trip "${tripName}":`, response);
+
+    return response;
+  } catch (error) {
+    console.error("Error generating trip info:", error);
+    return "Sorry, I couldn't generate trip info at this time. Please try again later.";
+  }
+};
+
 export const generateTripMissions = async (
   tripName: string
 ): Promise<string> => {

@@ -49,13 +49,14 @@ export interface Trip {
     latitude: number;
     longitude: number;
   };
+  address?: string;
   description?: string;
   dateRange?: {
     startDate: string;
     endDate: string;
   };
   groupSize?: number;
-  hikingLevel?: string;
+  difficultyLevel?: string;
   amenities?: string[];
   highlights?: string[];
   parkWebsite?: string;
