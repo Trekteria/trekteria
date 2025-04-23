@@ -2,6 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+// Add interface for component props
+interface NavigationTabProps {
+  tripData?: any;
+}
+
 const steps = [
   { instruction: "Drive from San Jose to Park", time: "11-12 PM" },
   { instruction: "Check-in at the park", time: "12-1 PM" },
@@ -12,7 +17,7 @@ const steps = [
 
 const date = "02/25/2025 (Tue)";
 
-function NavigationTab() {
+function NavigationTab({ tripData }: NavigationTabProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.dateText}> {date}</Text>
@@ -26,9 +31,7 @@ function NavigationTab() {
             <View style={styles.iconColumn}>
               <Ionicons name="location-sharp" size={28} color="#2f4f2f" />
 
-              {index !== steps.length - 1 && (
-                <View style={styles.dottedLine} />
-              )}
+              {index !== steps.length - 1 && <View style={styles.dottedLine} />}
             </View>
 
             <View style={styles.instructionRow}>
@@ -97,6 +100,5 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
 });
-
 
 export default NavigationTab;

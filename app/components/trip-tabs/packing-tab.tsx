@@ -8,7 +8,12 @@ import {
 } from "react-native";
 import { Typography } from "../../../constants/Typography";
 
-export default function PackingTab() {
+// Add interface for component props
+interface PackingTabProps {
+  tripData?: any;
+}
+
+export default function PackingTab({ tripData }: PackingTabProps) {
   const [packingItems, setPackingItems] = useState([
     { id: "1", title: "Comfortable hiking shoes", packed: false },
     {
