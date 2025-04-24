@@ -140,7 +140,7 @@ export default function Preferences() {
                id: 9,
                type: 'multiselect',
                question: 'Are you looking for trips with:',
-               options: ['Camping areas', 'Mountain biking acccess', 'Snow trails', 'Other'],
+               options: ['Camping areas', 'Mountain biking access', 'Snow trails', 'Other'],
                value: [],
                icon: 'trail-sign-outline',
           },
