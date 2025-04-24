@@ -104,3 +104,42 @@ export const generateTripMissions = async (
     return "Sorry, I couldn't generate trip missions at this time. Please try again later.";
   }
 };
+
+
+export const generatePackingList = async (
+  tripName: string
+): Promise<string> => {
+  try {
+    // Initialize chat session
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+
+    // Construct the prompt with the form summary
+    const prompt = `
+    I want a list of 7 essential packing items that match my preferences. Each item should:
+    - Be necessary and enhance the experience for this specific trip
+    - Be practical, easy to carry, and realistically useful
+    - Be simple and compact
+    - Include a short, relevant emoji at the start
+    - Include only item name and concise description of purpose
+    - First item to include: 💧 Water bottle (stay hydrated)
+    Return ONLY a string with 7 packing items, seperated by #. Do not return anything else.
+    Example format: item1#item2#item3#item4#item5#item6#item7;
+    ---
+    For context, here is my trip name: ${tripName}
+    `;
+
+    // Send the prompt to Gemini
+    const result = await chatSession.sendMessage(prompt);
+    const response = result.response.text();
+
+    console.log(`Packing items from Gemini for trip "${tripName}":`, response);
+
+    return response;
+  } catch (error) {
+    console.error("Error generating packing items:", error);
+    return "Sorry, I couldn't generate packing items at this time. Please try again later.";
+  }
+};

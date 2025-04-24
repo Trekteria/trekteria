@@ -2,7 +2,7 @@ import { Trip } from "../types/Types";
 import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Timestamp } from "firebase/firestore";
-import { generateTripMissions } from "./geminiService";
+import { generateTripMissions, generatePackingList } from "./geminiService";
 
 /**
  * Fetch coordinates from OpenStreetMap API
@@ -113,6 +113,13 @@ export const parseRecommendations = async (
         completed: false,
       }));
 
+      // Generate packing list based on the trip name
+      const packingListString = await generatePackingList(name);
+      const packingChecklistArr = packingListString.split("#").map((item) => ({
+        item: item.trim(),
+        checked: false,
+      }));
+
       // Create a structured trip object
       return {
         createdAt: Timestamp.now(),
@@ -160,20 +167,21 @@ export const parseRecommendations = async (
           },
         ],
 
-        packingChecklist: [
-          {
-            item: "Water bottle",
-            checked: false,
-          },
-          {
-            item: "Hiking boots",
-            checked: false,
-          },
-          {
-            item: "Sunscreen",
-            checked: false,
-          },
-        ],
+        // packingChecklist: [
+        //   {
+        //     item: "Water bottle",
+        //     checked: false,
+        //   },
+        //   {
+        //     item: "Hiking boots",
+        //     checked: false,
+        //   },
+        //   {
+        //     item: "Sunscreen",
+        //     checked: false,
+        //   },
+        // ],
+        packingChecklist: packingChecklistArr,
         missions: missionsArr,
         warnings: [],
         thingsToKnow: [],
