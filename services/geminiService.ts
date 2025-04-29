@@ -143,3 +143,31 @@ export const generatePackingList = async (
     return "Sorry, I couldn't generate packing items at this time. Please try again later.";
   }
 };
+
+export const checkImageRelevance = async (
+  description: string,
+  altDescription: string
+): Promise<string> => {
+  try {
+    // Initialize chat session
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+
+    // Construct the prompt with the image description
+    const prompt = `
+    You are a helpful assistant that evaluates image descriptions. Given a text description, determine whether it is relevant to outdoor trail-related topics such as hiking, nature trips, mountains, lakes, ocean, sky, or wildlife. Return your result "True" or "False". Do not return anything else.
+    For your context, here is the text description: ${description} ${altDescription}
+    `;
+
+    // Send the prompt to Gemini
+    const result = await chatSession.sendMessage(prompt);
+    const response = result.response.text();
+
+    return response;
+  } catch (error) {
+    console.error("Error checking image relevance:", error);
+    return "Sorry, I couldn't check the image relevance at this time. Please try again later.";
+  }
+}
