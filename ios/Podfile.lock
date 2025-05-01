@@ -1,6 +1,8 @@
 PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
+  - EXApplication (6.0.2):
+    - ExpoModulesCore
   - EXConstants (17.0.7):
     - ExpoModulesCore
   - EXJSONUtils (0.14.0)
@@ -219,6 +221,8 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (14.0.3):
     - ExpoModulesCore
+  - ExpoCrypto (14.0.2):
+    - ExpoModulesCore
   - ExpoFileSystem (18.0.11):
     - ExpoModulesCore
   - ExpoFont (13.0.4):
@@ -229,7 +233,11 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (14.0.3):
     - ExpoModulesCore
+  - ExpoLinearGradient (14.0.2):
+    - ExpoModulesCore
   - ExpoLinking (7.0.5):
+    - ExpoModulesCore
+  - ExpoLocation (18.0.8):
     - ExpoModulesCore
   - ExpoModulesCore (2.2.2):
     - DoubleConversion
@@ -1505,6 +1513,51 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-maps (1.20.1):
+    - React-Core
+  - react-native-pager-view (6.5.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - react-native-pager-view/common (= 6.5.1)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-pager-view/common (6.5.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-safe-area-context (4.12.0):
     - DoubleConversion
     - glog
@@ -1859,6 +1912,48 @@ PODS:
     - React-logger (= 0.76.7)
     - React-perflogger (= 0.76.7)
     - React-utils (= 0.76.7)
+  - RNCAsyncStorage (2.1.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - RNDateTimePicker (8.3.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNGestureHandler (2.20.2):
     - DoubleConversion
     - glog
@@ -2012,12 +2107,77 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSVG (15.8.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNSVG/common (= 15.8.0)
+    - Yoga
+  - RNSVG/common (15.8.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - RNVectorIcons (10.2.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
+  - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
@@ -2028,12 +2188,15 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
+  - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
+  - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
+  - ExpoLocation (from `../node_modules/expo-location/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
@@ -2075,6 +2238,8 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-maps (from `../node_modules/react-native-maps`)
+  - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
@@ -2104,9 +2269,13 @@ DEPENDENCIES:
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
+  - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2118,6 +2287,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   DoubleConversion:
     :podspec: "../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec"
+  EXApplication:
+    :path: "../node_modules/expo-application/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
   EXJSONUtils:
@@ -2138,6 +2309,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-asset/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
+  ExpoCrypto:
+    :path: "../node_modules/expo-crypto/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -2148,8 +2321,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-router/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
+  ExpoLinearGradient:
+    :path: "../node_modules/expo-linear-gradient/ios"
   ExpoLinking:
     :path: "../node_modules/expo-linking/ios"
+  ExpoLocation:
+    :path: "../node_modules/expo-location/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoSplashScreen:
@@ -2229,6 +2406,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-maps:
+    :path: "../node_modules/react-native-maps"
+  react-native-pager-view:
+    :path: "../node_modules/react-native-pager-view"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-webview:
@@ -2287,18 +2468,27 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNCAsyncStorage:
+    :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
+  RNVectorIcons:
+    :path: "../node_modules/react-native-vector-icons"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
   DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
+  EXApplication: 4c72f6017a14a65e338c5e74fca418f35141e819
   EXConstants: 30c43b9ca8391c31bab9cc45c97f16eddcf11042
   EXJSONUtils: 01fc7492b66c234e395dcffdd5f53439c5c29c93
   EXManifests: 807ab5394ca9f8dd5e64283f02876b2f85c4eb72
@@ -2309,12 +2499,15 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 00dc42302a72722fdecec3fa048de84a9133bcc4
   ExpoAsset: 4033893dfb333b444bf45e951351254137b658d5
   ExpoBlur: 392c1207f71d0ecf22371621c1fbd44ba84d9742
+  ExpoCrypto: e97e864c8d7b9ce4a000bca45dddb93544a1b2b4
   ExpoFileSystem: 2d804c73034c0d65eb2a640e0a77627033b69edc
   ExpoFont: f354e926f8feae5e831ec8087f36652b44a0b188
   ExpoHaptics: 8d199b2f33245ea85289ff6c954c7ee7c00a5b5d
   ExpoHead: 5d1c5c20e3933db5d9ca349424cb3b9a4a84b706
   ExpoKeepAwake: b0171a73665bfcefcfcc311742a72a956e6aa680
+  ExpoLinearGradient: 35ebd83b16f80b3add053a2fd68cc328ed927f60
   ExpoLinking: 8d12bee174ba0cdf31239706578e29e74a417402
+  ExpoLocation: e7dc025bde1bd3091ad7e616ea6145240672b2e4
   ExpoModulesCore: 7f5e59799b89e5fad1d7cc6070744c1003ca320f
   ExpoSplashScreen: 0f281e3c2ded4757d2309276c682d023c6299c77
   ExpoSymbols: f3002db15156cd4e505c77b6ea1df5c984db9965
@@ -2354,6 +2547,8 @@ SPEC CHECKSUMS:
   React-logger: 5cad0c76d056809523289e589309012215a393b5
   React-Mapbuffer: a381120aea722d2244d4e4b663a10d4c3b2d4e51
   React-microtasksnativemodule: d9b946675010659cddd1c7611c074216579c8ad3
+  react-native-maps: 9febd31278b35cd21e4fad2cf6fa708993be5dab
+  react-native-pager-view: defed12be912daa26498488593573a118656af1a
   react-native-safe-area-context: 0f16e24dc808e9f0ced17f2bdcec692b2376fb68
   react-native-webview: 2ae666ce72cfd3c38d8750c2009f5caa621d709f
   React-nativeconfig: 67fa7a63ea288cb5b1d0dd2deaf240405fec164f
@@ -2383,9 +2578,13 @@ SPEC CHECKSUMS:
   React-utils: 0342746d2cf989cf5e0d1b84c98cfa152edbdf3f
   ReactCodegen: e1c019dc68733dd2c5d3b263b4a6dc72002c0045
   ReactCommon: 81e0744ee33adfd6d586141b927024f488bc49ea
+  RNCAsyncStorage: 01d008a47892226320734b59f495f3847c3ce0c9
+  RNDateTimePicker: cfde47eb14e5ee6b9744f2764bcd1085e6590d9b
   RNGestureHandler: 16ef3dc2d7ecb09f240f25df5255953c4098819b
   RNReanimated: a2692304a6568bc656c04c8ffea812887d37436e
   RNScreens: 351f431ef2a042a1887d4d90e1c1024b8ae9d123
+  RNSVG: 030717ff82ea8f2117347c2fcf52a2d1eafba9ba
+  RNVectorIcons: a24016b773380b1aa37fca501ec6b94a951890a0
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 90d80701b27946c4b23461c00a7207f300a6ff71
 

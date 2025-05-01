@@ -19,7 +19,7 @@ import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { TabView, SceneMap } from "react-native-tab-view";
 
 import InfoTab from "../components/trip-tabs/info-tab";
-import NavigationTab from "../components/trip-tabs/navigation-tab";
+import ScheduleTab from "../components/trip-tabs/schedule-tab";
 import PackingTab from "../components/trip-tabs/packing-tab";
 import MissionTab from "../components/trip-tabs/mission-tab";
 import ChatTab from "../components/trip-tabs/chat-tab";
@@ -27,7 +27,7 @@ import ChatTab from "../components/trip-tabs/chat-tab";
 // Simple routes with titles
 const routes = [
   { key: "info", title: "Info" },
-  { key: "navigation", title: "Navigation" },
+  { key: "schedule", title: "Schedule" },
   { key: "packing", title: "Packing" },
   { key: "mission", title: "Mission" },
   { key: "chat", title: "Chat" },
@@ -36,7 +36,7 @@ const routes = [
 // Icon mapping with proper typing for Ionicons
 const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
   info: "information",
-  navigation: "navigate",
+  schedule: "navigate",
   packing: "bag",
   mission: "trophy",
   chat: "chatbubble-ellipses",
@@ -60,8 +60,8 @@ function Trip() {
       case "info":
         //    return <InfoTab tripData={tripData} />;
         return <InfoTab />;
-      case "navigation":
-        return <NavigationTab tripData={tripData} />;
+      case "schedule":
+        return <ScheduleTab tripData={tripData} />;
       case "packing":
         return <PackingTab tripData={tripData} />;
       case "mission":
