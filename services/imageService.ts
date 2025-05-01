@@ -6,7 +6,10 @@ const defaultTripImages = [
   "https://images.unsplash.com/photo-1605196560547-b2f7281b7355?auto=format&fit=crop&q=80&w=1000",
 ];
 
-export const fetchUnsplashImage = async (query: string): Promise<string> => {
+export const fetchUnsplashImage = async (
+  query: string,
+  trail: boolean = false
+): Promise<string> => {
   if (!query) {
     console.error("Query is undefined or empty in fetchUnsplashImage");
     return defaultTripImages[0];
@@ -53,21 +56,23 @@ export const fetchUnsplashImage = async (query: string): Promise<string> => {
       return defaultTripImages[0];
     }
 
-    try {
-      const isRelevantString = await checkImageRelevance(
-        description,
-        altDescription
-      );
-      if (isRelevantString?.trim() === "False") {
-        // If the image is not relevant, use a default image
-        const randomIndex = Math.floor(
-          Math.random() * defaultTripImages.length
+    if (trail) {
+      try {
+        const isRelevantString = await checkImageRelevance(
+          description,
+          altDescription
         );
-        imageUrl = defaultTripImages[randomIndex];
+        if (isRelevantString?.trim() === "False") {
+          // If the image is not relevant, use a default image
+          const randomIndex = Math.floor(
+            Math.random() * defaultTripImages.length
+          );
+          imageUrl = defaultTripImages[randomIndex];
+        }
+      } catch (relevanceError) {
+        console.error("Error checking image relevance:", relevanceError);
+        // Continue with the image we found anyway
       }
-    } catch (relevanceError) {
-      console.error("Error checking image relevance:", relevanceError);
-      // Continue with the image we found anyway
     }
 
     return imageUrl;

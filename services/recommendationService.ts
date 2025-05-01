@@ -209,7 +209,7 @@ export const parseRecommendations = async (
         : [{ item: "Water bottle", checked: false }];
 
       // Fetch image URL for the trip
-      const imageUrl = (await fetchUnsplashImage(name)) || "";
+      const imageUrl = (await fetchUnsplashImage(name, true)) || "";
 
       // Create a structured trip object
       return {
@@ -299,9 +299,9 @@ export const savePlan = async (
       tripFeatures: formData[8]?.value || [],
     };
 
-    // Fetch image URL for the trip
+    // Fetch image URL for the plan
     const imageUrl =
-      (await fetchUnsplashImage(formData[0]?.value?.location)) || "";
+      (await fetchUnsplashImage(formData[0]?.value?.location, false)) || "";
 
     // Create a new plan in Firestore
     const planData = {
