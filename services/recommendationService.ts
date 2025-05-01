@@ -299,9 +299,14 @@ export const savePlan = async (
       tripFeatures: formData[8]?.value || [],
     };
 
+    // Fetch image URL for the trip
+    const imageUrl =
+      (await fetchUnsplashImage(formData[0]?.value?.location)) || "";
+
     // Create a new plan in Firestore
     const planData = {
       createdAt: Timestamp.now(),
+      imageUrl,
       preferences,
       summary: formattedSummary,
       userId,

@@ -309,7 +309,7 @@ export default function Home() {
         const plansList = plansSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          image: placeholderImage, // Using placeholder image
+          image: doc.data().imageUrl || placeholderImage,
         })) as Plan[];
 
         // Sort plans by date (newest first)
@@ -346,7 +346,7 @@ export default function Home() {
         const tripsList = tripsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          image: placeholderImage, // Using placeholder image
+          image: doc.data().imageUrl || placeholderImage,
         })) as Trip[];
 
         // console.log("Bookmarked Trips:", tripsList);
