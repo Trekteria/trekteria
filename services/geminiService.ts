@@ -67,7 +67,10 @@ export const generateTripRecommendations = async (
   }
 };
 
-export const generateInfo = async (tripName: string): Promise<string> => {
+export const generateInfo = async (
+  tripName: string,
+  preferences: string
+): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generateInfo");
     return "#N/A#N/A#N/A#N/A#N/A#N/A";
@@ -83,7 +86,7 @@ export const generateInfo = async (tripName: string): Promise<string> => {
     // Construct the prompt with the form summary
     const prompt = `
     Please provide me with some information about the trip ${tripName}.
-
+    For context, here are my preferences: ${preferences}. 
     Return the information in this format:
     #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel. Do not return anything else.
 
@@ -122,7 +125,10 @@ export const generateInfo = async (tripName: string): Promise<string> => {
   }
 };
 
-export const generateSchedule = async (tripName: string): Promise<string> => {
+export const generateSchedule = async (
+  tripName: string,
+  preferences: string
+): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generateSchedule");
     return "$Day1#Default Activity@9:00AM-5:00PM#Sleep@9:00PM-7:00AM$";
@@ -143,6 +149,7 @@ export const generateSchedule = async (tripName: string): Promise<string> => {
     Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.
     ---
     For context, here is my trip name: ${tripName}
+    For context, here are my preferences: ${preferences}. 
     `;
 
     // Send the prompt to Gemini
@@ -177,7 +184,8 @@ export const generateSchedule = async (tripName: string): Promise<string> => {
 };
 
 export const generateTripMissions = async (
-  tripName: string
+  tripName: string,
+  preferences: string
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generateTripMissions");
@@ -204,6 +212,7 @@ export const generateTripMissions = async (
     Example format: mission1#mission2#mission3#mission4#mission5;
     ---
     For context, here is my trip name: ${tripName}
+    For context, here are my preferences: ${preferences}. 
     `;
 
     // Send the prompt to Gemini
@@ -237,7 +246,8 @@ export const generateTripMissions = async (
 };
 
 export const generatePackingList = async (
-  tripName: string
+  tripName: string,
+  preferences: string
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generatePackingList");
@@ -264,6 +274,7 @@ export const generatePackingList = async (
     Example format: item1#item2#item3#item4#item5#item6#item7;
     ---
     For context, here is my trip name: ${tripName}
+    For context, here are my preferences: ${preferences}. 
     `;
 
     // Send the prompt to Gemini

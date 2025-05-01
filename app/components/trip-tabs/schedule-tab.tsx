@@ -144,13 +144,13 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
           <View style={styles.stepContainer}>
             <View style={styles.iconColumn}>
               <Ionicons name="location-sharp" size={28} color="#2f4f2f" />
-              {index !== currentDay.activities.length - 1 && (
+              {/* {index !== currentDay.activities.length - 1 && (
                 <View style={styles.lineContainer}>
                   <View style={styles.dashedLine} />
                   <View style={styles.dashedLine} />
                   <View style={styles.dashedLine} />
-                </View>
-              )}
+                </View> 
+              {/* )} */}
             </View>
 
             <View style={styles.instructionRow}>
@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     width: "100%",
     minHeight: 30,
+    marginBottom: 30,
   },
   iconColumn: {
     alignItems: "center",

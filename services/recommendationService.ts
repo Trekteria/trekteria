@@ -62,7 +62,8 @@ export const fetchCoordinates = async (
  */
 export const parseRecommendations = async (
   recommendationsString: string,
-  userId: string
+  userId: string,
+  formattedSummary: string
 ): Promise<Trip[]> => {
   if (!recommendationsString) return [];
 
@@ -113,7 +114,7 @@ export const parseRecommendations = async (
         .filter(Boolean);
 
       // Generate info based on the trip name
-      const infoString = await generateInfo(name);
+      const infoString = await generateInfo(name, formattedSummary);
 
       // Add null checks to prevent "Cannot read property 'split' of undefined" errors
       if (!infoString) {
@@ -130,7 +131,7 @@ export const parseRecommendations = async (
       const difficultyLevel = infoParts[6]?.trim() || "N/A";
 
       // Generate schedule based on the trip name
-      const scheduleString = await generateSchedule(name);
+      const scheduleString = await generateSchedule(name, formattedSummary);
 
       // Add null check for schedule
       if (!scheduleString) {
@@ -187,7 +188,7 @@ export const parseRecommendations = async (
         .filter(Boolean); // Filter out null entries
 
       // Generate missions based on the trip name
-      const missionsString = await generateTripMissions(name);
+      const missionsString = await generateTripMissions(name, formattedSummary);
 
       // Add null check for missions
       const missionsArr = missionsString
@@ -198,7 +199,10 @@ export const parseRecommendations = async (
         : [{ task: "Explore the area", completed: false }];
 
       // Generate packing list based on the trip name
-      const packingListString = await generatePackingList(name);
+      const packingListString = await generatePackingList(
+        name,
+        formattedSummary
+      );
 
       // Add null check for packing list
       const packingChecklistArr = packingListString
@@ -366,7 +370,11 @@ export const processRecommendations = async (
 ): Promise<string> => {
   try {
     // Parse the recommendations
-    const trips = await parseRecommendations(recommendationsString, userId);
+    const trips = await parseRecommendations(
+      recommendationsString,
+      userId,
+      formattedSummary
+    );
 
     if (trips.length === 0) {
       throw new Error("No valid trip recommendations found");
