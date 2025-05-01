@@ -2,7 +2,13 @@ import { Trip } from "../types/Types";
 import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Timestamp } from "firebase/firestore";
-import { generateTripMissions, generatePackingList } from "./geminiService";
+import {
+  generateInfo,
+  generateSchedule,
+  generateTripMissions,
+  generatePackingList,
+} from "./geminiService";
+import { fetchUnsplashImage } from "./imageService";
 
 /**
  * Fetch coordinates from OpenStreetMap API
@@ -108,26 +114,102 @@ export const parseRecommendations = async (
 
       // Generate info based on the trip name
       const infoString = await generateInfo(name);
-      const address = infoString.split("#")[1].trim();
-      const description = infoString.split("#")[2].trim();
-      const cellService = infoString.split("#")[3].trim();
-      const parkWebsite = infoString.split("#")[4].trim();
-      const parkContact = infoString.split("#")[5].trim();
-      const difficultyLevel = infoString.split("#")[6].trim();
+
+      // Add null checks to prevent "Cannot read property 'split' of undefined" errors
+      if (!infoString) {
+        console.error("generateInfo returned undefined for:", name);
+        return null;
+      }
+
+      const infoParts = infoString.split("#");
+      const address = infoParts[1]?.trim() || "N/A";
+      const description = infoParts[2]?.trim() || "N/A";
+      const cellService = infoParts[3]?.trim() || "N/A";
+      const parkWebsite = infoParts[4]?.trim() || "N/A";
+      const parkContact = infoParts[5]?.trim() || "N/A";
+      const difficultyLevel = infoParts[6]?.trim() || "N/A";
+
+      // Generate schedule based on the trip name
+      const scheduleString = await generateSchedule(name);
+
+      // Add null check for schedule
+      if (!scheduleString) {
+        console.error("generateSchedule returned undefined for:", name);
+        return null;
+      }
+
+      const scheduleArr = scheduleString
+        .split("$")
+        .filter((day) => day && day.trim()) // Ensure day is not null/undefined and not empty
+        .map((dayBlock) => {
+          // Ensure the day block has the expected format
+          if (!dayBlock.includes("#")) {
+            return null;
+          }
+
+          const dayParts = dayBlock.split("#");
+          const day = dayParts[0]?.trim() || "Day1";
+          const activities = dayParts.slice(1).filter(Boolean);
+
+          return {
+            day: parseInt(day.replace("Day", "")) || 1,
+            date: new Date().toISOString().split("T")[0],
+            activities: activities
+              .map((activity) => {
+                // Ensure activity has expected format
+                if (
+                  !activity ||
+                  !activity.includes("@") ||
+                  !activity.includes("-")
+                ) {
+                  return {
+                    activity: "Default activity",
+                    startTime: "9:00 AM",
+                    endTime: "5:00 PM",
+                  };
+                }
+
+                const activityParts = activity.split("@");
+                const activityName =
+                  activityParts[0]?.trim() || "Default activity";
+                const timeRange = activityParts[1] || "9:00 AM-5:00 PM";
+                const timeParts = timeRange.split("-");
+
+                return {
+                  activity: activityName,
+                  startTime: timeParts[0]?.trim() || "9:00 AM",
+                  endTime: timeParts[1]?.trim() || "5:00 PM",
+                };
+              })
+              .filter(Boolean),
+          };
+        })
+        .filter(Boolean); // Filter out null entries
 
       // Generate missions based on the trip name
       const missionsString = await generateTripMissions(name);
-      const missionsArr = missionsString.split("#").map((mission) => ({
-        task: mission.trim(),
-        completed: false,
-      }));
+
+      // Add null check for missions
+      const missionsArr = missionsString
+        ? missionsString.split("#").map((mission) => ({
+            task: mission?.trim() || "Explore the area",
+            completed: false,
+          }))
+        : [{ task: "Explore the area", completed: false }];
 
       // Generate packing list based on the trip name
       const packingListString = await generatePackingList(name);
-      const packingChecklistArr = packingListString.split("#").map((item) => ({
-        item: item.trim(),
-        checked: false,
-      }));
+
+      // Add null check for packing list
+      const packingChecklistArr = packingListString
+        ? packingListString.split("#").map((item) => ({
+            item: item?.trim() || "Essential item",
+            checked: false,
+          }))
+        : [{ item: "Water bottle", checked: false }];
+
+      // Fetch image URL for the trip
+      const imageUrl = (await fetchUnsplashImage(name)) || "";
 
       // Create a structured trip object
       return {
@@ -140,6 +222,7 @@ export const parseRecommendations = async (
         coordinates,
         address: address,
         description: description,
+        imageUrl: imageUrl,
         dateRange: {
           startDate: new Date().toISOString().split("T")[0],
           endDate: new Date().toISOString().split("T")[0],
@@ -152,31 +235,7 @@ export const parseRecommendations = async (
         cellService: cellService,
         parkContact: parkContact,
 
-        schedule: [
-          {
-            day: 1,
-            date: new Date().toISOString().split("T")[0],
-            activities: [
-              {
-                time: "9:00 AM",
-                activity: "Start hiking",
-                description: "Begin your adventure",
-                trailDetails: {
-                  trailName: name.trim(),
-                  distance: 0,
-                  elevation: 0,
-                  difficulty: "Moderate",
-                  coordinates: coordinates || { latitude: 0, longitude: 0 },
-                  estimatedTime: "2 hours",
-                  features: highlightsArr,
-                  trailType: "Loop",
-                  duration: "2 hours",
-                },
-              },
-            ],
-          },
-        ],
-
+        schedule: scheduleArr,
         // packingChecklist: [
         //   {
         //     item: "Water bottle",

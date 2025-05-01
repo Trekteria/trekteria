@@ -68,6 +68,11 @@ export const generateTripRecommendations = async (
 };
 
 export const generateInfo = async (tripName: string): Promise<string> => {
+  if (!tripName) {
+    console.error("Trip name is undefined or empty in generateInfo");
+    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+  }
+
   try {
     // Initialize chat session
     const chatSession = model.startChat({
@@ -91,18 +96,94 @@ export const generateInfo = async (tripName: string): Promise<string> => {
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
+    if (!response) {
+      console.error(
+        "Empty response from Gemini in generateInfo for trip:",
+        tripName
+      );
+      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    }
+
     console.log(`Trip Info from Gemini for trip "${tripName}":`, response);
+
+    // Validate the response format
+    if (!response.includes("#")) {
+      console.error(
+        "Invalid response format from Gemini in generateInfo:",
+        response
+      );
+      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    }
 
     return response;
   } catch (error) {
     console.error("Error generating trip info:", error);
-    return "Sorry, I couldn't generate trip info at this time. Please try again later.";
+    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+  }
+};
+
+export const generateSchedule = async (tripName: string): Promise<string> => {
+  if (!tripName) {
+    console.error("Trip name is undefined or empty in generateSchedule");
+    return "$Day1#Default Activity@9:00AM-5:00PM#Sleep@9:00PM-7:00AM$";
+  }
+
+  try {
+    // Initialize chat session
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+
+    // Construct the prompt with the form summary
+    const prompt = `
+    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation.
+    Return in this format: $Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2. Do not return anything else.   
+    For example: $02/25/2025(Tue)#Drive from San Jose to Park@11:00AM-12:00PM#Check-in at the park office@12:00PM-1:00PM#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day2#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day3#Drive from Park to San Jose@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$
+    Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.
+    ---
+    For context, here is my trip name: ${tripName}
+    `;
+
+    // Send the prompt to Gemini
+    const result = await chatSession.sendMessage(prompt);
+    const response = result.response.text();
+
+    console.log("Raw response from Gemini for schedule:", response);
+
+    if (!response) {
+      console.error("No response received from Gemini for schedule");
+      return "$Day1#Default Activity@9:00AM-5:00PM#Sleep@9:00PM-7:00AM$";
+    }
+
+    // Validate the response format
+    if (
+      !response.includes("$") ||
+      !response.includes("#") ||
+      !response.includes("@")
+    ) {
+      console.error(
+        "Invalid response format from Gemini for schedule:",
+        response
+      );
+      return "$Day1#Default Activity@9:00AM-5:00PM#Sleep@9:00PM-7:00AM$";
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error generating trip plan:", error);
+    return "$Day1#Default Activity@9:00AM-5:00PM#Sleep@9:00PM-7:00AM$";
   }
 };
 
 export const generateTripMissions = async (
   tripName: string
 ): Promise<string> => {
+  if (!tripName) {
+    console.error("Trip name is undefined or empty in generateTripMissions");
+    return "🗺️ Explore the main trail#📸 Take photos of wildlife#🌱 Learn about local plants#♻️ Practice Leave No Trace principles#🌄 Watch the sunrise/sunset";
+  }
+
   try {
     // Initialize chat session
     const chatSession = model.startChat({
@@ -129,19 +210,40 @@ export const generateTripMissions = async (
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
+    if (!response) {
+      console.error(
+        "Empty response from Gemini in generateTripMissions for trip:",
+        tripName
+      );
+      return "🗺️ Explore the main trail#📸 Take photos of wildlife#🌱 Learn about local plants#♻️ Practice Leave No Trace principles#🌄 Watch the sunrise/sunset";
+    }
+
     console.log(`Trip Missions from Gemini for trip "${tripName}":`, response);
+
+    // Validate the response format
+    if (!response.includes("#")) {
+      console.error(
+        "Invalid response format from Gemini in generateTripMissions:",
+        response
+      );
+      return "🗺️ Explore the main trail#📸 Take photos of wildlife#🌱 Learn about local plants#♻️ Practice Leave No Trace principles#🌄 Watch the sunrise/sunset";
+    }
 
     return response;
   } catch (error) {
     console.error("Error generating trip missions:", error);
-    return "Sorry, I couldn't generate trip missions at this time. Please try again later.";
+    return "🗺️ Explore the main trail#📸 Take photos of wildlife#🌱 Learn about local plants#♻️ Practice Leave No Trace principles#🌄 Watch the sunrise/sunset";
   }
 };
-
 
 export const generatePackingList = async (
   tripName: string
 ): Promise<string> => {
+  if (!tripName) {
+    console.error("Trip name is undefined or empty in generatePackingList");
+    return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+  }
+
   try {
     // Initialize chat session
     const chatSession = model.startChat({
@@ -168,12 +270,29 @@ export const generatePackingList = async (
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
+    if (!response) {
+      console.error(
+        "Empty response from Gemini in generatePackingList for trip:",
+        tripName
+      );
+      return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    }
+
     console.log(`Packing items from Gemini for trip "${tripName}":`, response);
+
+    // Validate the response format
+    if (!response.includes("#")) {
+      console.error(
+        "Invalid response format from Gemini in generatePackingList:",
+        response
+      );
+      return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    }
 
     return response;
   } catch (error) {
     console.error("Error generating packing items:", error);
-    return "Sorry, I couldn't generate packing items at this time. Please try again later.";
+    return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
   }
 };
 
@@ -203,4 +322,4 @@ export const checkImageRelevance = async (
     console.error("Error checking image relevance:", error);
     return "Sorry, I couldn't check the image relevance at this time. Please try again later.";
   }
-}
+};

@@ -9,6 +9,7 @@ export interface User {
 export interface Plan {
   id?: string;
   createdAt: Timestamp; // Using Firestore Timestamp instead of number
+  imageUrl?: string;
   preferences: {
     dateRange?: {
       startDate: string;
@@ -40,6 +41,7 @@ export interface Plan {
 export interface Trip {
   id?: string;
   createdAt: Timestamp; // Using Firestore Timestamp
+  imageUrl?: string;
   planId: string; // reference to the plan this trip belongs to
   bookmarked?: boolean;
   userId: string;
@@ -66,27 +68,11 @@ export interface Trip {
   schedule: {
     day: number;
     date: string;
-    activities: [
-      {
-        time: string;
-        activity: string;
-        description: string;
-        trailDetails?: {
-          trailName: string;
-          distance: number;
-          elevation: number;
-          difficulty: string;
-          coordinates: {
-            latitude: number;
-            longitude: number;
-          };
-          estimatedTime: string;
-          features: string[];
-          trailType: string;
-          duration: string;
-        };
-      }
-    ];
+    activities: {
+      startTime: string;
+      endTime: string;
+      activity: string;
+    }[];
   }[];
 
   packingChecklist: {
