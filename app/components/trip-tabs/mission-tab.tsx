@@ -237,10 +237,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
+    ...Typography.text.body,
     color: "red",
     textAlign: "center",
   },
   emptyText: {
+    ...Typography.text.body,
     textAlign: "center",
     color: "#666",
     marginTop: 20,
@@ -257,9 +259,10 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   missionItem: {
+    lineHeight: 20,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 20,
   },
   checkboxCircle: {
     width: 20,
@@ -277,8 +280,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   missionText: {
+    ...Typography.text.body,
     flex: 1,
-    fontSize: 15,
     color: "#333",
   },
   missionCompleted: {
