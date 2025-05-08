@@ -518,7 +518,7 @@ export default function Home() {
         <View>
           <View style={styles.nameRow}>
             <Text style={styles.username}>Hello, </Text>
-            <Text style={styles.username}>{userName}</Text>
+            <Text style={styles.username} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
           </View>
           <View style={styles.ecoPointsRow}>
             <Text style={styles.ecoPoints}>Eco-Points: </Text>
@@ -638,6 +638,7 @@ const styles = StyleSheet.create({
   username: {
     ...Typography.text.h1,
     color: Colors.primary,
+    maxWidth: 200, // Limit width to prevent overflow
   },
   ecoPointsRow: {
     flexDirection: "row",
