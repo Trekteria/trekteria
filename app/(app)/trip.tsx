@@ -325,6 +325,7 @@ const styles = StyleSheet.create({
   },
   tripNameContainer: {
     display: "flex",
+    paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
     width: "70%",
