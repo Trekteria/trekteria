@@ -205,9 +205,11 @@ export const generateTripMissions = async (
     - Be related to the environmental science
     - Help the traveler learn about or contribute to the local environment
     - Be easy, achievable and engaging
+    - Start with easiest one, and gradually increase in difficulty
     - Include a short, engaging emoji at the start
     - Be unique and not repetitive based on the trip
-    - Be formatted as a simple, direct instruction (e.g. "🗑️ Pick up 3 pieces of litter and log it.")
+    - Be formatted as a simple, short sentence, direct instruction, and no participial phrase
+    Example mission: "🌿 Observe and photograph 5 different plant species along the trail"
     Return ONLY a string with 5 missions, seperated by #. Do not return anything else.
     Example format: mission1#mission2#mission3#mission4#mission5;
     ---

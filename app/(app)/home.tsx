@@ -260,6 +260,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
 export default function Home() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
+  const [ecoPoints, setEcoPoints] = useState(0); // Add state for eco points
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: string }>({});
@@ -284,13 +285,20 @@ export default function Home() {
     });
   };
 
-  const fetchUserName = async () => {
+  // Replace fetchUserName with fetchUserData
+  const fetchUserData = async () => {
     const user = auth.currentUser;
     if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setUserName(userData.firstname);
+
+        // Get eco points from Firestore
+        const pointsValue =
+          userData.ecoPoints !== undefined ? userData.ecoPoints : 0; // Fallback to 0 if ecoPoints is undefined
+
+        setEcoPoints(pointsValue);
       }
     }
   };
@@ -392,9 +400,10 @@ export default function Home() {
     }
   };
 
+  // Update the useFocusEffect to use fetchUserData instead of fetchUserName
   useFocusEffect(
     useCallback(() => {
-      fetchUserName();
+      fetchUserData(); // Replace fetchUserName with fetchUserData
       fetchTrips();
       fetchPlans();
       // Reset edit modes when screen focuses
@@ -518,11 +527,17 @@ export default function Home() {
         <View>
           <View style={styles.nameRow}>
             <Text style={styles.username}>Hello, </Text>
-            <Text style={styles.username} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
+            <Text
+              style={styles.username}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {userName}
+            </Text>
           </View>
           <View style={styles.ecoPointsRow}>
             <Text style={styles.ecoPoints}>Eco-Points: </Text>
-            <Text style={styles.ecoPointsNum}>150</Text>
+            <Text style={styles.ecoPointsNum}>{ecoPoints}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={goToSettings}>

@@ -10,7 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
-import { db } from "../../../services/firebaseConfig";
+import { db, auth } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 // Add this interface to define the component props
@@ -108,11 +108,18 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
 
   const toggleMissionCompletion = async (id: string) => {
     try {
+      // Find the current mission in local state to get its current completion status
+      const missionIndex = missions.findIndex((m) => m.id === id);
+      if (missionIndex === -1) return;
+
+      const currentMission = missions[missionIndex];
+      const newCompletionStatus = !currentMission.completed;
+
       // Update local state immediately for better UX
       setMissions((prevMissions) =>
         prevMissions.map((mission) =>
           mission.id === id
-            ? { ...mission, completed: !mission.completed }
+            ? { ...mission, completed: newCompletionStatus }
             : mission
         )
       );
@@ -135,11 +142,22 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
         const tripData = tripDoc.data();
 
         if (tripData.missions && Array.isArray(tripData.missions)) {
-          // Find the mission to toggle
+          // Find the mission to toggle and track its points
+          let missionPoints = 0;
+          let missionToUpdate = null;
+
           const updatedMissions = tripData.missions.map(
             (mission: any, index: number) => {
-              if ((index + 1).toString() === id) {
-                return { ...mission, completed: !mission.completed }; // Toggle completed status
+              // Match by ID or index+1 (as string) for backward compatibility
+              if (mission.id === id || (index + 1).toString() === id) {
+                missionToUpdate = mission;
+                missionPoints = mission.points || (index + 1) * 5; // Use points from mission or fallback to index-based calculation
+
+                // Toggle the completion status
+                return {
+                  ...mission,
+                  completed: newCompletionStatus,
+                };
               }
               return mission;
             }
@@ -150,8 +168,40 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             missions: updatedMissions,
           });
 
+          // Get current user to update their eco points
+          const user = auth.currentUser;
+          if (user && missionToUpdate) {
+            const userRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userRef);
+
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              const currentPoints = userData.ecoPoints || 0;
+
+              if (newCompletionStatus) {
+                // If mission is now completed, add points
+                await updateDoc(userRef, {
+                  ecoPoints: currentPoints + missionPoints,
+                });
+                console.log(
+                  `Added ${missionPoints} eco points. New total: ${
+                    currentPoints + missionPoints
+                  }`
+                );
+              } else {
+                // If mission is now uncompleted, subtract points (don't go below 0)
+                const newTotal = Math.max(0, currentPoints - missionPoints);
+                await updateDoc(userRef, {
+                  ecoPoints: newTotal,
+                });
+                console.log(
+                  `Removed ${missionPoints} eco points. New total: ${newTotal}`
+                );
+              }
+            }
+          }
+
           console.log("Updated mission completion status in Firestore");
-          console.log("Updated missions:", updatedMissions);
         } else {
           console.error("Missions array not found in Firestore data");
         }
@@ -187,7 +237,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.missionItem}
             onPress={() => toggleMissionCompletion(item.id)}
@@ -203,6 +253,10 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             >
               {item.title}
             </Text>
+            <View style={styles.pointsContainer}>
+              <Text style={styles.pointsText}>{(index + 1) * 5}</Text>
+              <Text style={styles.pointsLabel}>pts</Text>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -218,7 +272,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -261,7 +315,7 @@ const styles = StyleSheet.create({
   missionItem: {
     lineHeight: 20,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 20,
   },
   checkboxCircle: {
@@ -273,6 +327,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
+    marginTop: 6, // Add small top margin to align checkbox with first line of text
   },
   checkmark: {
     fontSize: 13,
@@ -283,9 +338,31 @@ const styles = StyleSheet.create({
     ...Typography.text.body,
     flex: 1,
     color: "#333",
+    flexWrap: "wrap", // Ensure text wraps properly
+    paddingRight: 10, // Add padding to ensure text has room before points
   },
   missionCompleted: {
     textDecorationLine: "line-through",
     color: "gray",
+  },
+  pointsContainer: {
+    backgroundColor: Colors.primary || "#4CAF50",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6, // Align with checkbox
+  },
+  pointsText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  pointsLabel: {
+    color: "white",
+    fontSize: 12,
+    marginLeft: 2,
   },
 });
