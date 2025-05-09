@@ -203,6 +203,10 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             >
               {item.title}
             </Text>
+            <View style={styles.pointsContainer}>
+              <Text style={styles.pointsText}>10</Text>
+              <Text style={styles.pointsLabel}>pts</Text>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -218,7 +222,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
   missionItem: {
     lineHeight: 20,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 20,
   },
   checkboxCircle: {
@@ -273,6 +277,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
+    marginTop: 6, // Add small top margin to align checkbox with first line of text
   },
   checkmark: {
     fontSize: 13,
@@ -283,9 +288,31 @@ const styles = StyleSheet.create({
     ...Typography.text.body,
     flex: 1,
     color: "#333",
+    flexWrap: "wrap", // Ensure text wraps properly
+    paddingRight: 10, // Add padding to ensure text has room before points
   },
   missionCompleted: {
     textDecorationLine: "line-through",
     color: "gray",
+  },
+  pointsContainer: {
+    backgroundColor: Colors.primary || "#4CAF50",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6, // Align with checkbox
+  },
+  pointsText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  pointsLabel: {
+    color: "white",
+    fontSize: 12,
+    marginLeft: 2,
   },
 });
