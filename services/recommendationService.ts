@@ -190,13 +190,14 @@ export const parseRecommendations = async (
       // Generate missions based on the trip name
       const missionsString = await generateTripMissions(name, formattedSummary);
 
-      // Add null check for missions
+      // Add null check for missions and include points based on mission index
       const missionsArr = missionsString
-        ? missionsString.split("#").map((mission) => ({
-            task: mission?.trim() || "Explore the area",
-            completed: false,
-          }))
-        : [{ task: "Explore the area", completed: false }];
+        ? missionsString.split("#").map((mission, index) => ({
+          task: mission?.trim() || "Explore the area",
+          completed: false,
+          points: (index + 1) * 5, // 5, 10, 15, 20, 25 points
+        }))
+        : [{ task: "Explore the area", completed: false, points: 5 }];
 
       // Generate packing list based on the trip name
       const packingListString = await generatePackingList(
@@ -207,9 +208,9 @@ export const parseRecommendations = async (
       // Add null check for packing list
       const packingChecklistArr = packingListString
         ? packingListString.split("#").map((item) => ({
-            item: item?.trim() || "Essential item",
-            checked: false,
-          }))
+          item: item?.trim() || "Essential item",
+          checked: false,
+        }))
         : [{ item: "Water bottle", checked: false }];
 
       // Fetch image URL for the trip

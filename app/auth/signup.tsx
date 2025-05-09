@@ -62,6 +62,7 @@ export default function Signup() {
         lastname,
         email,
         emailVerified: false,
+        ecoPoints: 0,
       });
 
       console.log("User created and data saved:", user.uid);
