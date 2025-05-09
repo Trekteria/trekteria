@@ -180,7 +180,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   }
 
   return (
-    <View style={{ paddingHorizontal: 20 }}>
+    <View style={styles.container}>
       <Text style={styles.title}>Packing Checklist</Text>
       <View style={styles.divider} />
       <FlatList
@@ -215,6 +215,10 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 10,
+    // paddingRight: 30,
+  },
   title: {
     ...Typography.text.h3,
     marginBottom: 15,
@@ -247,6 +251,8 @@ const styles = StyleSheet.create({
   },
   packingText: {
     ...Typography.text.body,
+    flex: 1,
+    flexWrap: "wrap",
   },
   packingCompleted: {
     textDecorationLine: "line-through",
@@ -256,7 +262,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 10,
   },
   loadingText: {
     marginTop: 10,
