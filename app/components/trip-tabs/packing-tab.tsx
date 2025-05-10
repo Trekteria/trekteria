@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,16 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
+  Modal,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
 
 // Add interface for component props
 interface PackingTabProps {
@@ -26,6 +30,18 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // New state for CRUD operations
+  const [newItemText, setNewItemText] = useState("");
+  const [editingItem, setEditingItem] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Ref to hold the current trip ID
+  const currentTripIdRef = useRef<string>("");
+
   // Fetch packing items from Firestore or tripData
   useEffect(() => {
     const fetchPackingItems = async () => {
@@ -37,12 +53,14 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           currentTripId = tripData.id;
         }
 
+        // Store currentTripId in ref as soon as we have it
         if (currentTripId) {
-          await AsyncStorage.setItem("selectedTripId", currentTripId);
+          currentTripIdRef.current = currentTripId;
         } else {
           const storedTripId = await AsyncStorage.getItem("selectedTripId");
           if (storedTripId) {
             currentTripId = storedTripId;
+            currentTripIdRef.current = storedTripId; // Update ref here too
           }
         }
 
@@ -99,11 +117,11 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   const setDefaultPackingItems = () => {
     setPackingItems([
-      { id: "1", title: "💧 Water bottle (stay hydrated)", checked: false },
-      { id: "2", title: "🥾 Hiking boots (for long walks)", checked: false },
-      { id: "3", title: "🧴 Sunscreen (protect your skin)", checked: false },
-      { id: "4", title: "🎒 Backpack (carry your essentials)", checked: false },
-      { id: "5", title: "🕶️ Sunglasses (shield your eyes)", checked: false },
+      { id: "1", title: "💧 Refillable Water bottle", checked: false },
+      { id: "2", title: "🥾 Hiking boots", checked: false },
+      { id: "3", title: "🧴 Mineral Sunscreen", checked: false },
+      { id: "4", title: "🎒 Reusable Backpack", checked: false },
+      { id: "5", title: "🕶️ Sunglasses (bamboo frame)", checked: false },
       { id: "6", title: "📷 Camera (capture memories)", checked: false },
     ]);
   };
@@ -117,10 +135,19 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
         )
       );
 
-      // Get current trip ID
-      let currentTripId = tripId || tripData?.id;
+      // Get current trip ID from ref or other sources
+      let currentTripId = currentTripIdRef.current;
+
       if (!currentTripId) {
-        currentTripId = (await AsyncStorage.getItem("selectedTripId")) || "";
+        currentTripId = tripId || tripData?.id;
+
+        if (!currentTripId) {
+          currentTripId = (await AsyncStorage.getItem("selectedTripId")) || "";
+        }
+
+        if (currentTripId) {
+          currentTripIdRef.current = currentTripId;
+        }
       }
 
       if (!currentTripId) {
@@ -139,9 +166,9 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           Array.isArray(tripData.packingChecklist)
         ) {
           const updatedPackingItems = tripData.packingChecklist.map(
-            (item: any, index: number) =>
-              (index + 1).toString() === id
-                ? { ...item, checked: !item.checked } // Toggle checked status
+            (item: any) =>
+              item.id === id
+                ? { ...item, checked: !item.checked } // Toggle checked status using item.id
                 : item
           );
 
@@ -160,6 +187,159 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     } catch (error) {
       console.error("Error toggling packing item:", error);
     }
+  };
+
+  // Handle adding a new packing item
+  const handleAddItem = async () => {
+    if (!newItemText.trim()) return;
+
+    try {
+      // Find the highest existing ID and increment by 1
+      let maxId = 0;
+
+      packingItems.forEach((item) => {
+        // Try to convert ID to a number
+        const numericId = parseInt(item.id);
+        // Only update maxId if the conversion was successful and it's greater than current maxId
+        if (!isNaN(numericId) && numericId > maxId) {
+          maxId = numericId;
+        }
+      });
+
+      // New ID will be the highest existing ID + 1
+      const newId = (maxId + 1).toString();
+
+      // Add item to local state
+      const newItem = {
+        id: newId,
+        title: newItemText.trim(),
+        checked: false,
+      };
+
+      const updatedItems = [...packingItems, newItem];
+      setPackingItems(updatedItems);
+
+      // Update Firestore
+      await updatePackingListInFirestore(updatedItems);
+
+      // Reset input
+      setNewItemText("");
+    } catch (error) {
+      console.error("Error adding item:", error);
+      Alert.alert("Error", "Failed to add new item");
+    }
+  };
+
+  // Handle updating an existing item
+  const handleUpdateItem = async () => {
+    if (!editingItem || !editingItem.title.trim()) return;
+
+    try {
+      const updatedItems = packingItems.map((item) =>
+        item.id === editingItem.id
+          ? { ...item, title: editingItem.title.trim() }
+          : item
+      );
+
+      setPackingItems(updatedItems);
+      await updatePackingListInFirestore(updatedItems);
+
+      // Close modal and reset
+      setIsModalVisible(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error("Error updating item:", error);
+      Alert.alert("Error", "Failed to update item");
+    }
+  };
+
+  // Handle deleting an item
+  const handleDeleteItem = async (id: string) => {
+    Alert.alert(
+      "Delete Item",
+      "Are you sure you want to remove this item from your packing list?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const updatedItems = packingItems.filter(
+                (item) => item.id !== id
+              );
+              setPackingItems(updatedItems);
+              await updatePackingListInFirestore(updatedItems);
+            } catch (error) {
+              console.error("Error deleting item:", error);
+              Alert.alert("Error", "Failed to delete item");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Helper function to update Firestore
+  const updatePackingListInFirestore = async (
+    items: Array<{ id: string; title: string; checked: boolean }>
+  ) => {
+    // Try to get trip ID from multiple sources to ensure we have one
+    let currentTripId = currentTripIdRef.current;
+
+    if (!currentTripId) {
+      currentTripId = tripId || tripData?.id;
+
+      if (!currentTripId) {
+        try {
+          currentTripId = (await AsyncStorage.getItem("selectedTripId")) || "";
+        } catch (error) {
+          console.error("Error getting trip ID from AsyncStorage:", error);
+        }
+      }
+
+      // Update ref with the found ID
+      if (currentTripId) {
+        currentTripIdRef.current = currentTripId;
+      }
+    }
+
+    if (!currentTripId) {
+      console.error("No trip ID available");
+      Alert.alert("Error", "Unable to save changes. Trip ID not found.");
+      return;
+    }
+
+    const tripRef = doc(db, "trips", currentTripId);
+    const tripDoc = await getDoc(tripRef);
+
+    if (tripDoc.exists()) {
+      // Format items to match Firestore schema
+      const firestoreItems = items.map((item) => ({
+        id: item.id,
+        item: item.title, // Using 'item' field for compatibility
+        checked: item.checked,
+      }));
+
+      await updateDoc(tripRef, {
+        packingChecklist: firestoreItems,
+      });
+
+      console.log("Updated packing list in Firestore");
+    } else {
+      throw new Error("Trip document not found");
+    }
+  };
+
+  // Function to open edit modal
+  const openEditModal = (item: { id: string; title: string }) => {
+    setEditingItem({ id: item.id, title: item.title });
+    setIsModalVisible(true);
+  };
+
+  // Toggle edit mode
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
   };
 
   if (loading) {
@@ -181,35 +361,130 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Packing Checklist</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Packing Checklist</Text>
+        <TouchableOpacity style={styles.editButton} onPress={toggleEditMode}>
+          <Text style={styles.editButtonText}>
+            {isEditing ? "Done" : "Edit"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.divider} />
+
       <FlatList
         data={packingItems}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.packingItem}
-            onPress={() => togglePackingItem(item.id)}
-          >
-            <View style={styles.checkboxCircle}>
-              {item.checked && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text
-              style={[
-                styles.packingText,
-                item.checked && styles.packingCompleted,
-              ]}
-            >
-              {item.title}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.packingItemRow}>
+            {isEditing ? (
+              <View style={styles.editModeItem}>
+                <TouchableOpacity
+                  style={styles.editIcon}
+                  onPress={() => openEditModal(item)}
+                >
+                  <Ionicons name="pencil" size={18} color="#555" />
+                </TouchableOpacity>
+                <Text style={styles.packingText}>{item.title}</Text>
+                <TouchableOpacity
+                  style={styles.deleteIcon}
+                  onPress={() => handleDeleteItem(item.id)}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.packingItem}
+                onPress={() => togglePackingItem(item.id)}
+              >
+                <View style={styles.checkboxCircle}>
+                  {item.checked && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text
+                  style={[
+                    styles.packingText,
+                    item.checked && styles.packingCompleted,
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            No packing items available for this trip.
+            No packing items available. Add some items using the field below.
           </Text>
         }
       />
+
+      {/* Add new item section */}
+      <View style={styles.addItemContainer}>
+        <TextInput
+          style={styles.input}
+          value={newItemText}
+          onChangeText={setNewItemText}
+          placeholder="Add new packing item..."
+          placeholderTextColor="#999"
+        />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddItem}
+          disabled={!newItemText.trim()}
+        >
+          <Ionicons
+            name="add-circle"
+            size={36}
+            color={newItemText.trim() ? Colors.primary : "#ccc"}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Edit Modal */}
+      <Modal visible={isModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Item</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              value={editingItem?.title || ""}
+              onChangeText={(text) =>
+                setEditingItem((prev) =>
+                  prev ? { ...prev, title: text } : null
+                )
+              }
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setIsModalVisible(false);
+                  setEditingItem(null);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.saveButton,
+                  !editingItem?.title.trim() && styles.disabledButton,
+                ]}
+                onPress={handleUpdateItem}
+                disabled={!editingItem?.title.trim()}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -217,29 +492,50 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 10,
-    // paddingRight: 30,
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
   title: {
     ...Typography.text.h3,
-    marginBottom: 15,
-    textAlign: "center",
     fontSize: 16,
+    flex: 1,
+    textAlign: "center",
+  },
+  editButton: {
+    paddingHorizontal: 10,
+  },
+  editButtonText: {
+    color: Colors.primary,
+    fontWeight: "500",
   },
   divider: {
     height: 1,
     backgroundColor: "#ccc",
     marginBottom: 18,
   },
+  packingItemRow: {
+    marginBottom: 20,
+  },
   packingItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+  },
+  editModeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   checkboxCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
+    borderColor: "#555",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -282,5 +578,95 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#666",
     marginTop: 20,
+    marginBottom: 20,
+  },
+  addItemContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    marginRight: 10,
+  },
+  addButton: {
+    padding: 5,
+  },
+  editIcon: {
+    padding: 5,
+    marginRight: 5,
+  },
+  deleteIcon: {
+    padding: 5,
+    marginLeft: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    width: "80%",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    ...Typography.text.h3,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  cancelButton: {
+    marginRight: 10,
+    backgroundColor: "#f0f0f0",
+  },
+  cancelButtonText: {
+    color: "#333",
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
   },
 });

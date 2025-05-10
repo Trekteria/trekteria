@@ -253,7 +253,7 @@ export const generatePackingList = async (
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generatePackingList");
-    return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    return "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
   }
 
   try {
@@ -265,15 +265,16 @@ export const generatePackingList = async (
 
     // Construct the prompt with the form summary
     const prompt = `
-    I want a list of 7 essential packing items that match my preferences. Each item should:
+    I want a list of essential 10-15 packing items that match my preferences and trip. Each item should:
     - Be necessary and enhance the experience for this specific trip
     - Be practical, easy to carry, and realistically useful
-    - Be simple and compact
-    - Include a short, relevant emoji at the start
-    - Include only item name and concise description of purpose
-    - First item to include: 💧 Water bottle (stay hydrated)
-    Return ONLY a string with 7 packing items, seperated by #. Do not return anything else.
-    Example format: item1#item2#item3#item4#item5#item6#item7;
+    - Be simple, compact, and most importantly, eco-friendly
+    - Include a short, relevant emoji at the start and space between the emoji and item name
+    - Be unique and not repetitive based on the trip
+    - Include only item name
+    - First item to include: 💧 Refillable Water bottle
+    Return ONLY a string with packing items, seperated by #. Do not return anything else.
+    Example format: item1#item2#item3#item4#item5#item6#item7
     ---
     For context, here is my trip name: ${tripName}
     For context, here are my preferences: ${preferences}. 
@@ -283,29 +284,58 @@ export const generatePackingList = async (
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
-    if (!response) {
-      console.error(
-        "Empty response from Gemini in generatePackingList for trip:",
-        tripName
-      );
-      return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
-    }
+    //   if (!response) {
+    //     console.error(
+    //       "Empty response from Gemini in generatePackingList for trip:",
+    //       tripName
+    //     );
+    //     return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    //   }
 
-    console.log(`Packing items from Gemini for trip "${tripName}":`, response);
+    //   console.log(`Packing items from Gemini for trip "${tripName}":`, response);
 
-    // Validate the response format
-    if (!response.includes("#")) {
-      console.error(
-        "Invalid response format from Gemini in generatePackingList:",
-        response
-      );
-      return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
-    }
+    //   // Validate the response format
+    //   if (!response.includes("#")) {
+    //     console.error(
+    //       "Invalid response format from Gemini in generatePackingList:",
+    //       response
+    //     );
+    //     return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    //   }
 
-    return response;
+    //   return response;
+    // } catch (error) {
+    //   console.error("Error generating packing items:", error);
+    //   return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    // }
+    const validateResponse = (
+      response: string | undefined,
+      tripName: string,
+      defaultResponse: string,
+      logPrefix: string
+    ): string => {
+      if (!response) {
+        console.error(`Empty response from Gemini in ${logPrefix} for trip:`, tripName);
+        return defaultResponse;
+      }
+
+      console.log(`${logPrefix} from Gemini for trip "${tripName}":`, response);
+
+      if (!response.includes("#")) {
+        console.error(`Invalid response format from Gemini in ${logPrefix}:`, response);
+        return defaultResponse;
+      }
+
+      return response;
+    };
+
+    const defaultPackingList =
+      "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
+
+    return validateResponse(response, tripName, defaultPackingList, "generatePackingList");
   } catch (error) {
     console.error("Error generating packing items:", error);
-    return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
+    return "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
   }
 };
 
