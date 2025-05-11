@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { Colors } from "../../../constants/Colors";
@@ -22,15 +23,41 @@ import { Ionicons } from "@expo/vector-icons";
 // Component for changing the user's email
 export default function ChangeEmail() {
   const router = useRouter(); // Router for navigation
+  const [currentEmail, setCurrentEmail] = useState(""); // State to store current email
   const [newEmail, setNewEmail] = useState(""); // State to store the new email
   const [password, setPassword] = useState(""); // State to store the user's password
   const [loading, setLoading] = useState(false); // State to manage loading state
+  const [initializing, setInitializing] = useState(true); // State to track initial loading
+
+  // Fetch current email on component mount
+  useEffect(() => {
+    const fetchCurrentEmail = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user && user.email) {
+          setCurrentEmail(user.email);
+        }
+      } catch (error) {
+        console.error("Error fetching current email:", error);
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    fetchCurrentEmail();
+  }, []);
 
   // Function to handle email update
   const handleUpdateEmail = async () => {
     // Validate if the new email is provided
     if (!newEmail.trim()) {
       Alert.alert("Error", "New email is required.");
+      return;
+    }
+
+    // Check if new email is different from current email
+    if (newEmail.trim() === currentEmail) {
+      Alert.alert("Error", "New email must be different from current email.");
       return;
     }
 
@@ -87,6 +114,16 @@ export default function ChangeEmail() {
     }
   };
 
+  // Show loading indicator while fetching the current email
+  if (initializing) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading your information...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Hide the default header */}
@@ -104,26 +141,40 @@ export default function ChangeEmail() {
 
       {/* Form Section */}
       <View style={styles.form}>
+        {/* Display current email */}
+        <View style={styles.currentEmailContainer}>
+          <Text style={styles.inputLabel}>Current Email</Text>
+          <View style={styles.currentEmailBox}>
+            <Text style={styles.currentEmailText}>{currentEmail}</Text>
+          </View>
+        </View>
+
         {/* Input for new email */}
-        <TextInput
-          style={styles.input}
-          value={newEmail}
-          onChangeText={setNewEmail}
-          placeholder="Enter your new email"
-          placeholderTextColor="#666"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+        <View>
+          <Text style={styles.inputLabel}>New Email</Text>
+          <TextInput
+            style={styles.input}
+            value={newEmail}
+            onChangeText={setNewEmail}
+            placeholder="Enter your new email"
+            placeholderTextColor="#666"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
 
         {/* Input for password */}
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter your password"
-          placeholderTextColor="#666"
-          secureTextEntry
-        />
+        <View>
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            placeholderTextColor="#666"
+            secureTextEntry
+          />
+        </View>
 
         {/* Button to trigger email update */}
         <TouchableOpacity
@@ -163,6 +214,13 @@ const styles = StyleSheet.create({
     gap: 20,
     padding: 20,
   },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#555",
+    marginBottom: 8,
+    paddingLeft: 10,
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.inactive,
@@ -170,6 +228,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 20,
     fontSize: 16,
+  },
+  currentEmailContainer: {
+    marginBottom: 10,
+  },
+  currentEmailBox: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#f7f7f7",
+    borderRadius: 100,
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+  },
+  currentEmailText: {
+    fontSize: 16,
+    color: "#666",
   },
   button: {
     backgroundColor: Colors.primary,
@@ -184,5 +257,14 @@ const styles = StyleSheet.create({
   buttonText: {
     ...Typography.text.button,
     color: "white",
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#666",
   },
 });
