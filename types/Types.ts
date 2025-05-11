@@ -85,4 +85,12 @@ export interface Trip {
   }[];
   warnings?: string[];
   thingsToKnow?: string[];
+
+  // Add chat history
+  chatHistory?: {
+    id: string;
+    text: string;
+    sender: "user" | "bot";
+    timestamp: Timestamp;
+  }[];
 }

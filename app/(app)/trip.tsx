@@ -67,7 +67,7 @@ function Trip() {
       case "mission":
         return <MissionTab tripId={tripData.id} tripData={tripData} />;
       case "chat":
-        return <ChatTab />;
+        return <ChatTab tripId={tripData.id} />;
       default:
         return null;
     }

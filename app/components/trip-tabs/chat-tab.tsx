@@ -4,6 +4,7 @@ import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { generateChatResponse } from "../../../services/geminiService";
+import { saveChatMessage, getChatMessages, ChatMessage as FirestoreChatMessage } from "../../../services/chatService";
 
 // Message type for the chat
 type Message = {
@@ -101,17 +102,59 @@ const TypingIndicator = () => {
      );
 };
 
-export default function ChatTab() {
-     const [messages, setMessages] = useState<Message[]>([
-          {
-               id: "1",
-               text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
-               sender: "bot",
-          },
-     ]);
+interface ChatTabProps {
+     tripId: string;
+}
+
+export default function ChatTab({ tripId }: ChatTabProps) {
+     const [messages, setMessages] = useState<Message[]>([]);
      const [inputText, setInputText] = useState("");
      const [isLoading, setIsLoading] = useState(false);
+     const [isInitialLoading, setIsInitialLoading] = useState(true);
      const flatListRef = useRef<FlatList>(null);
+
+     // Load existing messages when component mounts
+     useEffect(() => {
+          const loadMessages = async () => {
+               try {
+                    const firestoreMessages = await getChatMessages(tripId);
+
+                    // If no messages exist, add the welcome message
+                    if (firestoreMessages.length === 0) {
+                         const welcomeMessage: Message = {
+                              id: "welcome",
+                              text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
+                              sender: "bot",
+                         };
+                         await saveChatMessage(tripId, {
+                              text: welcomeMessage.text,
+                              sender: welcomeMessage.sender,
+                         });
+                         setMessages([welcomeMessage]);
+                    } else {
+                         // Convert Firestore messages to local message format
+                         const localMessages: Message[] = firestoreMessages.map(msg => ({
+                              id: msg.id || Date.now().toString(),
+                              text: msg.text,
+                              sender: msg.sender,
+                         }));
+                         setMessages(localMessages);
+                    }
+               } catch (error) {
+                    console.error("Error loading messages:", error);
+                    // Add welcome message as fallback
+                    setMessages([{
+                         id: "welcome",
+                         text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
+                         sender: "bot",
+                    }]);
+               } finally {
+                    setIsInitialLoading(false);
+               }
+          };
+
+          loadMessages();
+     }, [tripId]);
 
      // Scroll to bottom when messages change or when loading state changes
      useEffect(() => {
@@ -131,6 +174,16 @@ export default function ChatTab() {
                sender: "user",
           };
 
+          // Save user message to Firestore
+          try {
+               await saveChatMessage(tripId, {
+                    text: userMessage.text,
+                    sender: userMessage.sender,
+               });
+          } catch (error) {
+               console.error("Error saving user message:", error);
+          }
+
           setMessages(prevMessages => [...prevMessages, userMessage]);
           setInputText("");
 
@@ -144,7 +197,6 @@ export default function ChatTab() {
 
           try {
                // Get only the relevant conversation history
-               // Skip the welcome message if it's the first one
                const conversationHistory = messages.length > 1 || messages[0].sender === "user"
                     ? messages.map(msg => ({
                          role: msg.sender === "user" ? "user" : "model" as "user" | "model",
@@ -167,6 +219,16 @@ export default function ChatTab() {
                     sender: "bot",
                };
 
+               // Save bot message to Firestore
+               try {
+                    await saveChatMessage(tripId, {
+                         text: botMessage.text,
+                         sender: botMessage.sender,
+                    });
+               } catch (error) {
+                    console.error("Error saving bot message:", error);
+               }
+
                setMessages(prevMessages => [...prevMessages, botMessage]);
           } catch (error) {
                console.error("Error getting chat response:", error);
@@ -175,6 +237,17 @@ export default function ChatTab() {
                     text: "Sorry, I'm having trouble connecting right now. Please try again later.",
                     sender: "bot",
                };
+
+               // Save error message to Firestore
+               try {
+                    await saveChatMessage(tripId, {
+                         text: errorMessage.text,
+                         sender: errorMessage.sender,
+                    });
+               } catch (saveError) {
+                    console.error("Error saving error message:", saveError);
+               }
+
                setMessages(prevMessages => [...prevMessages, errorMessage]);
           } finally {
                setIsLoading(false);
@@ -197,6 +270,15 @@ export default function ChatTab() {
                </View>
           );
      };
+
+     // Add loading indicator for initial load
+     if (isInitialLoading) {
+          return (
+               <View style={[styles.container, styles.loadingContainer]}>
+                    <TypingIndicator />
+               </View>
+          );
+     }
 
      return (
           <KeyboardAvoidingView
@@ -305,10 +387,7 @@ const styles = StyleSheet.create({
      },
 
      loadingContainer: {
-          position: 'absolute',
-          bottom: 70,
-          left: 0,
-          right: 0,
+          justifyContent: 'center',
           alignItems: 'center',
      },
 
