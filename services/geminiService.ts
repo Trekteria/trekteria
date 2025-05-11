@@ -284,30 +284,6 @@ export const generatePackingList = async (
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
-    //   if (!response) {
-    //     console.error(
-    //       "Empty response from Gemini in generatePackingList for trip:",
-    //       tripName
-    //     );
-    //     return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
-    //   }
-
-    //   console.log(`Packing items from Gemini for trip "${tripName}":`, response);
-
-    //   // Validate the response format
-    //   if (!response.includes("#")) {
-    //     console.error(
-    //       "Invalid response format from Gemini in generatePackingList:",
-    //       response
-    //     );
-    //     return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
-    //   }
-
-    //   return response;
-    // } catch (error) {
-    //   console.error("Error generating packing items:", error);
-    //   return "💧 Water bottle (stay hydrated)#🥾 Hiking boots (for comfortable walking)#🧢 Hat (sun protection)#🕶️ Sunglasses (eye protection)#🧴 Sunscreen (skin protection)#🔦 Flashlight (for darkness)#🧰 First aid kit (for emergencies)";
-    // }
     const validateResponse = (
       response: string | undefined,
       tripName: string,
@@ -315,14 +291,20 @@ export const generatePackingList = async (
       logPrefix: string
     ): string => {
       if (!response) {
-        console.error(`Empty response from Gemini in ${logPrefix} for trip:`, tripName);
+        console.error(
+          `Empty response from Gemini in ${logPrefix} for trip:`,
+          tripName
+        );
         return defaultResponse;
       }
 
       console.log(`${logPrefix} from Gemini for trip "${tripName}":`, response);
 
       if (!response.includes("#")) {
-        console.error(`Invalid response format from Gemini in ${logPrefix}:`, response);
+        console.error(
+          `Invalid response format from Gemini in ${logPrefix}:`,
+          response
+        );
         return defaultResponse;
       }
 
@@ -332,13 +314,92 @@ export const generatePackingList = async (
     const defaultPackingList =
       "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
 
-    return validateResponse(response, tripName, defaultPackingList, "generatePackingList");
+    return validateResponse(
+      response,
+      tripName,
+      defaultPackingList,
+      "generatePackingList"
+    );
   } catch (error) {
     console.error("Error generating packing items:", error);
     return "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
   }
 };
 
+export const generateChatResponse = async (
+  message: string,
+  chatHistory: { role: "user" | "model"; text: string }[] = []
+): Promise<string> => {
+  try {
+    // Initialize chat session with history
+    // Gemini requires the first message to be from the user
+    // If the first message is from model, we'll initialize without history
+    // and handle the conversation manually
+    let sanitizedHistory = [...chatHistory];
+
+    // Remove model messages from the beginning until we find a user message
+    while (
+      sanitizedHistory.length > 0 &&
+      sanitizedHistory[0].role === "model"
+    ) {
+      sanitizedHistory.shift();
+    }
+
+    // If we have no history left or empty history, don't use history
+    const useHistory = sanitizedHistory.length > 0;
+
+    // Create a system prompt to guide the model's behavior
+    const systemPrompt = `
+You are TrailMate AI, an expert hiking and outdoor adventure assistant, who always follow eco-friendly and sustainable practices.
+Follow these guidelines in your responses:
+- Provide helpful, accurate information about hiking, trails, and outdoor activities
+- Be concise but informative, aim for responses under 250 words, and 100 words is ideal
+- Emphasize safety and environmental responsibility in outdoor activities
+- When appropriate, mention sustainable practices and Leave No Trace principles
+- Focus on being practical and actionable
+- If you don't know something, say so rather than making up information
+- Personalize responses based on the user's preferences and experience level
+- Use a friendly, encouraging tone
+- Do not use bold text, or any other formatting
+- Write in clean format, with proper spacing and punctuation
+- Use emojis to make the response more engaging
+
+The user is planning a hiking trip. Help them with their questions. If the user asks about the things that are not related to hiking, please say "I'm sorry, I can't help with that."
+`;
+
+    // Inject the system prompt into the user's message
+    const enhancedMessage = `${systemPrompt}\n\nUser question: ${message}`;
+
+    const chatSession = model.startChat({
+      generationConfig: {
+        ...generationConfig,
+        maxOutputTokens: 1024, // Using shorter responses for chat
+      },
+      history: useHistory
+        ? sanitizedHistory.map((msg) => ({
+            role: msg.role,
+            parts: [{ text: msg.text }],
+          }))
+        : [],
+    });
+
+    // Send the enhanced message to Gemini
+    const result = await chatSession.sendMessage(enhancedMessage);
+    let response = result.response.text();
+
+    console.log("Raw response from Gemini in chat:", response);
+
+    if (!response) {
+      console.error("Empty response from Gemini in chat");
+      return "I'm sorry, I couldn't generate a response at this time. Please try again.";
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error generating chat response:", error);
+    return "I'm sorry, I encountered an issue while processing your request. Please try again later.";
+  }
+};
 export const checkImageRelevance = async (
   description: string,
   altDescription: string
