@@ -176,9 +176,9 @@ export const parseRecommendations = async (
                   !activity.includes("-")
                 ) {
                   return {
-                    activity: "Default activity",
-                    startTime: "9:00 AM",
-                    endTime: "5:00 PM",
+                    activity: "Error parsing activity",
+                    startTime: "invalid",
+                    endTime: "invalid",
                   };
                 }
 
@@ -194,7 +194,11 @@ export const parseRecommendations = async (
                   endTime: timeParts[1]?.trim() || "5:00 PM",
                 };
               })
-              .filter(Boolean),
+              .filter(
+                (activity) =>
+                  activity.activity !== "Default activity" &&
+                  activity.activity !== "Error parsing activity"
+              ),
           };
         })
         .filter(Boolean); // Filter out null entries
