@@ -5,6 +5,7 @@ import { Colors } from "../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { generateChatResponse } from "../../../services/geminiService";
 import { saveChatMessage, getChatMessages, ChatMessage as FirestoreChatMessage } from "../../../services/chatService";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 // Message type for the chat
 type Message = {
@@ -19,6 +20,9 @@ const TypingIndicator = () => {
      const [dot1] = useState(new Animated.Value(0));
      const [dot2] = useState(new Animated.Value(0));
      const [dot3] = useState(new Animated.Value(0));
+     const { colorScheme } = useColorScheme();
+     const isDarkMode = colorScheme === 'dark';
+     const theme = isDarkMode ? Colors.dark : Colors.light;
 
      // Animation function for a single dot
      const animateDot = (dot: Animated.Value, delay: number) => {
@@ -77,24 +81,33 @@ const TypingIndicator = () => {
      });
 
      return (
-          <View style={[styles.messageBubble, styles.botMessage, styles.loadingBubble]}>
+          <View style={[styles.messageBubble, styles.botMessage, styles.loadingBubble, { backgroundColor: isDarkMode ? '#444' : '#f0f0f0' }]}>
                <View style={styles.dotsContainer}>
                     <Animated.View
                          style={[
                               styles.dot,
-                              { transform: [{ translateY: dot1TranslateY }] }
+                              {
+                                   transform: [{ translateY: dot1TranslateY }],
+                                   backgroundColor: isDarkMode ? '#999' : '#666'
+                              }
                          ]}
                     />
                     <Animated.View
                          style={[
                               styles.dot,
-                              { transform: [{ translateY: dot2TranslateY }] }
+                              {
+                                   transform: [{ translateY: dot2TranslateY }],
+                                   backgroundColor: isDarkMode ? '#999' : '#666'
+                              }
                          ]}
                     />
                     <Animated.View
                          style={[
                               styles.dot,
-                              { transform: [{ translateY: dot3TranslateY }] }
+                              {
+                                   transform: [{ translateY: dot3TranslateY }],
+                                   backgroundColor: isDarkMode ? '#999' : '#666'
+                              }
                          ]}
                     />
                </View>
@@ -112,6 +125,9 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      const [isLoading, setIsLoading] = useState(false);
      const [isInitialLoading, setIsInitialLoading] = useState(true);
      const flatListRef = useRef<FlatList>(null);
+     const { colorScheme } = useColorScheme();
+     const isDarkMode = colorScheme === 'dark';
+     const theme = isDarkMode ? Colors.dark : Colors.light;
 
      // Load existing messages when component mounts
      useEffect(() => {
@@ -256,14 +272,21 @@ export default function ChatTab({ tripId }: ChatTabProps) {
 
      const renderMessage = ({ item }: { item: Message }) => {
           const isUserMessage = item.sender === "user";
-          const messageStyle = isUserMessage ? styles.userMessage : styles.botMessage;
+          const messageStyle = [
+               styles.messageBubble,
+               isUserMessage ?
+                    [styles.userMessage, { backgroundColor: theme.primary }] :
+                    [styles.botMessage, { backgroundColor: isDarkMode ? '#444' : '#f0f0f0', borderBottomLeftRadius: 5 }]
+          ];
           const textStyle = [
                styles.messageText,
-               isUserMessage ? styles.userMessageText : styles.botMessageText
+               isUserMessage ?
+                    [styles.userMessageText, { color: 'white' }] :
+                    [styles.botMessageText, { color: theme.text }]
           ];
 
           return (
-               <View style={[styles.messageBubble, messageStyle]}>
+               <View style={messageStyle}>
                     <Text style={textStyle}>
                          {item.text}
                     </Text>
@@ -274,7 +297,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      // Add loading indicator for initial load
      if (isInitialLoading) {
           return (
-               <View style={[styles.container, styles.loadingContainer]}>
+               <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.background }]}>
                     <TypingIndicator />
                </View>
           );
@@ -282,12 +305,12 @@ export default function ChatTab({ tripId }: ChatTabProps) {
 
      return (
           <KeyboardAvoidingView
-               style={styles.container}
+               style={[styles.container, { backgroundColor: theme.background }]}
                behavior={Platform.OS === "ios" ? "padding" : undefined}
                keyboardVerticalOffset={100}
           >
-               <Text style={styles.title}>AI Chat Assistant</Text>
-               <View style={styles.chatContainer}>
+               <Text style={[styles.title, { color: theme.text }]}>AI Chat Assistant</Text>
+               <View style={[styles.chatContainer, { backgroundColor: isDarkMode ? theme.card : 'white' }]}>
                     <FlatList
                          ref={flatListRef}
                          data={messages}
@@ -297,10 +320,17 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                          ListFooterComponent={isLoading ? <TypingIndicator /> : null}
                     />
 
-                    <View style={styles.chatInputContainer}>
+                    <View style={[
+                         styles.chatInputContainer,
+                         {
+                              borderColor: theme.borderColor,
+                              backgroundColor: isDarkMode ? Colors.dark.background : 'white'
+                         }
+                    ]}>
                          <TextInput
-                              style={styles.chatInput}
+                              style={[styles.chatInput, { color: theme.text }]}
                               placeholder="Ask me anything..."
+                              placeholderTextColor={theme.inactive}
                               value={inputText}
                               onChangeText={setInputText}
                               onSubmitEditing={handleSend}
@@ -316,7 +346,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                                    name="send"
                                    style={styles.sendIcon}
                                    size={20}
-                                   color={inputText.trim() === "" ? Colors.inactive : Colors.primary}
+                                   color={inputText.trim() === "" ? theme.inactive : theme.primary}
                               />
                          </TouchableOpacity>
                     </View>
@@ -341,7 +371,6 @@ const styles = StyleSheet.create({
      chatContainer: {
           flex: 1,
           padding: 15,
-          backgroundColor: 'white',
           borderRadius: 30,
           marginTop: 15,
           boxShadow: "0px 0px 20px 0px rgba(0, 0, 0, 0.1)",
@@ -359,15 +388,12 @@ const styles = StyleSheet.create({
      },
 
      userMessage: {
-          backgroundColor: Colors.primary,
           alignSelf: 'flex-end',
           borderBottomRightRadius: 5,
      },
 
      botMessage: {
-          backgroundColor: '#f0f0f0',
           alignSelf: 'flex-start',
-          borderBottomLeftRadius: 5,
      },
 
      messageText: {
@@ -377,12 +403,10 @@ const styles = StyleSheet.create({
      },
 
      userMessageText: {
-          color: 'white',
           lineHeight: 25,
      },
 
      botMessageText: {
-          color: '#333333',
           lineHeight: 25,
      },
 
@@ -409,7 +433,6 @@ const styles = StyleSheet.create({
           width: 10,
           height: 10,
           borderRadius: 5,
-          backgroundColor: '#666',
           marginHorizontal: 3,
      },
 
@@ -422,9 +445,7 @@ const styles = StyleSheet.create({
           alignItems: "center",
           justifyContent: "space-between",
           borderWidth: 1,
-          borderColor: '#e0e0e0',
           borderRadius: 50,
-          backgroundColor: 'white',
      },
 
      chatInput: {

@@ -8,6 +8,7 @@ import {
   Platform,
   Animated,
   useWindowDimensions,
+  ViewStyle,
 } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Typography } from "../../constants/Typography";
@@ -17,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { TabView, SceneMap } from "react-native-tab-view";
+import { useColorScheme } from "../../hooks/useColorScheme";
 
 import InfoTab from "../components/trip-tabs/info-tab";
 import ScheduleTab from "../components/trip-tabs/schedule-tab";
@@ -52,6 +54,10 @@ function Trip() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
+
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Replace the simple SceneMap with a function that passes props
   const renderScene = ({ route }: { route: { key: string } }) => {
@@ -132,14 +138,14 @@ function Trip() {
               key={route.key}
               style={[
                 styles.tabButton,
-                isActive && { backgroundColor: Colors.primary },
+                { backgroundColor: isActive ? theme.primary : (isDarkMode ? "#333" : "#f2f2f2") },
               ]}
               onPress={() => setIndex(i)}
             >
               <Ionicons
                 name={iconMap[route.key]}
                 size={24}
-                color={isActive ? Colors.white : "#999"}
+                color={isActive ? Colors.white : theme.icon}
               />
             </TouchableOpacity>
           );
@@ -148,10 +154,19 @@ function Trip() {
     );
   };
 
+  // Create the action sheet style with proper typing
+  const actionSheetStyle: ViewStyle = {
+    flex: 1,
+    backgroundColor: theme.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 5,
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <MapView
           style={styles.map}
           initialRegion={initialRegion}
@@ -159,6 +174,7 @@ function Trip() {
           showsScale={true}
           mapPadding={{ top: 80, right: 20, bottom: 0, left: 20 }}
           onPress={() => actionSheetRef.current?.show()}
+          userInterfaceStyle={isDarkMode ? "dark" : "light"}
         >
           <Marker
             coordinate={{
@@ -171,17 +187,17 @@ function Trip() {
         </MapView>
         <View style={styles.topBar}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: theme.background }]}
             onPress={() => router.back()}
           >
-            <Ionicons name="close" size={30} color="black" />
+            <Ionicons name="close" size={30} color={theme.text} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.tripNameContainer}
+            style={[styles.tripNameContainer, { backgroundColor: theme.background }]}
             onPress={() => router.back()}
           >
-            <Text style={styles.tripName}>{tripData.name}</Text>
+            <Text style={[styles.tripName, { color: theme.primary }]}>{tripData.name}</Text>
           </TouchableOpacity>
         </View>
 
@@ -197,7 +213,7 @@ function Trip() {
 
         <ActionSheet
           ref={actionSheetRef}
-          containerStyle={styles.actionSheet}
+          containerStyle={actionSheetStyle}
           overlayColor="transparent"
           gestureEnabled
           snapPoints={[45, 100]}
@@ -270,7 +286,7 @@ function Trip() {
                                         </Animated.View>
                                    </View> 
                               </View> */}
-            <View style={styles.tabContent}>
+            <View style={[styles.tabContent, { borderColor: theme.background }]}>
               <TabView
                 renderScene={renderScene}
                 navigationState={{ index, routes }}
@@ -289,7 +305,6 @@ function Trip() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   title: {
     ...Typography.text.h1,
@@ -311,7 +326,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   backButton: {
-    backgroundColor: "white",
     padding: 10,
     borderRadius: 30,
     shadowColor: "#000",
@@ -330,7 +344,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "70%",
     height: "100%",
-    backgroundColor: "white",
     borderRadius: 30,
     shadowColor: "#000",
     shadowOffset: {
@@ -344,7 +357,6 @@ const styles = StyleSheet.create({
   tripName: {
     ...Typography.text.h4,
     textAlign: "center",
-    color: Colors.primary,
   },
   // Commenting out unused styles for bottom buttons
   /* bottomButtonsContainer: {
@@ -381,7 +393,6 @@ const styles = StyleSheet.create({
      }, */
   actionSheet: {
     flex: 1,
-    backgroundColor: "white",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 5,
@@ -434,13 +445,9 @@ const styles = StyleSheet.create({
   tabContent: {
     padding: 5,
     height: "100%",
-    borderWidth: 1,
-    borderBlockColor: "white",
-    borderColor: "white",
   },
   customTabBar: {
     flexDirection: "row",
-    backgroundColor: "white",
     justifyContent: "space-around",
     paddingVertical: 10,
     height: 70,
@@ -451,7 +458,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
-    backgroundColor: "#f2f2f2",
     borderRadius: 15,
     marginHorizontal: 5,
   },

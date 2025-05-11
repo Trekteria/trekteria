@@ -16,6 +16,7 @@ import { Colors } from "../../../constants/Colors";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 // Add interface for component props
 interface PackingTabProps {
@@ -38,6 +39,11 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   } | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Get the color scheme
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Ref to hold the current trip ID
   const currentTripIdRef = useRef<string>("");
@@ -344,33 +350,33 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading packing items...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.inactive }]}>Loading packing items...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: isDarkMode ? "#ff6b6b" : "red" }]}>{error}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Packing Checklist</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Packing Checklist</Text>
         <TouchableOpacity style={styles.editButton} onPress={toggleEditMode}>
-          <Text style={styles.editButtonText}>
+          <Text style={[styles.editButtonText, { color: theme.primary }]}>
             {isEditing ? "Done" : "Edit"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.borderColor }]} />
 
       <FlatList
         data={packingItems}
@@ -383,14 +389,14 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                   style={styles.editIcon}
                   onPress={() => openEditModal(item)}
                 >
-                  <Ionicons name="pencil" size={18} color="#555" />
+                  <Ionicons name="pencil" size={18} color={theme.inactive} />
                 </TouchableOpacity>
-                <Text style={styles.packingText}>{item.title}</Text>
+                <Text style={[styles.packingText, { color: theme.text }]}>{item.title}</Text>
                 <TouchableOpacity
                   style={styles.deleteIcon}
                   onPress={() => handleDeleteItem(item.id)}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#ff3b30" />
+                  <Ionicons name="trash-outline" size={18} color={isDarkMode ? "#ff6b6b" : "#ff3b30"} />
                 </TouchableOpacity>
               </View>
             ) : (
@@ -398,13 +404,14 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                 style={styles.packingItem}
                 onPress={() => togglePackingItem(item.id)}
               >
-                <View style={styles.checkboxCircle}>
+                <View style={[styles.checkboxCircle, { borderColor: theme.text }]}>
                   {item.checked && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text
                   style={[
                     styles.packingText,
-                    item.checked && styles.packingCompleted,
+                    { color: theme.text },
+                    item.checked && [styles.packingCompleted, { color: theme.inactive }],
                   ]}
                 >
                   {item.title}
@@ -414,20 +421,27 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: theme.inactive }]}>
             No packing items available. Add some items using the field below.
           </Text>
         }
       />
 
       {/* Add new item section */}
-      <View style={styles.addItemContainer}>
+      <View style={[styles.addItemContainer, { borderTopColor: theme.borderColor }]}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              borderColor: theme.borderColor,
+              color: theme.text,
+              backgroundColor: isDarkMode ? Colors.dark.card : Colors.light.background
+            }
+          ]}
           value={newItemText}
           onChangeText={setNewItemText}
           placeholder="Add new packing item..."
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.inactive}
         />
         <TouchableOpacity
           style={styles.addButton}
@@ -437,7 +451,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           <Ionicons
             name="add-circle"
             size={36}
-            color={newItemText.trim() ? Colors.primary : "#ccc"}
+            color={newItemText.trim() ? theme.primary : theme.inactive}
           />
         </TouchableOpacity>
       </View>
@@ -445,11 +459,15 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       {/* Edit Modal */}
       <Modal visible={isModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Item</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Edit Item</Text>
 
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, {
+                borderColor: theme.borderColor,
+                color: theme.text,
+                backgroundColor: isDarkMode ? Colors.dark.background : Colors.light.background
+              }]}
               value={editingItem?.title || ""}
               onChangeText={(text) =>
                 setEditingItem((prev) =>
@@ -461,20 +479,21 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: isDarkMode ? "#333" : "#f0f0f0" }]}
                 onPress={() => {
                   setIsModalVisible(false);
                   setEditingItem(null);
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.modalButton,
                   styles.saveButton,
-                  !editingItem?.title.trim() && styles.disabledButton,
+                  { backgroundColor: theme.primary },
+                  !editingItem?.title.trim() && [styles.disabledButton, { backgroundColor: theme.inactive }],
                 ]}
                 onPress={handleUpdateItem}
                 disabled={!editingItem?.title.trim()}
@@ -510,12 +529,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   editButtonText: {
-    color: Colors.primary,
     fontWeight: "500",
   },
   divider: {
     height: 1,
-    backgroundColor: "#ccc",
     marginBottom: 18,
   },
   packingItemRow: {
@@ -535,7 +552,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#555",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -552,7 +568,6 @@ const styles = StyleSheet.create({
   },
   packingCompleted: {
     textDecorationLine: "line-through",
-    color: "gray",
   },
   loadingContainer: {
     flex: 1,
@@ -562,7 +577,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: "#666",
   },
   errorContainer: {
     flex: 1,
@@ -571,12 +585,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: "red",
     textAlign: "center",
   },
   emptyText: {
     textAlign: "center",
-    color: "#666",
     marginTop: 20,
     marginBottom: 20,
   },
@@ -587,12 +599,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
@@ -616,7 +626,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
     width: "80%",
@@ -636,7 +645,6 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 20,
@@ -654,7 +662,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginRight: 10,
-    backgroundColor: "#f0f0f0",
   },
   cancelButtonText: {
     color: "#333",

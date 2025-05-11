@@ -1,5 +1,4 @@
 import { TextStyle } from "react-native";
-import { Colors } from "./Colors";
 
 export const Typography = {
   // Font families
@@ -24,28 +23,24 @@ export const Typography = {
       fontFamily: "Montserrat",
       fontSize: 42,
       fontWeight: "500",
-      color: Colors.black,
     } as TextStyle,
 
     h2: {
       fontFamily: "Montserrat",
       fontSize: 25,
       fontWeight: "500",
-      color: Colors.black,
     } as TextStyle,
 
     h3: {
       fontFamily: "Montserrat",
       fontSize: 20,
       fontWeight: "500",
-      color: Colors.black,
     } as TextStyle,
 
     h4: {
       fontFamily: "Montserrat",
       fontSize: 16,
       fontWeight: "500",
-      color: Colors.black,
     } as TextStyle,
 
     // Body text
@@ -53,14 +48,12 @@ export const Typography = {
       fontFamily: "OpenSans",
       fontSize: 16,
       fontWeight: "400",
-      color: Colors.black,
     } as TextStyle,
 
     bodySmall: {
       fontFamily: "OpenSans",
       fontSize: 14,
       fontWeight: "400",
-      color: Colors.black,
     } as TextStyle,
 
     // Button text
@@ -68,7 +61,6 @@ export const Typography = {
       fontFamily: "Montserrat",
       fontSize: 18,
       fontWeight: "700",
-      color: "white",
     } as TextStyle,
 
     // Other styles
@@ -76,14 +68,12 @@ export const Typography = {
       fontFamily: "OpenSans",
       fontSize: 12,
       fontWeight: "400",
-      color: "#666",
     } as TextStyle,
 
     link: {
       fontFamily: "OpenSans",
       fontSize: 16,
       fontWeight: "400",
-      color: Colors.primary,
       textDecorationLine: "underline",
     } as TextStyle,
   },

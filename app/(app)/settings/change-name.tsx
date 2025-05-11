@@ -14,12 +14,16 @@ import { useState, useEffect } from "react";
 import { auth, db } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 export default function ChangeName() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,7 +65,7 @@ export default function ChangeName() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <Stack.Screen
         options={{
           headerShown: false,
@@ -71,35 +75,53 @@ export default function ChangeName() {
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color={"black"} />
+            <Ionicons name="chevron-back" size={28} color={theme.text} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Change Name</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>Change Name</Text>
       </View>
 
       <View style={styles.form}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              borderColor: theme.borderColor,
+              color: theme.text,
+              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+            }
+          ]}
           value={firstName}
           onChangeText={setFirstName}
           placeholder="Enter your first name"
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.inactive}
         />
 
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              borderColor: theme.borderColor,
+              color: theme.text,
+              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+            }
+          ]}
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter your last name"
-          placeholderTextColor="#666"
+          placeholderTextColor={theme.inactive}
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: theme.buttonBackground },
+            loading && styles.buttonDisabled
+          ]}
           onPress={handleUpdateName}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: theme.buttonText }]}>
             {loading ? "Updating..." : "Update Name"}
           </Text>
         </TouchableOpacity>
@@ -111,7 +133,6 @@ export default function ChangeName() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerContainer: {
     padding: 20,
@@ -123,7 +144,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.text.h1,
-    color: Colors.primary,
   },
   form: {
     width: "100%",
@@ -133,18 +153,15 @@ const styles = StyleSheet.create({
   label: {
     ...Typography.text.body,
     marginBottom: 8,
-    color: "#333",
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.inactive,
     borderRadius: 100,
     paddingHorizontal: 30,
     paddingVertical: 20,
     fontSize: 16,
   },
   button: {
-    backgroundColor: Colors.primary,
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
@@ -155,6 +172,5 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...Typography.text.button,
-    color: "white",
   },
 });
