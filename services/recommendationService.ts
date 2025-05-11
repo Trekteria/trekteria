@@ -58,12 +58,15 @@ export const fetchCoordinates = async (
  * Parse the recommendation string into structured trip data
  * @param recommendationsString Raw string from Gemini API
  * @param userId Current user's ID
+ * @param formattedSummary Text summary of preferences
+ * @param formData Raw form data
  * @returns Array of parsed Trip objects
  */
 export const parseRecommendations = async (
   recommendationsString: string,
   userId: string,
-  formattedSummary: string
+  formattedSummary: string,
+  formData: any
 ): Promise<Trip[]> => {
   if (!recommendationsString) return [];
 
@@ -142,7 +145,7 @@ export const parseRecommendations = async (
       const scheduleArr = scheduleString
         .split("$")
         .filter((day) => day && day.trim()) // Ensure day is not null/undefined and not empty
-        .map((dayBlock) => {
+        .map((dayBlock, index) => {
           // Ensure the day block has the expected format
           if (!dayBlock.includes("#")) {
             return null;
@@ -152,9 +155,18 @@ export const parseRecommendations = async (
           const day = dayParts[0]?.trim() || "Day1";
           const activities = dayParts.slice(1).filter(Boolean);
 
+          // Calculate the date based on startDate in dateRange
+          const startDate = formData[1]?.value?.startDate
+            ? new Date(formData[1]?.value?.startDate)
+            : new Date();
+
+          // Add index days to the start date to get the current day's date
+          const currentDate = new Date(startDate);
+          currentDate.setDate(startDate.getDate() + index);
+
           return {
-            day: parseInt(day.replace("Day", "")) || 1,
-            date: new Date().toISOString().split("T")[0],
+            day: index + 1, // Sequential day number starting from 1
+            date: currentDate.toISOString().split("T")[0],
             activities: activities
               .map((activity) => {
                 // Ensure activity has expected format
@@ -193,10 +205,10 @@ export const parseRecommendations = async (
       // Add null check for missions and include points based on mission index
       const missionsArr = missionsString
         ? missionsString.split("#").map((mission, index) => ({
-          task: mission?.trim() || "Explore the area",
-          completed: false,
-          points: (index + 1) * 5, // 5, 10, 15, 20, 25 points
-        }))
+            task: mission?.trim() || "Explore the area",
+            completed: false,
+            points: (index + 1) * 5, // 5, 10, 15, 20, 25 points
+          }))
         : [{ task: "Explore the area", completed: false, points: 5 }];
 
       // Generate packing list based on the trip name
@@ -208,9 +220,9 @@ export const parseRecommendations = async (
       // Add null check for packing list
       const packingChecklistArr = packingListString
         ? packingListString.split("#").map((item) => ({
-          item: item?.trim() || "Essential item",
-          checked: false,
-        }))
+            item: item?.trim() || "Essential item",
+            checked: false,
+          }))
         : [{ item: "Water bottle", checked: false }];
 
       // Fetch image URL for the trip
@@ -228,7 +240,7 @@ export const parseRecommendations = async (
         address: address,
         description: description,
         imageUrl: imageUrl,
-        dateRange: {
+        dateRange: formData[1]?.value || {
           startDate: new Date().toISOString().split("T")[0],
           endDate: new Date().toISOString().split("T")[0],
         },
@@ -282,6 +294,10 @@ export const savePlan = async (
   trips: Trip[]
 ): Promise<string> => {
   try {
+    // Log the entire formData structure
+    console.log("Form Data Structure:", JSON.stringify(formData, null, 2));
+    console.log("Date Range from formData:", formData[1]?.value);
+
     // Format the preferences data structure to match Firestore
     const preferences = {
       dateRange: formData[1]?.value || {},
@@ -374,7 +390,8 @@ export const processRecommendations = async (
     const trips = await parseRecommendations(
       recommendationsString,
       userId,
-      formattedSummary
+      formattedSummary,
+      formData
     );
 
     if (trips.length === 0) {
