@@ -276,4 +276,13 @@ const styles = StyleSheet.create({
     ...Typography.text.button,
     color: "white",
   },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#666",
+  },
 });
