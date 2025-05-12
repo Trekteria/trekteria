@@ -24,6 +24,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { db, auth } from "../../services/firebaseConfig";
+import { useColorScheme } from "../../hooks/useColorScheme";
 
 // Define the Trip interface for type safety
 interface Trip {
@@ -45,6 +46,10 @@ export default function Result() {
   const [parsedTrips, setParsedTrips] = useState<Trip[]>([]);
   const [summary, setSummary] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   const UNSPLASH_ACCESS_KEY = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY;
 
@@ -231,21 +236,21 @@ export default function Result() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <Ionicons name="close" size={40} color={Colors.black} />
+          <Ionicons name="close" size={40} color={theme.text} />
         </TouchableOpacity>
 
         {routePlanId ? (
           <>
-            <Text style={styles.title}>Your Saved Trip</Text>
-            <Text style={styles.secondTitle}>Trip Details</Text>
+            <Text style={[styles.title, { color: theme.primary }]}>Your Saved Trip</Text>
+            <Text style={[styles.secondTitle, { color: theme.primary }]}>Trip Details</Text>
           </>
         ) : (
           <>
-            <Text style={styles.title}>Handpicked for you -</Text>
-            <Text style={styles.secondTitle}>Select Your Trip!</Text>
+            <Text style={[styles.title, { color: theme.primary }]}>Handpicked for you -</Text>
+            <Text style={[styles.secondTitle, { color: theme.primary }]}>Select Your Trip!</Text>
           </>
         )}
 
@@ -256,8 +261,8 @@ export default function Result() {
         >
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
-              <Text style={styles.loadingText}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loadingText, { color: theme.icon }]}>
                 Loading your trip recommendations...
               </Text>
             </View>
@@ -265,7 +270,7 @@ export default function Result() {
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity
-                style={styles.retryButton}
+                style={[styles.retryButton, { backgroundColor: theme.primary }]}
                 onPress={handleRetry}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
@@ -276,8 +281,8 @@ export default function Result() {
               {parsedTrips.map(renderTripCard)}
             </View>
           ) : summary ? (
-            <View style={styles.section}>
-              <Text style={styles.summaryText}>{summary}</Text>
+            <View style={[styles.section, { backgroundColor: isDarkMode ? '#2C2C2C' : '#f5f5f5' }]}>
+              <Text style={[styles.summaryText, { color: theme.text }]}>{summary}</Text>
             </View>
           ) : null}
         </ScrollView>
@@ -289,11 +294,9 @@ export default function Result() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
   },
   container: {
     flex: 1,
-    backgroundColor: "white",
     paddingHorizontal: 20,
   },
   scrollView: {
@@ -309,18 +312,15 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.text.h2,
     marginBottom: 5,
-    color: Colors.primary,
     textAlign: "left",
   },
   secondTitle: {
     ...Typography.text.h1,
     fontWeight: "thin",
-    color: Colors.primary,
     textAlign: "left",
   },
   section: {
     padding: 15,
-    backgroundColor: "#f5f5f5",
     borderRadius: 10,
   },
   sectionTitle: {
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
   summaryText: {
     ...Typography.text.body,
     lineHeight: 24,
-    color: Colors.black,
     marginBottom: 20,
   },
   loadingContainer: {
@@ -345,7 +344,6 @@ const styles = StyleSheet.create({
   loadingText: {
     ...Typography.text.body,
     marginTop: 10,
-    color: Colors.inactive,
   },
   errorContainer: {
     padding: 20,
@@ -358,7 +356,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   retryButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,

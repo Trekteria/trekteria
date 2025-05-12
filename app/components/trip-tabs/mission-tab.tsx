@@ -12,6 +12,7 @@ import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
 import { db, auth } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 // Add this interface to define the component props
 interface MissionTabProps {
@@ -25,6 +26,9 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch missions from Firestore or tripData
   useEffect(() => {
@@ -184,8 +188,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
                   ecoPoints: currentPoints + missionPoints,
                 });
                 console.log(
-                  `Added ${missionPoints} eco points. New total: ${
-                    currentPoints + missionPoints
+                  `Added ${missionPoints} eco points. New total: ${currentPoints + missionPoints
                   }`
                 );
               } else {
@@ -215,25 +218,25 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading missions...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.inactive }]}>Loading missions...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: isDarkMode ? "#ff6b6b" : "red" }]}>{error}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Missions To Complete</Text>
-      <View style={styles.divider} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Missions To Complete</Text>
+      <View style={[styles.divider, { backgroundColor: theme.borderColor }]} />
       <FlatList
         data={missions}
         keyExtractor={(item) => item.id}
@@ -242,25 +245,27 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             style={styles.missionItem}
             onPress={() => toggleMissionCompletion(item.id)}
           >
-            <View style={styles.checkboxCircle}>
-              {item.completed && <Text style={styles.checkmark}>✓</Text>}
+            <View style={[styles.checkboxCircle, { borderColor: theme.text }]}>
+              {item.completed && <Text style={[styles.checkmark, { color: theme.primary }]}>✓</Text>}
             </View>
             <Text
               style={[
                 styles.missionText,
-                item.completed && styles.missionCompleted,
+                { color: theme.text },
+                item.completed && [styles.missionCompleted, { color: theme.inactive }],
               ]}
             >
               {item.title}
             </Text>
-            <View style={styles.pointsContainer}>
+            <View style={[styles.pointsContainer, { backgroundColor: theme.primary }]}>
               <Text style={styles.pointsText}>{(index + 1) * 5}</Text>
               <Text style={styles.pointsLabel}>pts</Text>
             </View>
           </TouchableOpacity>
         )}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: theme.inactive }]}>
             No missions available for this trip.
           </Text>
         }
@@ -282,7 +287,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: "#666",
   },
   errorContainer: {
     flex: 1,
@@ -292,13 +296,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...Typography.text.body,
-    color: "red",
     textAlign: "center",
   },
   emptyText: {
     ...Typography.text.body,
     textAlign: "center",
-    color: "#666",
     marginTop: 20,
   },
   title: {
@@ -309,7 +311,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#ccc",
     marginBottom: 18,
   },
   missionItem: {
@@ -323,7 +324,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#555",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -331,22 +331,18 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 13,
-    color: Colors.primary || "#4CAF50",
     fontWeight: "bold",
   },
   missionText: {
     ...Typography.text.body,
     flex: 1,
-    color: "#333",
     flexWrap: "wrap", // Ensure text wraps properly
     paddingRight: 10, // Add padding to ensure text has room before points
   },
   missionCompleted: {
     textDecorationLine: "line-through",
-    color: "gray",
   },
   pointsContainer: {
-    backgroundColor: Colors.primary || "#4CAF50",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,

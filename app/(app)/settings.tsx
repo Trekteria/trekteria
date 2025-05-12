@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  Switch,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,9 +15,13 @@ import { Colors } from "../../constants/Colors";
 import { Typography } from "../../constants/Typography";
 import { auth } from "../../services/firebaseConfig";
 import { signOut } from "firebase/auth";
+import { useColorScheme } from "../../hooks/useColorScheme";
+import { Share } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
   const handleLogout = async () => {
     try {
@@ -27,79 +32,126 @@ export default function SettingsPage() {
     }
   };
 
+  // Get the appropriate theme colors
+  const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  const handleAppShare = async () => {
+    try {
+      const result = await Share.share({
+        title: "TrailMate - Your Hiking Companion",
+        message: "TrailMate is a great hiking companion! Download it here: https://yourappstorelink.com",
+        url: "https://yourappstorelink.com", // optional on Android
+      });
+  
+      // Optional: check result.action to see if shared or dismissed
+    } catch (error) {
+      console.error("Error sharing app:", error);
+    }
+  };
+  
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color={"black"} />
+            <Ionicons
+              name="chevron-back"
+              size={28}
+              color={theme.text}
+            />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>Settings</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
         {/* Preferences Section */}
-        <Text style={styles.sectionHeader}>Preferences</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Temperature</Text>
-          <Text style={styles.value}>°F</Text>
+        <Text style={[styles.sectionHeader, { color: theme.text }]}>Preferences</Text>
+
+        {/* Dark Mode Toggle */}
+        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Dark Mode</Text>
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleColorScheme}
+            trackColor={{ false: "#767577", true: Colors.primary }}
+            thumbColor="#f4f3f4"
+          />
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Unit</Text>
-          <Text style={styles.value}>Imperial</Text>
+
+        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Temperature</Text>
+          <Text style={[styles.value, { color: theme.icon }]}>°F</Text>
+        </View>
+        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Unit</Text>
+          <Text style={[styles.value, { color: theme.icon }]}>Imperial</Text>
         </View>
 
         {/* Account Section */}
-        <Text style={styles.sectionHeader}>Account</Text>
+        <Text style={[styles.sectionHeader, { color: theme.text }]}>Account</Text>
         <TouchableOpacity
-          style={styles.row}
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/(app)/settings/change-name")}
         >
-          <Text style={styles.label}>Change name</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Change name</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.row}
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/(app)/settings/change-email")}
         >
-          <Text style={styles.label}>Change email</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Change email</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.row}
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/(app)/settings/change-password")}
         >
-          <Text style={styles.label}>Change password</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Change password</Text>
         </TouchableOpacity>
 
         {/* Support Section */}
-        <Text style={styles.sectionHeader}>Support</Text>
-        <TouchableOpacity
-          style={styles.row}
+        <Text style={[styles.sectionHeader, { color: theme.text }]}>Support</Text>
+
+        {/* Share with friends */}
+        {/* <TouchableOpacity
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
-          <Text style={styles.label}>Share with friends</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Share with friends</Text>
+        </TouchableOpacity> */}
+
+        <TouchableOpacity onPress={handleAppShare} style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <Text style={[styles.label, {color: theme.text}]}>Share TrailMate with Friends</Text>
         </TouchableOpacity>
+
+        {/* Feedback */}
         <TouchableOpacity
-          style={styles.row}
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
-          <Text style={styles.label}>Feedback</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Feedback</Text>
         </TouchableOpacity>
+
+        {/* Rate the app */}
         <TouchableOpacity
-          style={styles.row}
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
-          <Text style={styles.label}>Rate on App Store</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Rate on App Store</Text>
         </TouchableOpacity>
 
         {/* Log Out Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Log Out</Text>
+        <TouchableOpacity
+          style={[styles.logoutButton, { backgroundColor: theme.buttonBackground }]}
+          onPress={handleLogout}
+        >
+          <Text style={[styles.logoutText, { color: theme.buttonText }]}>Log Out</Text>
         </TouchableOpacity>
 
         {/* Footer Version */}
-        <Text style={styles.version}>23.6.2</Text>
+        <Text style={[styles.version, { color: theme.icon }]}>1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -108,14 +160,12 @@ export default function SettingsPage() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerContainer: {
     padding: 20,
   },
   container: {
     paddingHorizontal: 20,
-    backgroundColor: "white",
     flexGrow: 1,
   },
   header: {
@@ -125,7 +175,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.text.h1, // 42px, Montserrat, medium weight
-    color: "#3C5A40",
   },
   sectionHeader: {
     ...Typography.text.h2, // 25px, Montserrat
@@ -134,7 +183,6 @@ const styles = StyleSheet.create({
   },
   row: {
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
     paddingVertical: 15,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -144,11 +192,9 @@ const styles = StyleSheet.create({
   },
   value: {
     ...Typography.text.body, // same as label, but with gray override
-    color: "gray",
   },
   logoutButton: {
     marginTop: 30,
-    backgroundColor: "#3C5A40",
     paddingVertical: 16,
     borderRadius: 100,
     alignItems: "center",

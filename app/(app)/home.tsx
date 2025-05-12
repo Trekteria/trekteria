@@ -29,6 +29,7 @@ import {
 import { Plan as PlanType, Trip as TripType } from "../../types/Types";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import { useColorScheme } from "../../hooks/useColorScheme";
 
 // Define types for the data
 interface Trip extends TripType {
@@ -128,6 +129,7 @@ interface TripBoxProps {
   onPress: (item: Trip) => void;
   onDelete: (id: string) => void;
   animationDelay?: number;
+  theme: any;
 }
 
 const TripBox: React.FC<TripBoxProps> = ({
@@ -137,6 +139,7 @@ const TripBox: React.FC<TripBoxProps> = ({
   onPress,
   onDelete,
   animationDelay = 0,
+  theme,
 }) => {
   const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
 
@@ -158,10 +161,10 @@ const TripBox: React.FC<TripBoxProps> = ({
     <Animated.View style={[styles.animatedBox, animatedStyle]}>
       {isEditing && (
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, { backgroundColor: theme.background }]}
           onPress={() => item.id && onDelete(item.id)}
         >
-          <Ionicons name="remove-outline" size={28} color={Colors.black} />
+          <Ionicons name="remove-outline" size={28} color={theme.text} />
         </TouchableOpacity>
       )}
       <TouchableOpacity
@@ -175,8 +178,8 @@ const TripBox: React.FC<TripBoxProps> = ({
           style={styles.planOverlay}
           locations={[0, 0.4, 1]}
         />
-        <View style={styles.dateContainer}>
-          <Text style={styles.dateText}>{dateText}</Text>
+        <View style={[styles.dateContainer, { backgroundColor: theme.card }]}>
+          <Text style={[styles.dateText, { color: theme.text }]}>{dateText}</Text>
         </View>
         <View style={styles.planInfo}>
           <Text style={styles.planName}>{item.name}</Text>
@@ -196,6 +199,7 @@ interface PlanBoxProps {
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
   animationDelay?: number;
+  theme: any;
 }
 
 const PlanBox: React.FC<PlanBoxProps> = ({
@@ -204,6 +208,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   onPress,
   onDelete,
   animationDelay = 0,
+  theme,
 }) => {
   const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
 
@@ -226,10 +231,10 @@ const PlanBox: React.FC<PlanBoxProps> = ({
     <Animated.View style={[styles.animatedBox, animatedStyle]}>
       {isEditing && (
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, { backgroundColor: theme.background }]}
           onPress={() => item.id && onDelete(item.id)}
         >
-          <Ionicons name="remove-outline" size={28} color={Colors.black} />
+          <Ionicons name="remove-outline" size={28} color={theme.text} />
         </TouchableOpacity>
       )}
       <TouchableOpacity
@@ -243,8 +248,8 @@ const PlanBox: React.FC<PlanBoxProps> = ({
           style={styles.planOverlay}
           locations={[0, 0.5, 1]}
         />
-        <View style={styles.dateContainer}>
-          <Text style={styles.dateText}>{dateText}</Text>
+        <View style={[styles.dateContainer, { backgroundColor: theme.card }]}>
+          <Text style={[styles.dateText, { color: theme.text }]}>{dateText}</Text>
         </View>
         <View style={styles.planInfo}>
           <View style={styles.planMetaRow}>
@@ -259,6 +264,10 @@ const PlanBox: React.FC<PlanBoxProps> = ({
 // --- Home Screen Component ---
 export default function Home() {
   const router = useRouter();
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
+
   const [userName, setUserName] = useState("");
   const [ecoPoints, setEcoPoints] = useState(0); // Add state for eco points
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -506,29 +515,31 @@ export default function Home() {
   };
 
   const EmptyPlansComponent = () => (
-    <View style={styles.emptyContainer}>
+    <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
       <Ionicons
         name="map-outline"
         size={35}
         color={Colors.inactive}
         style={styles.emptyIcon}
       />
-      <Text style={styles.emptyText}>No items found</Text>
-      <Text style={styles.emptySubtext}>
+      <Text style={[styles.emptyText, { color: theme.icon }]}>No items found</Text>
+      <Text style={[styles.emptySubtext, { color: theme.icon }]}>
         Start planning your first adventure!
       </Text>
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
+    >
       {/* Info Panel */}
       <View style={styles.infoPanel}>
         <View>
           <View style={styles.nameRow}>
-            <Text style={styles.username}>Hello, </Text>
+            <Text style={[styles.username, { color: theme.primary }]}>Hello, </Text>
             <Text
-              style={styles.username}
+              style={[styles.username, { color: theme.primary }]}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
@@ -541,33 +552,36 @@ export default function Home() {
           </View>
         </View>
         <TouchableOpacity onPress={goToSettings}>
-          <Ionicons name="settings-outline" size={32} color={"dark"} />
+          <Ionicons name="settings-outline" size={32} color={theme.icon} />
         </TouchableOpacity>
       </View>
 
       {/* Plan a Trip Button */}
-      <TouchableOpacity style={styles.planButton} onPress={goToTripPlanning}>
+      <TouchableOpacity
+        style={[styles.planButton, { backgroundColor: theme.card, shadowColor: isDarkMode ? 'rgba(0,0,0,0.3)' : '#000' }]}
+        onPress={goToTripPlanning}
+      >
         <View style={styles.planButtonContent}>
           <Ionicons
             name="map-outline"
             size={19}
-            color="#444"
+            color={theme.text}
             style={styles.planButtonIcon}
           />
-          <Text style={styles.planButtonText}>Plan a Trip</Text>
+          <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
         </View>
       </TouchableOpacity>
 
       {/* Your Trips Section */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Favorite Trips</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Favorite Trips</Text>
         <TouchableOpacity
           onPress={() => {
             setIsTripsEditing(!isTripsEditing);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }}
         >
-          <Text style={styles.editButtonText}>
+          <Text style={[styles.editButtonText, { color: theme.icon }]}>
             {isTripsEditing ? "Done" : "Edit"}
           </Text>
         </TouchableOpacity>
@@ -586,6 +600,7 @@ export default function Home() {
             onPress={handleTripPress}
             onDelete={handleDeleteTrip}
             animationDelay={300} // Max 300ms random delay
+            theme={theme}
           />
         )}
         showsHorizontalScrollIndicator={false}
@@ -595,14 +610,14 @@ export default function Home() {
 
       {/* Your Plans Section */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Your Plans</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Plans</Text>
         <TouchableOpacity
           onPress={() => {
             setIsPlansEditing(!isPlansEditing);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }}
         >
-          <Text style={styles.editButtonText}>
+          <Text style={[styles.editButtonText, { color: theme.icon }]}>
             {isPlansEditing ? "Done" : "Edit"}
           </Text>
         </TouchableOpacity>
@@ -620,6 +635,7 @@ export default function Home() {
             onPress={goToTrip}
             onDelete={handleDeletePlan}
             animationDelay={300} // Max 300ms random delay
+            theme={theme}
           />
         )}
         showsHorizontalScrollIndicator={false}
@@ -633,7 +649,6 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: "white",
     paddingTop: 80,
     justifyContent: "center",
     alignItems: "center",
@@ -652,7 +667,6 @@ const styles = StyleSheet.create({
   },
   username: {
     ...Typography.text.h1,
-    color: Colors.primary,
     maxWidth: 200, // Limit width to prevent overflow
   },
   ecoPointsRow: {
@@ -672,13 +686,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   planButton: {
-    backgroundColor: "white",
     paddingVertical: 20,
     borderRadius: 100,
     alignItems: "center",
     marginBottom: 25,
     width: "90%",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -694,7 +706,6 @@ const styles = StyleSheet.create({
   },
   planButtonText: {
     ...Typography.text.button,
-    color: "#444",
     fontWeight: "500",
     fontSize: 18,
   },
@@ -713,7 +724,6 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     ...Typography.text.button,
-    color: Colors.inactive,
     fontSize: 16,
     fontWeight: "500",
     paddingLeft: 40,
@@ -784,13 +794,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     right: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderBottomLeftRadius: 10,
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
   dateText: {
-    color: "#333",
     fontSize: 11,
     fontWeight: "600",
   },
@@ -807,13 +815,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...Typography.text.h3,
-    color: Colors.inactive,
     marginBottom: 5,
     textAlign: "center",
   },
   emptySubtext: {
     ...Typography.text.body,
-    color: Colors.inactive,
     textAlign: "center",
   },
   deleteButton: {
@@ -821,7 +827,6 @@ const styles = StyleSheet.create({
     top: -8,
     left: -8,
     zIndex: 10,
-    backgroundColor: "white",
     opacity: 0.8,
     borderRadius: 15,
     padding: 2,

@@ -6,9 +6,15 @@
 const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 const primaryColor = "#42643D"; // TrailMate primary green color
+const primaryColorDark = "#5C8756"; // Slightly lighter green for dark mode
 const blackColor = "#232323"; // TrailMate black color (instead of pure black)
 const whiteColor = "#E6E6E6";
+const darkBackgroundColor = "#1A1A1A"; // Darker background for dark mode
 const inactiveColor = "#A3A3A3";
+const inactiveColorDark = "#666666"; // Darker gray for dark mode inactive elements
+const darkModeTextColor = "#ECEDEE";
+const borderColorLight = "#E0E0E0";
+const borderColorDark = "#3A3A3A";
 
 export const Colors = {
   primary: primaryColor, // Add primary color for easy access
@@ -24,15 +30,25 @@ export const Colors = {
     tabIconSelected: primaryColor, // Changed to use primary green
     primary: primaryColor, // Add primary color to light theme
     black: blackColor, // Add black color to light theme
+    borderColor: borderColorLight,
+    card: "#F9F9F9", // Light card background
+    buttonBackground: primaryColor,
+    buttonText: "#FFFFFF",
+    inactive: inactiveColor,
   },
   dark: {
-    text: "#ECEDEE",
-    background: blackColor, // Changed to use our custom black for dark mode background
-    tint: tintColorDark,
+    text: darkModeTextColor,
+    background: darkBackgroundColor, // Changed to use a darker background for dark mode
+    tint: primaryColorDark,
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    primary: primaryColor, // Add primary color to dark theme
+    tabIconSelected: primaryColorDark,
+    primary: primaryColorDark, // Slightly lighter primary for dark mode
     black: blackColor, // Add black color to dark theme
+    borderColor: borderColorDark,
+    card: "#2C2C2C", // Dark card background
+    buttonBackground: primaryColorDark,
+    buttonText: "#FFFFFF",
+    inactive: inactiveColorDark,
   },
 };

@@ -21,6 +21,7 @@ import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { processRecommendations } from '@/services/recommendationService';
 import { auth } from '@/services/firebaseConfig';
+import { useColorScheme } from '../../hooks/useColorScheme';
 
 type TravelerGroup = {
      label: string;
@@ -46,6 +47,10 @@ type DateRange = {
 
 export default function Preferences() {
      const router = useRouter();
+     const { colorScheme } = useColorScheme();
+     const isDarkMode = colorScheme === 'dark';
+     const theme = isDarkMode ? Colors.dark : Colors.light;
+
      const [currentQuestion, setCurrentQuestion] = useState(0);
      const [loading, setLoading] = useState(false);
      const [success, setSuccess] = useState(false);
@@ -505,30 +510,31 @@ export default function Preferences() {
 
      const renderDateRange = () => {
           return (
-               <View style={styles.calendarContainer}>
+               <View style={[styles.calendarContainer, { borderColor: theme.borderColor }]}>
                     <Calendar
                          minDate={new Date().toISOString().split('T')[0]}
                          markingType="period"
                          markedDates={getMarkedDates()}
                          onDayPress={onDayPress}
                          theme={{
-                              calendarBackground: 'white',
-                              textSectionTitleColor: '#666',
-                              selectedDayBackgroundColor: Colors.primary,
+                              calendarBackground: theme.background,
+                              textSectionTitleColor: theme.icon,
+                              selectedDayBackgroundColor: theme.primary,
                               selectedDayTextColor: 'white',
-                              todayTextColor: Colors.primary,
-                              dayTextColor: '#2d4150',
-                              textDisabledColor: '#d9e1e8',
-                              dotColor: Colors.primary,
-                              monthTextColor: Colors.black,
-                              indicatorColor: Colors.primary,
+                              todayTextColor: theme.primary,
+                              dayTextColor: theme.text,
+                              textDisabledColor: theme.inactive || '#d9e1e8',
+                              dotColor: theme.primary,
+                              monthTextColor: theme.text,
+                              indicatorColor: theme.primary,
                               textDayFontSize: 16,
                               textMonthFontSize: 16,
                               textDayHeaderFontSize: 14,
+                              arrowColor: theme.text,
                          }}
                     />
-                    <View style={styles.dateRangeInfo}>
-                         <Text style={styles.dateRangeText}>
+                    <View style={[styles.dateRangeInfo, { borderTopColor: theme.borderColor }]}>
+                         <Text style={[styles.dateRangeText, { color: theme.text }]}>
                               {dateRange.startDate ? (
                                    dateRange.endDate ? (
                                         `${new Date(dateRange.startDate).toLocaleDateString()} - ${new Date(
@@ -553,7 +559,11 @@ export default function Preferences() {
                     return (
                          <View style={styles.locationContainer}>
                               <TextInput
-                                   style={styles.input}
+                                   style={[styles.input, {
+                                        color: theme.text,
+                                        borderColor: theme.borderColor,
+                                        backgroundColor: theme.card
+                                   }]}
                                    value={question.value.location}
                                    onChangeText={(text) => {
                                         const newValue = {
@@ -563,13 +573,16 @@ export default function Preferences() {
                                         updateValue(newValue);
                                    }}
                                    placeholder="Enter city, or region name"
-                                   placeholderTextColor={Colors.inactive}
+                                   placeholderTextColor={theme.inactive}
                               />
                               <View style={styles.radiusContainer}>
-                                   <Text style={styles.radiusLabel}>Search radius:</Text>
+                                   <Text style={[styles.radiusLabel, { color: theme.text }]}>Search radius:</Text>
                                    <View style={styles.radiusInputContainer}>
                                         <TouchableOpacity
-                                             style={styles.numberButton}
+                                             style={[styles.numberButton, {
+                                                  borderColor: theme.borderColor,
+                                                  backgroundColor: theme.card
+                                             }]}
                                              onPress={() => {
                                                   const newValue = {
                                                        ...question.value,
@@ -577,11 +590,14 @@ export default function Preferences() {
                                                   };
                                                   updateValue(newValue);
                                              }}>
-                                             <Ionicons name="remove" size={18} color={Colors.black} />
+                                             <Ionicons name="remove" size={18} color={theme.text} />
                                         </TouchableOpacity>
-                                        <Text style={styles.numberText}>{question.value.radius} miles</Text>
+                                        <Text style={[styles.numberText, { color: theme.text }]}>{question.value.radius} miles</Text>
                                         <TouchableOpacity
-                                             style={styles.numberButton}
+                                             style={[styles.numberButton, {
+                                                  borderColor: theme.borderColor,
+                                                  backgroundColor: theme.card
+                                             }]}
                                              onPress={() => {
                                                   const newValue = {
                                                        ...question.value,
@@ -589,7 +605,7 @@ export default function Preferences() {
                                                   };
                                                   updateValue(newValue);
                                              }}>
-                                             <Ionicons name="add" size={18} color={Colors.black} />
+                                             <Ionicons name="add" size={18} color={theme.text} />
                                         </TouchableOpacity>
                                    </View>
                               </View>
@@ -602,16 +618,19 @@ export default function Preferences() {
                          return (
                               <View style={styles.groupsContainer}>
                                    {question.groups.map((group, index) => (
-                                        <View key={index} style={styles.groupItem}>
+                                        <View key={index} style={[styles.groupItem, { borderBottomColor: theme.borderColor }]}>
                                              <View style={styles.groupInfo}>
-                                                  <Text style={styles.groupLabel}>{group.label}</Text>
+                                                  <Text style={[styles.groupLabel, { color: theme.text }]}>{group.label}</Text>
                                                   {group.subtitle && (
-                                                       <Text style={styles.groupSubtitle}>{group.subtitle}</Text>
+                                                       <Text style={[styles.groupSubtitle, { color: theme.icon }]}>{group.subtitle}</Text>
                                                   )}
                                              </View>
                                              <View style={styles.groupControls}>
                                                   <TouchableOpacity
-                                                       style={styles.numberButton}
+                                                       style={[styles.numberButton, {
+                                                            borderColor: theme.borderColor,
+                                                            backgroundColor: theme.card
+                                                       }]}
                                                        onPress={() => {
                                                             const newGroups = [...question.groups!];
                                                             newGroups[index].count = Math.max(0, group.count - 1);
@@ -621,11 +640,14 @@ export default function Preferences() {
                                                             }), {});
                                                             updateValue(newValue);
                                                        }}>
-                                                       <Ionicons name="remove" size={18} color={Colors.black} />
+                                                       <Ionicons name="remove" size={18} color={theme.text} />
                                                   </TouchableOpacity>
-                                                  <Text style={styles.numberText}>{group.count}</Text>
+                                                  <Text style={[styles.numberText, { color: theme.text }]}>{group.count}</Text>
                                                   <TouchableOpacity
-                                                       style={styles.numberButton}
+                                                       style={[styles.numberButton, {
+                                                            borderColor: theme.borderColor,
+                                                            backgroundColor: theme.card
+                                                       }]}
                                                        onPress={() => {
                                                             const newGroups = [...question.groups!];
                                                             newGroups[index].count = group.count + 1;
@@ -635,7 +657,7 @@ export default function Preferences() {
                                                             }), {});
                                                             updateValue(newValue);
                                                        }}>
-                                                       <Ionicons name="add" size={18} color={Colors.black} />
+                                                       <Ionicons name="add" size={18} color={theme.text} />
                                                   </TouchableOpacity>
                                              </View>
                                         </View>
@@ -646,15 +668,21 @@ export default function Preferences() {
                     return (
                          <View style={styles.numberContainer}>
                               <TouchableOpacity
-                                   style={styles.numberButton}
+                                   style={[styles.numberButton, {
+                                        borderColor: theme.borderColor,
+                                        backgroundColor: theme.card
+                                   }]}
                                    onPress={() => updateValue(Math.max(1, question.value - 1))}>
-                                   <Ionicons name="remove" size={24} color={Colors.black} />
+                                   <Ionicons name="remove" size={24} color={theme.text} />
                               </TouchableOpacity>
-                              <Text style={styles.numberText}>{question.value}</Text>
+                              <Text style={[styles.numberText, { color: theme.text }]}>{question.value}</Text>
                               <TouchableOpacity
-                                   style={styles.numberButton}
+                                   style={[styles.numberButton, {
+                                        borderColor: theme.borderColor,
+                                        backgroundColor: theme.card
+                                   }]}
                                    onPress={() => updateValue(question.value + 1)}>
-                                   <Ionicons name="add" size={24} color={Colors.black} />
+                                   <Ionicons name="add" size={24} color={theme.text} />
                               </TouchableOpacity>
                          </View>
                     );
@@ -666,12 +694,14 @@ export default function Preferences() {
                                         key={option}
                                         style={[
                                              styles.optionButton,
-                                             question.value === option && styles.selectedOption,
+                                             { borderColor: theme.borderColor, backgroundColor: theme.card },
+                                             question.value === option && [styles.selectedOption, { backgroundColor: theme.primary }],
                                         ]}
                                         onPress={() => updateValue(option)}>
                                         <Text
                                              style={[
                                                   styles.optionText,
+                                                  { color: theme.text },
                                                   question.value === option && styles.selectedOptionText,
                                              ]}>
                                              {option}
@@ -680,7 +710,11 @@ export default function Preferences() {
                               ))}
                               {question.value === 'Other' && (
                                    <TextInput
-                                        style={styles.otherInput}
+                                        style={[styles.otherInput, {
+                                             color: theme.text,
+                                             borderColor: theme.borderColor,
+                                             backgroundColor: theme.card
+                                        }]}
                                         value={question.otherValue}
                                         onChangeText={(text) => {
                                              const newFormData = [...formData];
@@ -688,7 +722,7 @@ export default function Preferences() {
                                              setFormData(newFormData);
                                         }}
                                         placeholder="Please specify"
-                                        placeholderTextColor={Colors.inactive}
+                                        placeholderTextColor={theme.inactive}
                                         multiline
                                         numberOfLines={3}
                                    />
@@ -703,7 +737,8 @@ export default function Preferences() {
                                         key={option}
                                         style={[
                                              styles.optionButton,
-                                             question.value.includes(option) && styles.selectedOption,
+                                             { borderColor: theme.borderColor, backgroundColor: theme.card },
+                                             question.value.includes(option) && [styles.selectedOption, { backgroundColor: theme.primary }],
                                         ]}
                                         onPress={() => {
                                              const newValue = question.value.includes(option)
@@ -714,6 +749,7 @@ export default function Preferences() {
                                         <Text
                                              style={[
                                                   styles.optionText,
+                                                  { color: theme.text },
                                                   question.value.includes(option) && styles.selectedOptionText,
                                              ]}>
                                              {option}
@@ -722,7 +758,11 @@ export default function Preferences() {
                               ))}
                               {question.value.includes('Other') && (
                                    <TextInput
-                                        style={styles.otherInput}
+                                        style={[styles.otherInput, {
+                                             color: theme.text,
+                                             borderColor: theme.borderColor,
+                                             backgroundColor: theme.card
+                                        }]}
                                         value={question.otherValue}
                                         onChangeText={(text) => {
                                              const newFormData = [...formData];
@@ -730,7 +770,7 @@ export default function Preferences() {
                                              setFormData(newFormData);
                                         }}
                                         placeholder="Please specify"
-                                        placeholderTextColor={Colors.inactive}
+                                        placeholderTextColor={theme.inactive}
                                         multiline
                                         numberOfLines={3}
                                    />
@@ -766,7 +806,7 @@ export default function Preferences() {
                const backgroundColor = interpolateColor(
                     progressSegments[index].value,
                     [0, 1],
-                    ['#E0E0E0', Colors.primary]
+                    [isDarkMode ? '#444444' : '#E0E0E0', theme.primary]
                );
 
                return {
@@ -781,20 +821,20 @@ export default function Preferences() {
      return (
           <>
                {loading ? (
-                    <View style={styles.loadingContainer}>
-                         <ActivityIndicator size="large" color={Colors.primary} />
-                         <Text style={styles.loadingText}>Finding the perfect trips{'\n'}for your adventure... Hold tight!</Text>
+                    <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+                         <ActivityIndicator size="large" color={theme.primary} />
+                         <Text style={[styles.loadingText, { color: theme.primary }]}>Finding the perfect trips{'\n'}for your adventure... Hold tight!</Text>
                     </View>
                ) : (
-                    <SafeAreaView style={styles.safeArea}>
+                    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
                          <KeyboardAvoidingView
                               style={styles.keyboardAvoidingView}
                               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                               keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
                          >
-                              <View style={styles.container}>
+                              <View style={[styles.container, { backgroundColor: theme.background }]}>
                                    <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-                                        <Ionicons name="close" size={35} color={Colors.black} />
+                                        <Ionicons name="close" size={35} color={theme.text} />
                                    </TouchableOpacity>
 
                                    <View style={styles.progressContainer}>
@@ -809,6 +849,7 @@ export default function Preferences() {
                                                                  stiffness: 90,
                                                             }
                                                        ),
+                                                       backgroundColor: theme.primary,
                                                   },
                                              ]}
                                         />
@@ -831,10 +872,10 @@ export default function Preferences() {
                                                   <Ionicons
                                                        name={formData[currentQuestion].icon}
                                                        size={40}
-                                                       color={Colors.primary}
+                                                       color={theme.primary}
                                                   />
                                              </View>
-                                             <Text style={styles.questionText}>{formData[currentQuestion].question}</Text>
+                                             <Text style={[styles.questionText, { color: theme.primary }]}>{formData[currentQuestion].question}</Text>
                                              <View style={styles.questionContainer}>
                                                   {renderQuestion()}
                                              </View>
@@ -845,7 +886,7 @@ export default function Preferences() {
                                              ]}>
                                                   {currentQuestion > 0 && (
                                                        <TouchableOpacity style={styles.navButton} onPress={handlePrevious}>
-                                                            <Text style={styles.navButtonText}>Back</Text>
+                                                            <Text style={[styles.navButtonText, { color: theme.text }]}>Back</Text>
                                                        </TouchableOpacity>
                                                   )}
                                                   <TouchableOpacity
@@ -855,7 +896,7 @@ export default function Preferences() {
                                                        ]}
                                                        onPress={handleNext}
                                                   >
-                                                       <Text style={styles.navButtonText}>
+                                                       <Text style={[styles.navButtonText, { color: theme.text }]}>
                                                             {currentQuestion === formData.length - 1
                                                                  ? 'Finish'
                                                                  : hasValue(formData[currentQuestion].value, formData[currentQuestion].otherValue)
@@ -878,11 +919,9 @@ export default function Preferences() {
 const styles = StyleSheet.create({
      safeArea: {
           flex: 1,
-          backgroundColor: 'white',
      },
      container: {
           flex: 1,
-          backgroundColor: 'white',
           padding: 20,
      },
      closeButton: {
@@ -923,7 +962,6 @@ const styles = StyleSheet.create({
      },
      questionText: {
           ...Typography.text.h3,
-          color: Colors.primary,
           textAlign: 'center',
           marginBottom: 30,
      },
@@ -931,7 +969,6 @@ const styles = StyleSheet.create({
           width: '100%',
           height: 50,
           borderWidth: 0.5,
-          borderColor: Colors.inactive,
           borderRadius: 100,
           paddingHorizontal: 20,
           paddingVertical: 15,
@@ -951,16 +988,13 @@ const styles = StyleSheet.create({
           paddingHorizontal: 20,
           borderRadius: 100,
           borderWidth: 0.5,
-          borderColor: Colors.inactive,
           alignItems: 'flex-start',
      },
      selectedOption: {
-          backgroundColor: Colors.primary,
           borderColor: Colors.primary,
      },
      optionText: {
           fontSize: 16,
-          color: Colors.black,
      },
      selectedOptionText: {
           color: 'white',
@@ -988,26 +1022,21 @@ const styles = StyleSheet.create({
           alignItems: 'flex-end',
      },
      navButtonText: {
-          color: Colors.black,
           ...Typography.text.body,
      },
      calendarContainer: {
           width: '100%',
-          backgroundColor: 'white',
           borderRadius: 12,
           overflow: 'hidden',
           borderWidth: 1,
-          borderColor: '#E0E0E0',
      },
      dateRangeInfo: {
           padding: 15,
           borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
           alignItems: 'center',
      },
      dateRangeText: {
           fontSize: 16,
-          color: Colors.black,
      },
      groupsContainer: {
           width: '100%',
@@ -1020,18 +1049,15 @@ const styles = StyleSheet.create({
           width: '100%',
           paddingBottom: 20,
           borderBottomWidth: 1,
-          borderBottomColor: '#E0E0E0',
      },
      groupInfo: {
           flex: 1,
      },
      groupLabel: {
           ...Typography.text.h4,
-          color: Colors.black,
      },
      groupSubtitle: {
           ...Typography.text.caption,
-          color: Colors.inactive,
           marginTop: 4,
      },
      groupControls: {
@@ -1044,8 +1070,6 @@ const styles = StyleSheet.create({
           height: 30,
           borderRadius: 15,
           borderWidth: 1,
-          borderColor: Colors.inactive,
-          backgroundColor: 'white',
           justifyContent: 'center',
           alignItems: 'center',
      },
@@ -1057,7 +1081,6 @@ const styles = StyleSheet.create({
      progressBar: {
           position: 'absolute',
           height: 4,
-          backgroundColor: Colors.primary,
           borderRadius: 2,
           left: 0,
      },
@@ -1065,7 +1088,6 @@ const styles = StyleSheet.create({
           width: '100%',
           minHeight: 100,
           borderWidth: 0.5,
-          borderColor: Colors.inactive,
           borderRadius: 12,
           paddingHorizontal: 15,
           paddingVertical: 10,
@@ -1083,7 +1105,6 @@ const styles = StyleSheet.create({
           flexGrow: 1,
      },
      loadingContainer: {
-          backgroundColor: 'white',
           flex: 1,
           height: '100%',
           width: '100%',
@@ -1095,7 +1116,6 @@ const styles = StyleSheet.create({
      loadingText: {
           ...Typography.text.h3,
           lineHeight: 30,
-          color: Colors.primary,
           textAlign: 'center',
      },
      locationContainer: {
@@ -1110,7 +1130,6 @@ const styles = StyleSheet.create({
      },
      radiusLabel: {
           ...Typography.text.body,
-          color: Colors.black,
      },
      radiusInputContainer: {
           flexDirection: 'row',

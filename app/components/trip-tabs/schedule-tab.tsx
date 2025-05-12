@@ -7,6 +7,8 @@ import { Colors } from "../../../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useColorScheme } from "../../../hooks/useColorScheme";
+
 // Add interface for component props
 interface ScheduleTabProps {
   tripId?: string;
@@ -26,6 +28,9 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch schedule from Firestore or tripData
   useEffect(() => {
@@ -90,8 +95,8 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading schedule...</Text>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.text }]}>Loading schedule...</Text>
       </View>
     );
   }
@@ -99,7 +104,7 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: isDarkMode ? "#ff6b6b" : "red" }]}>{error}</Text>
       </View>
     );
   }
@@ -107,7 +112,7 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   if (schedule.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.emptyText}>No schedule available for this trip.</Text>
+        <Text style={[styles.emptyText, { color: theme.inactive }]}>No schedule available for this trip.</Text>
       </View>
     );
   }
@@ -115,27 +120,35 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const currentDay = schedule[currentDayIndex];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity
           onPress={goToPreviousDay}
           disabled={currentDayIndex === 0}
           style={styles.navButton}
         >
-          <Ionicons name="chevron-back" size={25} color={currentDayIndex === 0 ? "#ccc" : "#2f4f2f"} />
+          <Ionicons
+            name="chevron-back"
+            size={25}
+            color={currentDayIndex === 0 ? theme.inactive : theme.primary}
+          />
         </TouchableOpacity>
 
-        <Text style={styles.dateText}>{currentDay.date}</Text>
+        <Text style={[styles.dateText, { color: theme.text }]}>{currentDay.date}</Text>
 
         <TouchableOpacity
           onPress={goToNextDay}
           disabled={currentDayIndex === schedule.length - 1}
           style={styles.navButton}
         >
-          <Ionicons name="chevron-forward" size={25} color={currentDayIndex === schedule.length - 1 ? "#ccc" : "#2f4f2f"} />
+          <Ionicons
+            name="chevron-forward"
+            size={25}
+            color={currentDayIndex === schedule.length - 1 ? theme.inactive : theme.primary}
+          />
         </TouchableOpacity>
       </View>
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.borderColor }]} />
 
       <FlatList
         data={currentDay.activities}
@@ -143,7 +156,7 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
         renderItem={({ item, index }) => (
           <View style={styles.stepContainer}>
             <View style={styles.iconColumn}>
-              <Ionicons name="location-sharp" size={28} color="#2f4f2f" />
+              <Ionicons name="location-sharp" size={28} color={theme.primary} />
               {/* {index !== currentDay.activities.length - 1 && (
                 <View style={styles.lineContainer}>
                   <View style={styles.dashedLine} />
@@ -154,8 +167,8 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
             </View>
 
             <View style={styles.instructionRow}>
-              <Text style={styles.instructionText}>{item.activity}</Text>
-              <Text style={styles.timeText}>{(item.startTime).slice(0, -2)} - {(item.endTime)}</Text>
+              <Text style={[styles.instructionText, { color: theme.text }]}>{item.activity}</Text>
+              <Text style={[styles.timeText, { color: theme.inactive }]}>{(item.startTime).slice(0, -2)} - {(item.endTime)}</Text>
             </View>
           </View>
         )}
@@ -224,12 +237,10 @@ const styles = StyleSheet.create({
   timeText: {
     ...Typography.text.body,
     fontSize: 14,
-    color: "#777",
     marginLeft: 10,
   },
   divider: {
     height: 1,
-    backgroundColor: "#ccc",
     marginBottom: 18,
   },
   listContent: {
@@ -243,7 +254,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: "#666",
   },
   errorContainer: {
     flex: 1,
@@ -252,12 +262,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: "red",
     textAlign: "center",
   },
   emptyText: {
     textAlign: "center",
-    color: "#666",
     marginTop: 20,
   },
 });

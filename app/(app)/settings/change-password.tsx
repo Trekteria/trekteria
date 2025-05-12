@@ -18,6 +18,7 @@ import {
   updatePassword,
 } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 export default function ChangePassword() {
   const router = useRouter();
@@ -32,6 +33,11 @@ export default function ChangePassword() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+  // Get color scheme
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Function to handle password change
   const handleChangePassword = async () => {
@@ -98,7 +104,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       {/* Hide the default header */}
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -107,22 +113,28 @@ export default function ChangePassword() {
         <View style={styles.header}>
           {/* Back button to navigate to the previous screen */}
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color={"black"} />
+            <Ionicons name="chevron-back" size={28} color={theme.text} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Change Password</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>Change Password</Text>
       </View>
 
       {/* Form Section */}
       <View style={styles.form}>
         {/* Current Password Input */}
-        <View style={styles.inputContainer}>
+        <View style={[
+          styles.inputContainer,
+          {
+            borderColor: theme.borderColor,
+            backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+          }
+        ]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text }]}
             value={currentPassword}
             onChangeText={setCurrentPassword}
             placeholder="Enter your current password"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.inactive}
             secureTextEntry={!showCurrentPassword} // Toggle visibility
           />
           {/* Toggle visibility icon */}
@@ -133,19 +145,25 @@ export default function ChangePassword() {
             <Ionicons
               name={showCurrentPassword ? "eye-off" : "eye"}
               size={24}
-              color="#666"
+              color={theme.inactive}
             />
           </TouchableOpacity>
         </View>
 
         {/* New Password Input */}
-        <View style={styles.inputContainer}>
+        <View style={[
+          styles.inputContainer,
+          {
+            borderColor: theme.borderColor,
+            backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+          }
+        ]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text }]}
             value={newPassword}
             onChangeText={setNewPassword}
             placeholder="Enter your new password"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.inactive}
             secureTextEntry={!showNewPassword} // Toggle visibility
           />
           {/* Toggle visibility icon */}
@@ -156,19 +174,25 @@ export default function ChangePassword() {
             <Ionicons
               name={showNewPassword ? "eye-off" : "eye"}
               size={24}
-              color="#666"
+              color={theme.inactive}
             />
           </TouchableOpacity>
         </View>
 
         {/* Confirm New Password Input */}
-        <View style={styles.inputContainer}>
+        <View style={[
+          styles.inputContainer,
+          {
+            borderColor: theme.borderColor,
+            backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+          }
+        ]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text }]}
             value={confirmNewPassword}
             onChangeText={setConfirmNewPassword}
             placeholder="Confirm your new password"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.inactive}
             secureTextEntry={!showConfirmNewPassword} // Toggle visibility
           />
           {/* Toggle visibility icon */}
@@ -179,18 +203,22 @@ export default function ChangePassword() {
             <Ionicons
               name={showConfirmNewPassword ? "eye-off" : "eye"}
               size={24}
-              color="#666"
+              color={theme.inactive}
             />
           </TouchableOpacity>
         </View>
 
         {/* Change Password Button */}
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]} // Disable button when loading
+          style={[
+            styles.button,
+            { backgroundColor: theme.buttonBackground },
+            loading && styles.buttonDisabled
+          ]} // Disable button when loading
           onPress={handleChangePassword}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: theme.buttonText }]}>
             {loading ? "Updating..." : "Change Password"}
           </Text>
         </TouchableOpacity>
@@ -202,7 +230,6 @@ export default function ChangePassword() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerContainer: {
     padding: 20,
@@ -214,7 +241,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.text.h1,
-    color: Colors.primary,
   },
   form: {
     width: "100%",
@@ -225,7 +251,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.inactive,
     borderRadius: 100,
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -239,7 +264,6 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   button: {
-    backgroundColor: Colors.primary,
     padding: 20,
     borderRadius: 100,
     alignItems: "center",

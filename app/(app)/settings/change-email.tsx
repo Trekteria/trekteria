@@ -19,6 +19,7 @@ import {
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "../../../hooks/useColorScheme";
 
 // Component for changing the user's email
 export default function ChangeEmail() {
@@ -46,6 +47,9 @@ export default function ChangeEmail() {
 
     fetchCurrentEmail();
   }, []);
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Function to handle email update
   const handleUpdateEmail = async () => {
@@ -125,7 +129,7 @@ export default function ChangeEmail() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       {/* Hide the default header */}
       <Stack.Screen options={{ headerShown: false }} />
       {/* Header Section */}
@@ -133,10 +137,10 @@ export default function ChangeEmail() {
         <View style={styles.header}>
           {/* Back button to navigate to the previous screen */}
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color={"black"} />
+            <Ionicons name="chevron-back" size={28} color={theme.text} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.title}>Change Email</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>Change Email</Text>
       </View>
 
       {/* Form Section */}
@@ -153,11 +157,18 @@ export default function ChangeEmail() {
         <View>
           <Text style={styles.inputLabel}>New Email</Text>
           <TextInput
-            style={styles.input}
+            style={[
+            styles.input,
+            {
+              borderColor: theme.borderColor,
+              color: theme.text,
+              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+            }
+          ]}
             value={newEmail}
             onChangeText={setNewEmail}
             placeholder="Enter your new email"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.inactive}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -167,22 +178,33 @@ export default function ChangeEmail() {
         <View>
           <Text style={styles.inputLabel}>Password</Text>
           <TextInput
-            style={styles.input}
+            style={[
+            styles.input,
+            {
+              borderColor: theme.borderColor,
+              color: theme.text,
+              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+            }
+          ]}
             value={password}
             onChangeText={setPassword}
             placeholder="Enter your password"
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.inactive}
             secureTextEntry
           />
         </View>
 
         {/* Button to trigger email update */}
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: theme.buttonBackground },
+            loading && styles.buttonDisabled
+          ]}
           onPress={handleUpdateEmail}
           disabled={loading} // Disable button while loading
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: theme.buttonText }]}>
             {loading ? "Processing..." : "Update Email"}
           </Text>
         </TouchableOpacity>
@@ -195,7 +217,6 @@ export default function ChangeEmail() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerContainer: {
     padding: 20,
@@ -207,7 +228,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.text.h1,
-    color: Colors.primary,
   },
   form: {
     width: "100%",
@@ -223,7 +243,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.inactive,
     borderRadius: 100,
     paddingHorizontal: 30,
     paddingVertical: 20,
@@ -245,7 +264,6 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   button: {
-    backgroundColor: Colors.primary,
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
@@ -257,14 +275,5 @@ const styles = StyleSheet.create({
   buttonText: {
     ...Typography.text.button,
     color: "white",
-  },
-  loadingContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#666",
   },
 });

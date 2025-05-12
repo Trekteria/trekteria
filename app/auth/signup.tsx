@@ -20,6 +20,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../services/firebaseConfig";
+import { useColorScheme } from "../../hooks/useColorScheme";
 
 export default function Signup() {
   const router = useRouter();
@@ -32,6 +33,11 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Get color scheme
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Function to handle user signup
   const handleSignup = async () => {
@@ -108,7 +114,7 @@ export default function Signup() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
@@ -119,7 +125,7 @@ export default function Signup() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.appName}>Welcome to TrailMate</Text>
+          <Text style={[styles.appName, { color: theme.primary }]}>Welcome to TrailMate</Text>
         </View>
 
         {/* Signup Form */}
@@ -127,9 +133,16 @@ export default function Signup() {
           {/* First Name Input */}
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderColor: theme.borderColor,
+                  color: theme.text,
+                  backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                }
+              ]}
               placeholder="First Name"
-              placeholderTextColor={Colors.inactive}
+              placeholderTextColor={theme.inactive}
               autoCapitalize="words"
               value={firstname}
               onChangeText={setFirstname}
@@ -139,9 +152,16 @@ export default function Signup() {
           {/* Last Name Input */}
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderColor: theme.borderColor,
+                  color: theme.text,
+                  backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                }
+              ]}
               placeholder="Last Name"
-              placeholderTextColor={Colors.inactive}
+              placeholderTextColor={theme.inactive}
               autoCapitalize="words"
               value={lastname}
               onChangeText={setLastname}
@@ -151,9 +171,16 @@ export default function Signup() {
           {/* Email Input */}
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderColor: theme.borderColor,
+                  color: theme.text,
+                  backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                }
+              ]}
               placeholder="Email"
-              placeholderTextColor={Colors.inactive}
+              placeholderTextColor={theme.inactive}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -163,11 +190,17 @@ export default function Signup() {
 
           {/* Password Input with Toggle Visibility */}
           <View style={styles.inputContainer}>
-            <View style={styles.passwordContainer}>
+            <View style={[
+              styles.passwordContainer,
+              {
+                borderColor: theme.borderColor,
+                backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+              }
+            ]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: theme.text }]}
                 placeholder="Password"
-                placeholderTextColor={Colors.inactive}
+                placeholderTextColor={theme.inactive}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -179,7 +212,7 @@ export default function Signup() {
                 <Feather
                   name={showPassword ? "eye-off" : "eye"}
                   size={24}
-                  color={Colors.black}
+                  color={theme.text}
                 />
               </TouchableOpacity>
             </View>
@@ -187,11 +220,17 @@ export default function Signup() {
 
           {/* Confirm Password Input with Toggle Visibility */}
           <View style={styles.inputContainer}>
-            <View style={styles.passwordContainer}>
+            <View style={[
+              styles.passwordContainer,
+              {
+                borderColor: theme.borderColor,
+                backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+              }
+            ]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: theme.text }]}
                 placeholder="Confirm Password"
-                placeholderTextColor={Colors.inactive}
+                placeholderTextColor={theme.inactive}
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -203,24 +242,27 @@ export default function Signup() {
                 <Feather
                   name={showConfirmPassword ? "eye-off" : "eye"}
                   size={24}
-                  color={Colors.black}
+                  color={theme.text}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Register Button */}
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-            <Text style={styles.signupButtonText}>Register</Text>
+          <TouchableOpacity
+            style={[styles.signupButton, { backgroundColor: theme.buttonBackground }]}
+            onPress={handleSignup}
+          >
+            <Text style={[styles.signupButtonText, { color: theme.buttonText }]}>Register</Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer with Navigation to Login */}
         <View style={styles.footer}>
           <TouchableOpacity onPress={handleBackToLogin}>
-            <Text style={styles.footerText}>
+            <Text style={[styles.footerText, { color: theme.inactive }]}>
               Already have an account?{" "}
-              <Text style={styles.loginText}>Log In</Text>
+              <Text style={[styles.loginText, { color: theme.primary }]}>Log In</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -233,7 +275,6 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   logoContainer: {
     alignItems: "center",
@@ -246,7 +287,6 @@ const styles = StyleSheet.create({
   },
   appName: {
     ...Typography.text.h3,
-    color: Colors.primary,
     marginTop: 20,
   },
   contentContainer: {
@@ -261,7 +301,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: Colors.inactive,
     borderRadius: 100,
     paddingHorizontal: 30,
     paddingVertical: 15,
@@ -270,7 +309,6 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: "row",
     borderWidth: 1,
-    borderColor: Colors.inactive,
     borderRadius: 100,
     alignItems: "center",
   },
@@ -284,7 +322,6 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   signupButton: {
-    backgroundColor: Colors.primary,
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
@@ -292,7 +329,6 @@ const styles = StyleSheet.create({
   },
   signupButtonText: {
     ...Typography.text.button,
-    color: "white",
   },
   footer: {
     alignItems: "center",
@@ -300,11 +336,9 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...Typography.text.bodySmall,
-    color: Colors.inactive,
   },
   loginText: {
     ...Typography.text.link,
-    color: Colors.primary,
     fontWeight: "bold",
   },
 });
