@@ -4,6 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import { useColorScheme } from "../../../hooks/useColorScheme";
+import { Colors } from "../../../constants/Colors";
+import { Typography } from "../../../constants/Typography";
 
 interface InfoTabProps {
   tripId?: string;
@@ -27,6 +30,9 @@ if (!apiKey) {
 }
 
 export default function InfoTab({ tripId, tripData }: InfoTabProps) {
+  const { colorScheme } = useColorScheme();
+  const theme = Colors[colorScheme];
+
   const [tripInfo, setTripInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,8 +88,6 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         const response = await fetch(url);
         const data = await response.json();
 
-        // const kelvinToF = (k: number) => ((k - 273.15) * 9) / 5 + 32;
-
         const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
         const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
 
@@ -110,8 +114,8 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2f4f2f" />
-        <Text>Loading trip info...</Text>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.text }]}>Loading trip info...</Text>
       </View>
     );
   }
@@ -119,130 +123,100 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   if (error || !tripInfo) {
     return (
       <View style={styles.errorContainer}>
-        <Text>{error || "No trip data available."}</Text>
+        <Text style={[styles.errorText, { color: theme.text }]}>{error || "No trip data available."}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.tripName}>{tripInfo.name}</Text>
-      <Text style={styles.subheader}>
-        <Ionicons name="star" size={12} color="#2f4f2f" />{" "}
+      <Text style={[styles.tripName, { color: theme.text }]}>{tripInfo.name}</Text>
+      <Text style={[styles.subheader, { color: theme.icon }]}>
+        <Ionicons name="star" size={12} color={theme.tint} />{" "}
         {tripInfo.difficultyLevel?.slice(0, -1)} | {tripInfo.location}
       </Text>
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.borderColor }]} />
 
       <View style={styles.gridContainer}>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Contact</Text>
-          <Text style={styles.value}>{tripInfo.parkContact}</Text>
+          <Text style={[styles.label, { color: theme.icon }]}>Contact</Text>
+          <Text style={[styles.value, { color: theme.text }]}>{tripInfo.parkContact}</Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Website</Text>
+          <Text style={[styles.label, { color: theme.icon }]}>Website</Text>
           <TouchableOpacity onPress={() => Linking.openURL(tripInfo.parkWebsite)}>
-            <Text style={[styles.value, { color: "#42643D", textDecorationLine: "underline" }]}>
+            <Text style={[styles.linkText, { color: theme.tint }]}>
               {getDisplayUrl(tripInfo.parkWebsite)}
             </Text>
           </TouchableOpacity>
         </View>
-        {/* <View style={styles.gridItem}>
-          <Text style={styles.label}>Cell Service</Text>
-          <Text style={styles.value}>{tripInfo.cellService}</Texts>
-        </View>
-        <View style={styles.gridItem}>
-          <Text style={styles.label}>Hours</Text>
-          <Text style={styles.value}>{tripInfo.hours}</Text>
-        </View> */}
       </View>
-    
-      <View style={styles.section}>
-          <Text style={styles.label}>Cell Service</Text>
-          <Text style={styles.paragraph}>{tripInfo.cellService}</Text>
-        </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Summary</Text>
-        <Text style={styles.paragraph}>{tripInfo.description}</Text>
+        <Text style={[styles.label, { color: theme.icon }]}>Cell Service</Text>
+        <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.cellService}</Text>
       </View>
-{/* 
+
       <View style={styles.section}>
-        <Text style={styles.label}>Amenities</Text>
-        <Text style={styles.value}>
-          {Array.isArray(tripInfo.amenities) ? tripInfo.amenities.join(", ") : "N/A"}
-        </Text>
-      </View> */}
+        <Text style={[styles.label, { color: theme.icon }]}>Summary</Text>
+        <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.description}</Text>
+      </View>
+
       <View style={styles.section}>
-        <Text style={styles.label}>Amenities</Text>
-        <Text style={styles.value}>
+        <Text style={[styles.label, { color: theme.icon }]}>Amenities</Text>
+        <Text style={[styles.bodyText, { color: theme.text }]}>
           {Array.isArray(tripInfo.amenities)
             ? tripInfo.amenities
-                .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
-                .join(", ")
+              .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
+              .join(", ")
             : "N/A"}
         </Text>
       </View>
 
-
-      {/* <View style={styles.section}>
-        <Text style={styles.label}>Highlights</Text>
-        <Text style={styles.value}>
-          {Array.isArray(tripInfo.highlights) ? tripInfo.highlights.join(", ") : "N/A"}
-        </Text>
-      </View> */}
       <View style={styles.section}>
-        <Text style={styles.label}>Highlights</Text>
-        <Text style={styles.value}>
+        <Text style={[styles.label, { color: theme.icon }]}>Highlights</Text>
+        <Text style={[styles.bodyText, { color: theme.text }]}>
           {Array.isArray(tripInfo.highlights)
             ? tripInfo.highlights
-                .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
-                .join(", ")
+              .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
+              .join(", ")
             : "N/A"}
         </Text>
       </View>
 
       {/* Weather Conditions Section */}
       <View style={styles.section}>
-        <Text style={styles.label}>
-          Conditions <Ionicons name="cloud-outline" size={12} color="gray" />
+        <Text style={[styles.label, { color: theme.icon }]}>
+          Conditions <Ionicons name="cloud-outline" size={12} color={theme.icon} />
         </Text>
 
-        <Text style={styles.tempText}>{weather?.temperature ?? "--"}</Text>
+        <Text style={[styles.tempText, { color: theme.text }]}>{weather?.temperature ?? "--"}</Text>
 
         <View style={styles.conditionsRow}>
-          <Text style={styles.tempValue}>{weather?.status ?? "--"}</Text>
-          {/* {weather?.icon && (
-            <Image source={{uri: weather.icon }} style={{ width: 40, height: 40 }} />
-          )} */}
+          <Text style={[styles.bodyText, { color: theme.text }]}>{weather?.status ?? "--"}</Text>
         </View>
 
         <View style={styles.conditionsRow}>
-          {/* <Text style={styles.tempValue}>Feels Like: {weather?.feels_like ?? "--"}</Text> */}
-          <Text style={styles.tempValue}>Humidity: {weather?.humidity ?? "--"}</Text>
-          <Text style={styles.tempValue}>
-            <Ionicons name="water-outline" size={12} color="black" /> Precipitation: {weather?.precipitation ?? "--"}
+          <Text style={[styles.bodyText, { color: theme.text }]}>Humidity: {weather?.humidity ?? "--"}</Text>
+          <Text style={[styles.bodyText, { color: theme.text }]}>
+            <Ionicons name="water-outline" size={14} color={theme.text} /> Precipitation: {weather?.precipitation ?? "--"}
           </Text>
         </View>
 
         <View style={styles.conditionsRow}>
-          <Text style={styles.tempValue}>H: {weather?.high ?? "--"} | L: {weather?.low ?? "--"}</Text>
-          <Text style={styles.tempValue}>
-            <Ionicons name="sunny-outline" size={12} color="black" /> Sunrise: {weather?.sunrise ?? "--"}
+          <Text style={[styles.bodyText, { color: theme.text }]}>H: {weather?.high ?? "--"} | L: {weather?.low ?? "--"}</Text>
+          <Text style={[styles.bodyText, { color: theme.text }]}>
+            <Ionicons name="sunny-outline" size={14} color={theme.text} /> Sunrise: {weather?.sunrise ?? "--"}
           </Text>
         </View>
 
         <View style={styles.conditionsRow}>
-          {/* <Text style={styles.tempValue}>Humidity: {weather?.humidity ?? "--"}</Text> */}
-          <Text style={styles.tempValue}>Sea Level: {weather?.seaLevel ?? "--"}</Text>
-          <Text style={styles.tempValue}>
-            <Ionicons name="partly-sunny-outline" size={12} color="black" /> Sunset: {weather?.sunset ?? "--"}
+          <Text style={[styles.bodyText, { color: theme.text }]}>Sea Level: {weather?.seaLevel ?? "--"}</Text>
+          <Text style={[styles.bodyText, { color: theme.text }]}>
+            <Ionicons name="partly-sunny-outline" size={14} color={theme.text} /> Sunset: {weather?.sunset ?? "--"}
           </Text>
         </View>
-
-        {/* <View style={styles.conditionsRow}>
-          <Text style={styles.tempValue}>Sea Level: {weather?.seaLevel ?? "--"}</Text>
-        </View> */}
       </View>
     </View>
   );
@@ -258,32 +232,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  loadingText: {
+    ...Typography.text.bodySmall,
+    marginTop: 10,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
+  errorText: {
+    ...Typography.text.body,
+    textAlign: "center",
+  },
   tripName: {
-    fontSize: 16,
+    ...Typography.text.h3,
     textAlign: "center",
   },
   subheader: {
-    fontSize: 12,
+    ...Typography.text.caption,
     textAlign: "center",
-    color: "gray",
     marginTop: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: "#ccc",
     marginVertical: 10,
   },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    backgroundColor: "white",
+    marginVertical: 5,
   },
   gridItem: {
     width: "47%",
@@ -291,35 +271,32 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 10,
-    backgroundColor: "white",
+    marginBottom: 5,
   },
   label: {
-    fontSize: 12,
-    color: "gray",
+    ...Typography.text.caption,
+    fontWeight: "500",
     marginBottom: 4,
     marginTop: 4,
   },
   value: {
-    fontSize: 12,
-    color: "black",
+    ...Typography.text.body,
   },
-  paragraph: {
-    color: "#333",
-    fontSize: 13,
+  bodyText: {
+    ...Typography.text.body,
     marginTop: 4,
+    lineHeight: 22,
+  },
+  linkText: {
+    ...Typography.text.link,
   },
   tempText: {
-    fontSize: 22,
-    fontWeight: "500",
+    ...Typography.text.h2,
     marginVertical: 4,
-  },
-  tempValue: {
-    fontSize: 12,
-    color: "black",
   },
   conditionsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 4,
+    marginTop: 8,
   },
 });
