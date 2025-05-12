@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
@@ -129,7 +129,11 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={[styles.tripName, { color: theme.text }]}>{tripInfo.name}</Text>
       <Text style={[styles.subheader, { color: theme.icon }]}>
         <Ionicons name="star" size={12} color={theme.tint} />{" "}
@@ -218,13 +222,17 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: 20,
+    paddingBottom: 30,
   },
   loadingContainer: {
     flex: 1,
