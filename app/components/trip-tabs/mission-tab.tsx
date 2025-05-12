@@ -263,6 +263,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             </View>
           </TouchableOpacity>
         )}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: theme.inactive }]}>
             No missions available for this trip.

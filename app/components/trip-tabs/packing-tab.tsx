@@ -420,6 +420,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
             )}
           </View>
         )}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: theme.inactive }]}>
             No packing items available. Add some items using the field below.

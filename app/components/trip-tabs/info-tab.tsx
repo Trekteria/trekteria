@@ -88,12 +88,24 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         const response = await fetch(url);
         const data = await response.json();
 
-        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
-        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
+        const iconCode = data.weather[0].icon;
+        const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
 
         setWeather({
           temperature: `${Math.round(data.main.temp)}°F`,
-          status: data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1),
+          // status: data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1),
+          status: (data.weather[0].description.split(" ") as string[])
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" "),
           precipitation: data.rain?.["1h"] ? `${data.rain["1h"]} mm` : "0 mm",
           high: `${Math.round(data.main.temp_max)}°F`,
           low: `${Math.round(data.main.temp_min)}°F`,
@@ -102,6 +114,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           seaLevel: `${data.main.sea_level} Ft`,
           sunrise,
           sunset,
+          iconUrl,
         });
       } catch (error) {
         console.error("Failed to fetch weather:", error);
@@ -145,7 +158,12 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
       <View style={styles.gridContainer}>
         <View style={styles.gridItem}>
           <Text style={[styles.label, { color: theme.icon }]}>Contact</Text>
-          <Text style={[styles.value, { color: theme.text }]}>{tripInfo.parkContact}</Text>
+          <TouchableOpacity onPress={() => Linking.openURL(`tel:${tripInfo.parkContact}`)}>
+            <Text style={[styles.bodyText, { color: theme.tint }]}>
+              {tripInfo.parkContact}
+            </Text>
+          </TouchableOpacity>
+          {/* <Text style={[styles.value, { color: theme.text }]}>{tripInfo.parkContact}</Text> */}
         </View>
         <View style={styles.gridItem}>
           <Text style={[styles.label, { color: theme.icon }]}>Website</Text>
@@ -159,7 +177,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
       <View style={styles.section}>
         <Text style={[styles.label, { color: theme.icon }]}>Cell Service</Text>
-        <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.cellService}</Text>
+        <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.cellService}</Text>    
       </View>
 
       <View style={styles.section}>
@@ -191,14 +209,22 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
       {/* Weather Conditions Section */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.icon }]}>
-          Conditions <Ionicons name="cloud-outline" size={12} color={theme.icon} />
-        </Text>
+        <View style={styles.sectionSpecial}>
+          <Text style={[styles.label, {color: theme.icon}]}>Conditions</Text>
+          <Ionicons name="cloud-outline" size={12} color={theme.icon} style={{ }} />
+        </View>
 
         <Text style={[styles.tempText, { color: theme.text }]}>{weather?.temperature ?? "--"}</Text>
 
-        <View style={styles.conditionsRow}>
+        <View style={styles.conditionsRowSpecial}>
           <Text style={[styles.bodyText, { color: theme.text }]}>{weather?.status ?? "--"}</Text>
+          {weather?.iconUrl && (
+            <Image
+              source={{ uri: weather.iconUrl }}
+              style={{ width: 30, height: 30, paddingBottom: 2 }}
+              resizeMode="contain"
+            />
+          )}  
         </View>
 
         <View style={styles.conditionsRow}>
@@ -281,6 +307,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 5,
   },
+  sectionSpecial: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 5,
+  },
   label: {
     ...Typography.text.caption,
     fontWeight: "500",
@@ -306,5 +340,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 8,
+  },
+  conditionsRowSpecial: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginTop: 8,
+    gap: 4,
   },
 });

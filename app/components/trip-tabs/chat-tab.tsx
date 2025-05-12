@@ -314,6 +314,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                     <FlatList
                          ref={flatListRef}
                          data={messages}
+                         showsVerticalScrollIndicator={false}
                          renderItem={renderMessage}
                          keyExtractor={item => item.id}
                          contentContainerStyle={styles.messagesContainer}
