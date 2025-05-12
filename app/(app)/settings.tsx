@@ -16,6 +16,7 @@ import { Typography } from "../../constants/Typography";
 import { auth } from "../../services/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { Share } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -33,6 +34,21 @@ export default function SettingsPage() {
 
   // Get the appropriate theme colors
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  const handleAppShare = async () => {
+    try {
+      const result = await Share.share({
+        title: "TrailMate - Your Hiking Companion",
+        message: "TrailMate is a great hiking companion! Download it here: https://yourappstorelink.com",
+        url: "https://yourappstorelink.com", // optional on Android
+      });
+  
+      // Optional: check result.action to see if shared or dismissed
+    } catch (error) {
+      console.error("Error sharing app:", error);
+    }
+  };
+  
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -97,18 +113,28 @@ export default function SettingsPage() {
 
         {/* Support Section */}
         <Text style={[styles.sectionHeader, { color: theme.text }]}>Support</Text>
-        <TouchableOpacity
+
+        {/* Share with friends */}
+        {/* <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
           <Text style={[styles.label, { color: theme.text }]}>Share with friends</Text>
+        </TouchableOpacity> */}
+
+        <TouchableOpacity onPress={handleAppShare} style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <Text style={[styles.label, {color: theme.text}]}>Share TrailMate with Friends</Text>
         </TouchableOpacity>
+
+        {/* Feedback */}
         <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
           <Text style={[styles.label, { color: theme.text }]}>Feedback</Text>
         </TouchableOpacity>
+
+        {/* Rate the app */}
         <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
