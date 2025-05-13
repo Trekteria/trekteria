@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { ColorSchemeProvider, useColorSchemeSimple } from '../hooks/useColorScheme';
 import { TemperatureUnitProvider } from '../hooks/useTemperatureUnit';
+import { clearExpiredWeatherCache } from '../services/cacheService';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -40,6 +41,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      clearExpiredWeatherCache();
       SplashScreen.hideAsync();
     }
   }, [loaded]);

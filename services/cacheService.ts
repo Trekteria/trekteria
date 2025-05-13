@@ -46,4 +46,13 @@ export async function cacheWeatherData(key: string, data: any): Promise<void> {
     JSON.stringify(data),
     Date.now()
   );
+}
+
+export async function clearExpiredWeatherCache(): Promise<void> {
+  const db = await getDb();
+  const expirationTimestamp = Date.now() - ONE_HOUR;
+  await db.runAsync(
+    `DELETE FROM ${TABLE_NAME} WHERE timestamp < ?`,
+    expirationTimestamp
+  );
 } 
