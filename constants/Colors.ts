@@ -6,7 +6,7 @@
 const tintColorLight = "#0a7ea4";
 const tintColorDark = "#fff";
 const primaryColor = "#42643D"; // TrailMate primary green color
-const primaryColorDark = "#5C8756"; // Slightly lighter green for dark mode
+const primaryColorDark = "#308523"; // Slightly lighter green for dark mode
 const blackColor = "#232323"; // TrailMate black color (instead of pure black)
 const whiteColor = "#E6E6E6";
 const darkBackgroundColor = "#1A1A1A"; // Darker background for dark mode
