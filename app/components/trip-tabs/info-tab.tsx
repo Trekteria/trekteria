@@ -8,7 +8,7 @@ import { useColorScheme } from "../../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../../hooks/useTemperatureUnit";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
-import { getCachedWeatherData, cacheWeatherData } from '../../../services/cacheService';
+import { getCachedWeatherData, cacheWeatherData, getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
 
 interface InfoTabProps {
   tripId?: string;
@@ -78,11 +78,20 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         }
 
         if (currentTripId) {
-          const tripDoc = await getDoc(doc(db, "trips", currentTripId));
-          if (tripDoc.exists()) {
-            setTripInfo(tripDoc.data());
+          // Try cache first
+          const cached = await getCachedTrailData(currentTripId);
+          if (cached) {
+            console.log('Trail data loaded from CACHE for InfoTab:', currentTripId);
+            setTripInfo(cached);
           } else {
-            setError("Trip not found.");
+            const tripDoc = await getDoc(doc(db, "trips", currentTripId));
+            if (tripDoc.exists()) {
+              console.log('Trail data loaded from FIREBASE for InfoTab:', currentTripId);
+              setTripInfo(tripDoc.data());
+              await cacheTrailData(currentTripId, tripDoc.data());
+            } else {
+              setError("Trip not found.");
+            }
           }
         } else {
           setError("No trip ID available.");
