@@ -59,14 +59,22 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           currentTripId = tripData.id;
         }
 
-        if (!currentTripId) {
+        if (currentTripId) {
+          await AsyncStorage.setItem("selectedTripId", currentTripId);
+        } else {
           const storedTripId = await AsyncStorage.getItem("selectedTripId");
-          if (storedTripId) currentTripId = storedTripId;
+          if (storedTripId) {
+            currentTripId = storedTripId;
+          }
         }
 
-        if (tripData) {
+        if (tripData?.schedule && Array.isArray(tripData.schedule)) {
           setTripInfo(tripData);
-        } else if (currentTripId) {
+          setLoading(false);
+          return;
+        }
+
+        if (currentTripId) {
           const tripDoc = await getDoc(doc(db, "trips", currentTripId));
           if (tripDoc.exists()) {
             setTripInfo(tripDoc.data());

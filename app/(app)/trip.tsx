@@ -65,11 +65,11 @@ function Trip() {
     switch (route.key) {
       case "info":
         //    return <InfoTab tripData={tripData} />;
-        return <InfoTab />;
+        return <InfoTab tripId={tripData.id} tripData={tripData} />;
       case "schedule":
-        return <ScheduleTab tripData={tripData} />;
+        return <ScheduleTab tripId={tripData.id} tripData={tripData} />;
       case "packing":
-        return <PackingTab tripData={tripData} />;
+        return <PackingTab tripId={tripData.id} tripData={tripData} />;
       case "mission":
         return <MissionTab tripId={tripData.id} tripData={tripData} />;
       case "chat":
