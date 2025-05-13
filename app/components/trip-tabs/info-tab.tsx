@@ -216,6 +216,8 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("hard")) return "trending-up";
     if (name.includes("morning") || name.includes("sunset")) return "sunny";
     if (name.includes("evening") || name.includes("night")) return "moon";
+    if (name.includes("snow")) return "snow";
+    if (name.includes("shade")) return "umbrella";
     return "star";
   };
 
