@@ -8,6 +8,7 @@ import { useColorScheme } from "../../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../../hooks/useTemperatureUnit";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
+import { getCachedWeatherData, cacheWeatherData } from '../../../services/cacheService';
 
 interface InfoTabProps {
   tripId?: string;
@@ -103,12 +104,29 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
       const lat = tripInfo.coordinates.latitude;
       const lon = tripInfo.coordinates.longitude;
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&date=${tripInfo.dateRange.startDate}&appid=${apiKey}&units=imperial`;
+      const date = tripInfo.dateRange?.startDate || '';
+      const cacheKey = `${lat},${lon},${date}`;
+
+      // Try cache first
+      const cached = await getCachedWeatherData(cacheKey);
+      let data;
+      if (cached) {
+        data = cached;
+        console.log("-------Successfully fetched weather data from CACHE-------");
+      } else {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&date=${date}&appid=${apiKey}&units=imperial`;
+        try {
+          const response = await fetch(url);
+          data = await response.json();
+          console.log("-------Successfully fetched weather data from API-------");
+          await cacheWeatherData(cacheKey, data);
+        } catch (error) {
+          console.error("Failed to fetch weather:", error);
+          return;
+        }
+      }
 
       try {
-        const response = await fetch(url);
-        const data = await response.json();
-
         const iconCode = data.weather[0].icon.slice(0, -1) + 'd';
         const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
@@ -143,7 +161,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           iconUrl,
         });
       } catch (error) {
-        console.error("Failed to fetch weather:", error);
+        console.error("Failed to process weather data:", error);
       }
     };
 
