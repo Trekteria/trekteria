@@ -170,7 +170,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   // Get icons for amenities
   const getAmenityIcon = (amenity: string) => {
     const name = amenity.toLowerCase();
-    if (name.includes("restroom") || name.includes("bathroom")) return "water";
+    if (name.includes("restroom") || name.includes("bathroom")) return "transgender";
     if (name.includes("parking")) return "car";
     if (name.includes("water")) return "water-outline";
     if (name.includes("picnic")) return "restaurant";
@@ -191,6 +191,13 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("forest") || name.includes("tree")) return "leaf";
     if (name.includes("historic")) return "time";
     if (name.includes("quiet")) return "volume-mute";
+    if (name.includes("wildflower") || name.includes("flower")) return "flower";
+    if (name.includes("moderate") || name.includes("difficult")) return "footsteps";
+    if (name.includes("easy")) return "leaf";
+    if (name.includes("difficult") || name.includes("extreme")) return "warning";
+    if (name.includes("hard")) return "trending-up";
+    if (name.includes("sunset")) return "sunset";
+    if (name.includes("morning")) return "sunny";
     return "star";
   };
 
