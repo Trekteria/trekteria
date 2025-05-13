@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   Switch,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,12 +17,17 @@ import { Typography } from "../../constants/Typography";
 import { auth } from "../../services/firebaseConfig";
 import { signOut } from "firebase/auth";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { useTemperatureUnit } from "../../hooks/useTemperatureUnit";
 import { Share } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { temperatureUnit, setTemperatureUnit } = useTemperatureUnit();
   const isDarkMode = colorScheme === 'dark';
+  const [measurementUnit, setMeasurementUnit] = useState("Imperial");
+  const [showTemperatureModal, setShowTemperatureModal] = useState(false);
+  const [showUnitModal, setShowUnitModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -42,13 +48,13 @@ export default function SettingsPage() {
         message: "TrailMate is a great hiking companion! Download it here: https://yourappstorelink.com",
         url: "https://yourappstorelink.com", // optional on Android
       });
-  
+
       // Optional: check result.action to see if shared or dismissed
     } catch (error) {
       console.error("Error sharing app:", error);
     }
   };
-  
+
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -81,14 +87,27 @@ export default function SettingsPage() {
           />
         </View>
 
-        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+        <TouchableOpacity
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
+          onPress={() => setShowTemperatureModal(true)}
+        >
           <Text style={[styles.label, { color: theme.text }]}>Temperature</Text>
-          <Text style={[styles.value, { color: theme.icon }]}>°F</Text>
-        </View>
-        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+          <View style={styles.valueContainer}>
+            <Text style={[styles.value, { color: theme.icon }]}>{temperatureUnit}</Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.icon} />
+          </View>
+        </TouchableOpacity>
+
+        {/* <TouchableOpacity
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
+          onPress={() => setShowUnitModal(true)}
+        >
           <Text style={[styles.label, { color: theme.text }]}>Unit</Text>
-          <Text style={[styles.value, { color: theme.icon }]}>Imperial</Text>
-        </View>
+          <View style={styles.valueContainer}>
+            <Text style={[styles.value, { color: theme.icon }]}>{measurementUnit}</Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.icon} />
+          </View>
+        </TouchableOpacity> */}
 
         {/* Account Section */}
         <Text style={[styles.sectionHeader, { color: theme.text }]}>Account</Text>
@@ -111,6 +130,110 @@ export default function SettingsPage() {
           <Text style={[styles.label, { color: theme.text }]}>Change password</Text>
         </TouchableOpacity>
 
+        {/* Temperature Selection Modal */}
+        <Modal
+          visible={showTemperatureModal}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Temperature Unit</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  temperatureUnit === "°F" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setTemperatureUnit("°F");
+                  setShowTemperatureModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Fahrenheit (°F)</Text>
+                {temperatureUnit === "°F" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  temperatureUnit === "°C" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setTemperatureUnit("°C");
+                  setShowTemperatureModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Celsius (°C)</Text>
+                {temperatureUnit === "°C" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowTemperatureModal(false)}
+              >
+                <Text style={styles.modalCloseText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Unit Selection Modal */}
+        <Modal
+          visible={showUnitModal}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Measurement Unit</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  measurementUnit === "Imperial" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setMeasurementUnit("Imperial");
+                  setShowUnitModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Imperial (miles, feet)</Text>
+                {measurementUnit === "Imperial" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  measurementUnit === "Metric" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setMeasurementUnit("Metric");
+                  setShowUnitModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Metric (kilometers, meters)</Text>
+                {measurementUnit === "Metric" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowUnitModal(false)}
+              >
+                <Text style={styles.modalCloseText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         {/* Support Section */}
         <Text style={[styles.sectionHeader, { color: theme.text }]}>Support</Text>
 
@@ -123,7 +246,7 @@ export default function SettingsPage() {
         </TouchableOpacity> */}
 
         <TouchableOpacity onPress={handleAppShare} style={[styles.row, { borderBottomColor: theme.borderColor }]}>
-          <Text style={[styles.label, {color: theme.text}]}>Share TrailMate with Friends</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Share TrailMate with Friends</Text>
         </TouchableOpacity>
 
         {/* Feedback */}
@@ -206,5 +329,52 @@ const styles = StyleSheet.create({
     ...Typography.text.caption, // 12px, OpenSans
     textAlign: "center",
     marginTop: 20,
+  },
+  valueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "80%",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalTitle: {
+    ...Typography.text.h3,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+    marginBottom: 10,
+  },
+  modalOptionText: {
+    ...Typography.text.body,
+  },
+  modalCloseButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 100,
+    backgroundColor: Colors.primary,
+  },
+  modalCloseText: {
+    ...Typography.text.button,
+    color: "white",
   },
 });

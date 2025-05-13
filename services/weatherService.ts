@@ -6,6 +6,7 @@ export const fetchWeatherData = async (
   latitude: number,
   longitude: number
 ) => {
+  // Always fetch in Fahrenheit
   const params = {
     latitude: latitude,
     longitude: longitude,
@@ -17,7 +18,7 @@ export const fetchWeatherData = async (
     ],
     timezone: "America/Los_Angeles",
     wind_speed_unit: "mph",
-    temperature_unit: "fahrenheit",
+    temperature_unit: "fahrenheit", // Always use Fahrenheit
     precipitation_unit: "inch",
     start_date: startDate,
     end_date: endDate,
@@ -55,6 +56,7 @@ export const fetchWeatherData = async (
   };
 
   // Format the weather data into a readable string
+  // Return raw values without units, let the UI handle formatting
   let weatherSummary = "";
 
   for (let i = 0; i < weatherData.daily.time.length; i++) {

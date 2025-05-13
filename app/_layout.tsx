@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { ColorSchemeProvider, useColorSchemeSimple } from '../hooks/useColorScheme';
+import { TemperatureUnitProvider } from '../hooks/useTemperatureUnit';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -49,7 +50,9 @@ export default function RootLayout() {
 
   return (
     <ColorSchemeProvider>
-      <NavigationLayout />
+      <TemperatureUnitProvider>
+        <NavigationLayout />
+      </TemperatureUnitProvider>
     </ColorSchemeProvider>
   );
 }

@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { useTemperatureUnit } from "../../../hooks/useTemperatureUnit";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
 
@@ -42,6 +43,7 @@ const getDifficultyIcon = (difficulty: string) => {
 
 export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   const { colorScheme } = useColorScheme();
+  const { temperatureUnit, convertTemperature } = useTemperatureUnit();
   const theme = Colors[colorScheme];
 
   const [tripInfo, setTripInfo] = useState<any>(null);
@@ -119,15 +121,21 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           minute: '2-digit',
         });
 
+        // Convert temperatures based on user preference
+        const temp = convertTemperature(data.main.temp);
+        const high = convertTemperature(data.main.temp_max);
+        const low = convertTemperature(data.main.temp_min);
+        const feels_like = convertTemperature(data.main.feels_like);
+
         setWeather({
-          temperature: `${Math.round(data.main.temp)}°F`,
+          temperature: `${temp.value}${temp.unit}`,
           status: (data.weather[0].description.split(" ") as string[])
             .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" "),
           precipitation: data.rain?.["1h"] ? `${data.rain["1h"]} mm` : "0 mm",
-          high: `${Math.round(data.main.temp_max)}°F`,
-          low: `${Math.round(data.main.temp_min)}°F`,
-          feels_like: `${Math.round(data.main.feels_like)}°F`,
+          high: `${high.value}${high.unit}`,
+          low: `${low.value}${low.unit}`,
+          feels_like: `${feels_like.value}${feels_like.unit}`,
           humidity: `${data.main.humidity}%`,
           seaLevel: data.main.sea_level ? `${data.main.sea_level} Ft` : "N/A",
           sunrise,
@@ -140,7 +148,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     };
 
     fetchWeather();
-  }, [tripInfo]);
+  }, [tripInfo, temperatureUnit]);
 
   if (loading) {
     return (
