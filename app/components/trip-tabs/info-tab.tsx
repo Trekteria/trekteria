@@ -172,7 +172,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     const name = amenity.toLowerCase();
     if (name.includes("restroom") || name.includes("bathroom")) return "transgender";
     if (name.includes("parking")) return "car";
-    if (name.includes("water")) return "water-outline";
+    if (name.includes("water")) return "water";
     if (name.includes("picnic")) return "restaurant";
     if (name.includes("camp")) return "bonfire";
     if (name.includes("wifi")) return "wifi";
@@ -196,8 +196,8 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("easy")) return "leaf";
     if (name.includes("difficult") || name.includes("extreme")) return "warning";
     if (name.includes("hard")) return "trending-up";
-    if (name.includes("sunset")) return "sunset";
-    if (name.includes("morning")) return "sunny";
+    if (name.includes("morning") || name.includes("sunset")) return "sunny";
+    if (name.includes("evening") || name.includes("night")) return "moon";
     return "star";
   };
 
