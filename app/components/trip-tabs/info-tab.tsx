@@ -29,6 +29,17 @@ if (!apiKey) {
   );
 }
 
+const getDifficultyIcon = (difficulty: string) => {
+  if (!difficulty) return "star";
+
+  const level = difficulty.toLowerCase();
+  if (level.includes("easy")) return "leaf";
+  if (level.includes("moderate")) return "footsteps";
+  if (level.includes("hard") || level.includes("difficult")) return "trending-up";
+  if (level.includes("extreme")) return "warning";
+  return "star";
+};
+
 export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   const { colorScheme } = useColorScheme();
   const theme = Colors[colorScheme];
@@ -88,7 +99,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         const response = await fetch(url);
         const data = await response.json();
 
-        const iconCode = data.weather[0].icon;
+        const iconCode = data.weather[0].icon.slice(0, -1) + 'd';
         const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
         const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString([], {
@@ -102,7 +113,6 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
         setWeather({
           temperature: `${Math.round(data.main.temp)}°F`,
-          // status: data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1),
           status: (data.weather[0].description.split(" ") as string[])
             .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" "),
@@ -111,7 +121,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           low: `${Math.round(data.main.temp_min)}°F`,
           feels_like: `${Math.round(data.main.feels_like)}°F`,
           humidity: `${data.main.humidity}%`,
-          seaLevel: `${data.main.sea_level} Ft`,
+          seaLevel: data.main.sea_level ? `${data.main.sea_level} Ft` : "N/A",
           sunrise,
           sunset,
           iconUrl,
@@ -141,112 +151,216 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     );
   }
 
+  // Get icons for amenities
+  const getAmenityIcon = (amenity: string) => {
+    const name = amenity.toLowerCase();
+    if (name.includes("restroom") || name.includes("bathroom")) return "water";
+    if (name.includes("parking")) return "car";
+    if (name.includes("water")) return "water-outline";
+    if (name.includes("picnic")) return "restaurant";
+    if (name.includes("camp")) return "bonfire";
+    if (name.includes("wifi")) return "wifi";
+    if (name.includes("view")) return "eye";
+    if (name.includes("pet") || name.includes("dog")) return "paw";
+    return "trail-sign";
+  };
+
+  // Get icons for highlights
+  const getHighlightIcon = (highlight: string) => {
+    const name = highlight.toLowerCase();
+    if (name.includes("view") || name.includes("scenic")) return "eye";
+    if (name.includes("water") || name.includes("lake") || name.includes("river")) return "water";
+    if (name.includes("wildlife") || name.includes("animal")) return "paw";
+    if (name.includes("photo")) return "camera";
+    if (name.includes("forest") || name.includes("tree")) return "leaf";
+    if (name.includes("historic")) return "time";
+    if (name.includes("quiet")) return "volume-mute";
+    return "star";
+  };
+
+  // Function to render amenities with icons
+  const renderAmenities = () => {
+    if (!Array.isArray(tripInfo.amenities) || tripInfo.amenities.length === 0) {
+      return <Text style={[styles.bodyText, { color: theme.text }]}>N/A</Text>;
+    }
+
+    return (
+      <View style={styles.iconGrid}>
+        {tripInfo.amenities.map((amenity: string, index: number) => (
+          <View key={`amenity-${index}`} style={styles.iconItem}>
+            <Ionicons
+              name={getAmenityIcon(amenity)}
+              size={28}
+              color={theme.tint}
+              style={styles.featureIcon}
+            />
+            <Text style={[styles.iconLabel, { color: theme.text }]}>
+              {amenity.charAt(0).toUpperCase() + amenity.slice(1)}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  // Function to render highlights with icons
+  const renderHighlights = () => {
+    if (!Array.isArray(tripInfo.highlights) || tripInfo.highlights.length === 0) {
+      return <Text style={[styles.bodyText, { color: theme.text }]}>N/A</Text>;
+    }
+
+    return (
+      <View style={styles.iconGrid}>
+        {tripInfo.highlights.map((highlight: string, index: number) => (
+          <View key={`highlight-${index}`} style={styles.iconItem}>
+            <Ionicons
+              name={getHighlightIcon(highlight)}
+              size={28}
+              color={theme.tint}
+              style={styles.featureIcon}
+            />
+            <Text style={[styles.iconLabel, { color: theme.text }]}>
+              {highlight.charAt(0).toUpperCase() + highlight.slice(1)}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.tripName, { color: theme.text }]}>{tripInfo.name}</Text>
-      <Text style={[styles.subheader, { color: theme.icon }]}>
-        <Ionicons name="star" size={12} color={theme.tint} />{" "}
-        {tripInfo.difficultyLevel?.slice(0, -1)} | {tripInfo.location}
-      </Text>
-
-      <View style={[styles.divider, { backgroundColor: theme.borderColor }]} />
-
-      <View style={styles.gridContainer}>
-        <View style={styles.gridItem}>
-          <Text style={[styles.label, { color: theme.icon }]}>Contact</Text>
-          <TouchableOpacity onPress={() => Linking.openURL(`tel:${tripInfo.parkContact}`)}>
-            <Text style={[styles.bodyText, { color: theme.tint }]}>
-              {tripInfo.parkContact}
-            </Text>
-          </TouchableOpacity>
-          {/* <Text style={[styles.value, { color: theme.text }]}>{tripInfo.parkContact}</Text> */}
+      {/* Simple Header */}
+      <View style={styles.headerSection}>
+        <Text style={[styles.tripName, { color: theme.text }]}>{tripInfo.name}</Text>
+        <View style={styles.locationWrapper}>
+          <Ionicons name="location" size={18} color={theme.tint} />
+          <Text style={[styles.locationText, { color: theme.text }]}>{tripInfo.location}</Text>
         </View>
-        <View style={styles.gridItem}>
-          <Text style={[styles.label, { color: theme.icon }]}>Website</Text>
-          <TouchableOpacity onPress={() => Linking.openURL(tripInfo.parkWebsite)}>
-            <Text style={[styles.linkText, { color: theme.tint }]}>
-              {getDisplayUrl(tripInfo.parkWebsite)}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.difficultyText, { color: theme.icon }]}>
+          {tripInfo.difficultyLevel?.slice(0, -1)} Difficulty
+        </Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.icon }]}>Cell Service</Text>
-        <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.cellService}</Text>    
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.icon }]}>Summary</Text>
+      {/* Summary with Icon */}
+      <View style={[styles.section, { backgroundColor: theme.card }]}>
+        <Ionicons name="information-circle" size={34} color={theme.tint} style={styles.sectionIcon} />
         <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.description}</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.icon }]}>Amenities</Text>
-        <Text style={[styles.bodyText, { color: theme.text }]}>
-          {Array.isArray(tripInfo.amenities)
-            ? tripInfo.amenities
-              .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
-              .join(", ")
-            : "N/A"}
+      {/* Contact Information - Simplified */}
+      <View style={styles.quickInfoRow}>
+        <TouchableOpacity
+          style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
+          onPress={() => Linking.openURL(`tel:${tripInfo.parkContact}`)}
+        >
+          <Ionicons name="call" size={32} color={theme.tint} />
+          <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Call Park</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
+          onPress={() => Linking.openURL(tripInfo.parkWebsite)}
+        >
+          <Ionicons name="globe" size={32} color={theme.tint} />
+          <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Website</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Cell Service Info */}
+      <View style={[styles.cellServiceCard, { backgroundColor: theme.card }]}>
+        <Ionicons
+          name={tripInfo.cellService.toLowerCase().includes("no") ? "close-circle" : "cellular"}
+          size={32}
+          color={tripInfo.cellService.toLowerCase().includes("no") ? theme.inactive : theme.tint}
+          style={styles.cellServiceIcon}
+        />
+        <Text style={[styles.cellServiceText, { color: theme.text }]} numberOfLines={2}>
+          Cell Service: {tripInfo.cellService}
         </Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.icon }]}>Highlights</Text>
-        <Text style={[styles.bodyText, { color: theme.text }]}>
-          {Array.isArray(tripInfo.highlights)
-            ? tripInfo.highlights
-              .map((item: string) => item.charAt(0).toUpperCase() + item.slice(1))
-              .join(", ")
-            : "N/A"}
-        </Text>
+      {/* Weather Display with Large Icon */}
+      <View style={[styles.weatherSection, { backgroundColor: theme.card }]}>
+        <Text style={[styles.weatherSectionTitle, { color: theme.text }]}>Weather on Trip Date</Text>
+
+        {/* Top weather overview */}
+        <View style={styles.weatherOverview}>
+          <View style={styles.weatherMainInfo}>
+            <Text style={[styles.tempText, { color: theme.text }]}>{weather?.temperature ?? "--"}</Text>
+            <Text style={[styles.weatherStatus, { color: theme.text }]}>{weather?.status ?? "--"}</Text>
+            <Text style={[styles.weatherFeelsLike, { color: theme.icon }]}>
+              Feels like: {weather?.feels_like ?? "--"}
+            </Text>
+          </View>
+
+          <View style={styles.weatherIconWrapper}>
+            {weather?.iconUrl ? (
+              <Image
+                source={{ uri: weather.iconUrl }}
+                style={styles.largeWeatherIcon}
+                resizeMode="contain"
+              />
+            ) : (
+              <Ionicons name="partly-sunny" size={70} color={theme.tint} />
+            )}
+            <Text style={[styles.highLowText, { color: theme.icon }]}>
+              H: {weather?.high ?? "--"} • L: {weather?.low ?? "--"}
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.weatherDivider, { backgroundColor: theme.borderColor }]} />
+
+        {/* Weather details grid */}
+        <View style={styles.weatherDetailsGrid}>
+          <View style={styles.weatherDetailItem}>
+            <Ionicons name="water" size={22} color={theme.tint} />
+            <View style={styles.weatherDetailContent}>
+              <Text style={[styles.weatherDetailLabel, { color: theme.icon }]}>Humidity</Text>
+              <Text style={[styles.weatherDetailValue, { color: theme.text }]}>{weather?.humidity ?? "--"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.weatherDetailItem}>
+            <Ionicons name="rainy" size={22} color={theme.tint} />
+            <View style={styles.weatherDetailContent}>
+              <Text style={[styles.weatherDetailLabel, { color: theme.icon }]}>Precipitation</Text>
+              <Text style={[styles.weatherDetailValue, { color: theme.text }]}>{weather?.precipitation ?? "--"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.weatherDetailItem}>
+            <Ionicons name="sunny" size={22} color={theme.tint} />
+            <View style={styles.weatherDetailContent}>
+              <Text style={[styles.weatherDetailLabel, { color: theme.icon }]}>Sunrise</Text>
+              <Text style={[styles.weatherDetailValue, { color: theme.text }]}>{weather?.sunrise ?? "--"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.weatherDetailItem}>
+            <Ionicons name="moon" size={22} color={theme.tint} />
+            <View style={styles.weatherDetailContent}>
+              <Text style={[styles.weatherDetailLabel, { color: theme.icon }]}>Sunset</Text>
+              <Text style={[styles.weatherDetailValue, { color: theme.text }]}>{weather?.sunset ?? "--"}</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
-      {/* Weather Conditions Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionSpecial}>
-          <Text style={[styles.label, {color: theme.icon}]}>Conditions</Text>
-          <Ionicons name="cloud-outline" size={12} color={theme.icon} style={{ }} />
-        </View>
+      {/* Trail Features with Icons */}
+      <View style={styles.featuresContainer}>
+        {/* Amenities */}
+        <Text style={[styles.featureTitle, { color: theme.text }]}>Amenities</Text>
+        {renderAmenities()}
 
-        <Text style={[styles.tempText, { color: theme.text }]}>{weather?.temperature ?? "--"}</Text>
-
-        <View style={styles.conditionsRowSpecial}>
-          <Text style={[styles.bodyText, { color: theme.text }]}>{weather?.status ?? "--"}</Text>
-          {weather?.iconUrl && (
-            <Image
-              source={{ uri: weather.iconUrl }}
-              style={{ width: 30, height: 30, paddingBottom: 2 }}
-              resizeMode="contain"
-            />
-          )}  
-        </View>
-
-        <View style={styles.conditionsRow}>
-          <Text style={[styles.bodyText, { color: theme.text }]}>Humidity: {weather?.humidity ?? "--"}</Text>
-          <Text style={[styles.bodyText, { color: theme.text }]}>
-            <Ionicons name="water-outline" size={14} color={theme.text} /> Precipitation: {weather?.precipitation ?? "--"}
-          </Text>
-        </View>
-
-        <View style={styles.conditionsRow}>
-          <Text style={[styles.bodyText, { color: theme.text }]}>H: {weather?.high ?? "--"} | L: {weather?.low ?? "--"}</Text>
-          <Text style={[styles.bodyText, { color: theme.text }]}>
-            <Ionicons name="sunny-outline" size={14} color={theme.text} /> Sunrise: {weather?.sunrise ?? "--"}
-          </Text>
-        </View>
-
-        <View style={styles.conditionsRow}>
-          <Text style={[styles.bodyText, { color: theme.text }]}>Sea Level: {weather?.seaLevel ?? "--"}</Text>
-          <Text style={[styles.bodyText, { color: theme.text }]}>
-            <Ionicons name="partly-sunny-outline" size={14} color={theme.text} /> Sunset: {weather?.sunset ?? "--"}
-          </Text>
-        </View>
+        {/* Highlights */}
+        <Text style={[styles.featureTitle, { color: theme.text }]}>Highlights</Text>
+        {renderHighlights()}
       </View>
     </ScrollView>
   );
@@ -257,8 +371,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 30,
+    paddingTop: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -280,71 +395,199 @@ const styles = StyleSheet.create({
     ...Typography.text.body,
     textAlign: "center",
   },
+  headerSection: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  difficultyBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
   tripName: {
     ...Typography.text.h3,
     textAlign: "center",
+    marginBottom: 8,
   },
-  subheader: {
-    ...Typography.text.caption,
-    textAlign: "center",
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 10,
-  },
-  gridContainer: {
+  locationWrapper: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginVertical: 5,
+    alignItems: "center",
+    marginBottom: 4,
   },
-  gridItem: {
-    width: "47%",
-    marginBottom: 5,
+  locationText: {
+    ...Typography.text.body,
+    marginLeft: 6,
+  },
+  difficultyText: {
+    ...Typography.text.caption,
+    marginTop: 4,
   },
   section: {
-    marginTop: 10,
-    marginBottom: 5,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  sectionSpecial: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 5,
-  },
-  label: {
-    ...Typography.text.caption,
-    fontWeight: "500",
-    marginBottom: 4,
-    marginTop: 4,
-  },
-  value: {
-    ...Typography.text.body,
+  sectionIcon: {
+    alignSelf: "center",
+    marginBottom: 12,
   },
   bodyText: {
     ...Typography.text.body,
-    marginTop: 4,
     lineHeight: 22,
+    textAlign: "center",
   },
-  linkText: {
-    ...Typography.text.link,
+  quickInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  quickInfoItem: {
+    width: "48%",
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  quickInfoLabel: {
+    ...Typography.text.caption,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  cellServiceCard: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  cellServiceIcon: {
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  cellServiceText: {
+    ...Typography.text.body,
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  weatherSection: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  weatherSectionTitle: {
+    ...Typography.text.h4,
+    marginBottom: 16,
+  },
+  weatherOverview: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  weatherMainInfo: {
+    flex: 1,
+  },
+  weatherIconWrapper: {
+    alignItems: "center",
+  },
+  largeWeatherIcon: {
+    width: 70,
+    height: 70,
+    marginBottom: 6,
   },
   tempText: {
     ...Typography.text.h2,
-    marginVertical: 4,
+    fontWeight: "600",
   },
-  conditionsRow: {
+  weatherStatus: {
+    ...Typography.text.body,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  weatherFeelsLike: {
+    ...Typography.text.caption,
+    marginTop: 4,
+  },
+  highLowText: {
+    ...Typography.text.caption,
+    textAlign: "center",
+  },
+  weatherDivider: {
+    height: 1,
+    marginBottom: 16,
+  },
+  weatherDetailsGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
+  },
+  weatherDetailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "48%",
+    marginBottom: 12,
+  },
+  weatherDetailContent: {
+    marginLeft: 12,
+  },
+  weatherDetailLabel: {
+    ...Typography.text.caption,
+  },
+  weatherDetailValue: {
+    ...Typography.text.body,
+    marginTop: 2,
+  },
+  featuresContainer: {
     marginTop: 8,
   },
-  conditionsRowSpecial: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
+  featureTitle: {
+    ...Typography.text.h4,
+    marginBottom: 16,
     marginTop: 8,
-    gap: 4,
+  },
+  iconGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
+  },
+  iconItem: {
+    width: "33%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  featureIcon: {
+    marginBottom: 8,
+  },
+  iconLabel: {
+    ...Typography.text.caption,
+    textAlign: "center",
+    paddingHorizontal: 4,
   },
 });

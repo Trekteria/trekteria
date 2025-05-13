@@ -29,6 +29,9 @@ export default function ChangeEmail() {
   const [password, setPassword] = useState(""); // State to store the user's password
   const [loading, setLoading] = useState(false); // State to manage loading state
   const [initializing, setInitializing] = useState(true); // State to track initial loading
+  const { colorScheme } = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch current email on component mount
   useEffect(() => {
@@ -47,9 +50,6 @@ export default function ChangeEmail() {
 
     fetchCurrentEmail();
   }, []);
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
-  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Function to handle email update
   const handleUpdateEmail = async () => {
@@ -121,9 +121,9 @@ export default function ChangeEmail() {
   // Show loading indicator while fetching the current email
   if (initializing) {
     return (
-      <SafeAreaView style={[styles.safeArea, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading your information...</Text>
+      <SafeAreaView style={[styles.safeArea, styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[styles.loadingText, { color: theme.text }]}>Loading your information...</Text>
       </SafeAreaView>
     );
   }
@@ -147,24 +147,24 @@ export default function ChangeEmail() {
       <View style={styles.form}>
         {/* Display current email */}
         <View style={styles.currentEmailContainer}>
-          <Text style={styles.inputLabel}>Current Email</Text>
-          <View style={styles.currentEmailBox}>
-            <Text style={styles.currentEmailText}>{currentEmail}</Text>
+          <Text style={[styles.inputLabel, { color: theme.icon }]}>Current Email</Text>
+          <View style={[styles.currentEmailBox, { backgroundColor: isDarkMode ? Colors.dark.card : '#f7f7f7', borderColor: theme.borderColor }]}>
+            <Text style={[styles.currentEmailText, { color: theme.text }]}>{currentEmail}</Text>
           </View>
         </View>
 
         {/* Input for new email */}
         <View>
-          <Text style={styles.inputLabel}>New Email</Text>
+          <Text style={[styles.inputLabel, { color: theme.icon }]}>New Email</Text>
           <TextInput
             style={[
-            styles.input,
-            {
-              borderColor: theme.borderColor,
-              color: theme.text,
-              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
-            }
-          ]}
+              styles.input,
+              {
+                borderColor: theme.borderColor,
+                color: theme.text,
+                backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+              }
+            ]}
             value={newEmail}
             onChangeText={setNewEmail}
             placeholder="Enter your new email"
@@ -176,16 +176,16 @@ export default function ChangeEmail() {
 
         {/* Input for password */}
         <View>
-          <Text style={styles.inputLabel}>Password</Text>
+          <Text style={[styles.inputLabel, { color: theme.icon }]}>Password</Text>
           <TextInput
             style={[
-            styles.input,
-            {
-              borderColor: theme.borderColor,
-              color: theme.text,
-              backgroundColor: isDarkMode ? Colors.dark.card : 'white'
-            }
-          ]}
+              styles.input,
+              {
+                borderColor: theme.borderColor,
+                color: theme.text,
+                backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+              }
+            ]}
             value={password}
             onChangeText={setPassword}
             placeholder="Enter your password"
@@ -208,6 +208,10 @@ export default function ChangeEmail() {
             {loading ? "Processing..." : "Update Email"}
           </Text>
         </TouchableOpacity>
+
+        <Text style={[styles.inputLabel, { color: theme.icon, textAlign: 'center', marginTop: 20 }]}>
+          Note: You'll need to verify your new email address before the changes take effect.
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -237,7 +241,6 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#555",
     marginBottom: 8,
     paddingLeft: 10,
   },
@@ -253,15 +256,12 @@ const styles = StyleSheet.create({
   },
   currentEmailBox: {
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    backgroundColor: "#f7f7f7",
     borderRadius: 100,
     paddingHorizontal: 30,
     paddingVertical: 20,
   },
   currentEmailText: {
     fontSize: 16,
-    color: "#666",
   },
   button: {
     padding: 20,
@@ -274,7 +274,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...Typography.text.button,
-    color: "white",
   },
   loadingContainer: {
     justifyContent: "center",
@@ -283,6 +282,5 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#666",
   },
 });
