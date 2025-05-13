@@ -265,7 +265,8 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           <Text style={[styles.locationText, { color: theme.text }]}>{tripInfo.location}</Text>
         </View>
         <Text style={[styles.difficultyText, { color: theme.icon }]}>
-          {tripInfo.difficultyLevel?.slice(0, -1)} Difficulty
+          {/* {tripInfo.difficultyLevel?.slice(0, -1)} Difficulty */}
+          {tripInfo.difficultyLevel?.split(" ")[0].replace(/[^\w]/g, "")} Difficulty
         </Text>
       </View>
 
