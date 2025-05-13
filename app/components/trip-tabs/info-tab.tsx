@@ -93,7 +93,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
       const lat = tripInfo.coordinates.latitude;
       const lon = tripInfo.coordinates.longitude;
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`;
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&date=${tripInfo.dateRange.startDate}&appid=${apiKey}&units=imperial`;
 
       try {
         const response = await fetch(url);
