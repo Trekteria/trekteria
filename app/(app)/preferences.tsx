@@ -16,7 +16,6 @@ import Animated, {
      Easing,
      runOnJS
 } from 'react-native-reanimated';
-import { fetchWeatherData } from '@/services/weatherService';
 import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { processRecommendations } from '@/services/recommendationService';
