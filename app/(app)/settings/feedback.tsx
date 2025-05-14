@@ -9,7 +9,10 @@ import {
      Alert,
      ActivityIndicator,
      KeyboardAvoidingView,
-     Platform
+     Platform,
+     TouchableWithoutFeedback,
+     Keyboard,
+     ScrollView
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,117 +71,126 @@ export default function FeedbackPage() {
                          headerShown: false,
                     }}
                />
-               <View style={styles.headerContainer}>
-                    <View style={styles.header}>
-                         <TouchableOpacity onPress={() => router.back()}>
-                              <Ionicons
-                                   name="chevron-back"
-                                   size={28}
-                                   color={theme.text}
-                              />
-                         </TouchableOpacity>
-                    </View>
-                    <Text style={[styles.title, { color: theme.primary }]}>Feedback</Text>
-               </View>
+               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={{ flex: 1 }}>
+                         <View style={styles.headerContainer}>
+                              <View style={styles.header}>
+                                   <TouchableOpacity onPress={() => router.back()}>
+                                        <Ionicons
+                                             name="chevron-back"
+                                             size={28}
+                                             color={theme.text}
+                                        />
+                                   </TouchableOpacity>
+                              </View>
+                              <Text style={[styles.title, { color: theme.primary }]}>Feedback</Text>
+                         </View>
 
-               <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.keyboardAvoidingView}
-               >
-                    <View style={styles.form}>
-                         <Text style={[styles.label, { color: theme.text }]}>Category</Text>
-                         <DropDownPicker
-                              open={open}
-                              value={category}
-                              items={items}
-                              setOpen={setOpen}
-                              setValue={setCategory}
-                              setItems={setItems}
-                              style={[
-                                   styles.dropdown,
-                                   {
-                                        borderColor: theme.borderColor,
-                                        backgroundColor: isDarkMode ? Colors.dark.card : 'white'
-                                   }
-                              ]}
-                              textStyle={{ color: theme.text }}
-                              dropDownContainerStyle={[
-                                   styles.dropdownListContainer,
-                                   {
-                                        borderColor: theme.borderColor,
-                                        backgroundColor: isDarkMode ? Colors.dark.card : 'white',
-                                        borderWidth: 1
-                                   }
-                              ]}
-                              placeholderStyle={{ color: theme.inactive }}
-                              ArrowUpIconComponent={() => (
-                                   <Ionicons name="chevron-up" size={16} color={isDarkMode ? Colors.white : '#000'} />
-                              )}
-                              ArrowDownIconComponent={() => (
-                                   <Ionicons name="chevron-down" size={16} color={isDarkMode ? Colors.white : '#000'} />
-                              )}
-                              TickIconComponent={() => (
-                                   <Ionicons name="checkmark" size={16} color={isDarkMode ? Colors.white : '#000'} />
-                              )}
-                              zIndex={3000}
-                              listMode="SCROLLVIEW"
-                              maxHeight={200}
-                              autoScroll
-                         />
-
-                         <Text style={[styles.label, { color: theme.text, marginTop: 10 }]}>Subject</Text>
-                         <TextInput
-                              style={[
-                                   styles.input,
-                                   {
-                                        borderColor: theme.borderColor,
-                                        color: theme.text,
-                                        backgroundColor: isDarkMode ? Colors.dark.card : 'white'
-                                   }
-                              ]}
-                              placeholder="Enter subject"
-                              placeholderTextColor={theme.inactive}
-                              value={subject}
-                              onChangeText={setSubject}
-                         />
-
-                         <Text style={[styles.label, { color: theme.text }]}>Message</Text>
-                         <TextInput
-                              style={[
-                                   styles.textArea,
-                                   {
-                                        borderColor: theme.borderColor,
-                                        color: theme.text,
-                                        backgroundColor: isDarkMode ? Colors.dark.card : 'white'
-                                   }
-                              ]}
-                              placeholder="Tell us more about your feedback, suggestions, or report issues..."
-                              placeholderTextColor={theme.inactive}
-                              value={message}
-                              onChangeText={setMessage}
-                              multiline
-                              textAlignVertical="top"
-                         />
-
-                         <TouchableOpacity
-                              style={[
-                                   styles.button,
-                                   { backgroundColor: theme.buttonBackground },
-                                   isSubmitting && styles.buttonDisabled
-                              ]}
-                              onPress={handleSubmit}
-                              disabled={isSubmitting}
+                         <KeyboardAvoidingView
+                              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                              style={styles.keyboardAvoidingView}
                          >
-                              {isSubmitting ? (
-                                   <ActivityIndicator color="#fff" />
-                              ) : (
-                                   <Text style={[styles.buttonText, { color: theme.buttonText }]}>
-                                        Submit Feedback
-                                   </Text>
-                              )}
-                         </TouchableOpacity>
+                              <ScrollView
+                                   contentContainerStyle={styles.scrollViewContent}
+                                   keyboardShouldPersistTaps="handled"
+                              >
+                                   <View style={styles.form}>
+                                        <Text style={[styles.label, { color: theme.text }]}>Category</Text>
+                                        <DropDownPicker
+                                             open={open}
+                                             value={category}
+                                             items={items}
+                                             setOpen={setOpen}
+                                             setValue={setCategory}
+                                             setItems={setItems}
+                                             style={[
+                                                  styles.dropdown,
+                                                  {
+                                                       borderColor: theme.borderColor,
+                                                       backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                                                  }
+                                             ]}
+                                             textStyle={{ color: theme.text }}
+                                             dropDownContainerStyle={[
+                                                  styles.dropdownListContainer,
+                                                  {
+                                                       borderColor: theme.borderColor,
+                                                       backgroundColor: isDarkMode ? Colors.dark.card : 'white',
+                                                       borderWidth: 1
+                                                  }
+                                             ]}
+                                             placeholderStyle={{ color: theme.inactive }}
+                                             ArrowUpIconComponent={() => (
+                                                  <Ionicons name="chevron-up" size={16} color={isDarkMode ? Colors.white : '#000'} />
+                                             )}
+                                             ArrowDownIconComponent={() => (
+                                                  <Ionicons name="chevron-down" size={16} color={isDarkMode ? Colors.white : '#000'} />
+                                             )}
+                                             TickIconComponent={() => (
+                                                  <Ionicons name="checkmark" size={16} color={isDarkMode ? Colors.white : '#000'} />
+                                             )}
+                                             zIndex={3000}
+                                             listMode="SCROLLVIEW"
+                                             maxHeight={200}
+                                             autoScroll
+                                        />
+
+                                        <Text style={[styles.label, { color: theme.text, marginTop: 10 }]}>Subject</Text>
+                                        <TextInput
+                                             style={[
+                                                  styles.input,
+                                                  {
+                                                       borderColor: theme.borderColor,
+                                                       color: theme.text,
+                                                       backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                                                  }
+                                             ]}
+                                             placeholder="Enter subject"
+                                             placeholderTextColor={theme.inactive}
+                                             value={subject}
+                                             onChangeText={setSubject}
+                                        />
+
+                                        <Text style={[styles.label, { color: theme.text }]}>Message</Text>
+                                        <TextInput
+                                             style={[
+                                                  styles.textArea,
+                                                  {
+                                                       borderColor: theme.borderColor,
+                                                       color: theme.text,
+                                                       backgroundColor: isDarkMode ? Colors.dark.card : 'white'
+                                                  }
+                                             ]}
+                                             placeholder="Tell us more about your feedback, suggestions, or report issues..."
+                                             placeholderTextColor={theme.inactive}
+                                             value={message}
+                                             onChangeText={setMessage}
+                                             multiline
+                                             textAlignVertical="top"
+                                        />
+
+                                        <TouchableOpacity
+                                             style={[
+                                                  styles.button,
+                                                  { backgroundColor: theme.buttonBackground },
+                                                  isSubmitting && styles.buttonDisabled
+                                             ]}
+                                             onPress={handleSubmit}
+                                             disabled={isSubmitting}
+                                        >
+                                             {isSubmitting ? (
+                                                  <ActivityIndicator color="#fff" />
+                                             ) : (
+                                                  <Text style={[styles.buttonText, { color: theme.buttonText }]}>
+                                                       Submit Feedback
+                                                  </Text>
+                                             )}
+                                        </TouchableOpacity>
+                                   </View>
+                              </ScrollView>
+                         </KeyboardAvoidingView>
                     </View>
-               </KeyboardAvoidingView>
+               </TouchableWithoutFeedback>
           </SafeAreaView>
      );
 }
@@ -192,6 +204,10 @@ const styles = StyleSheet.create({
      },
      keyboardAvoidingView: {
           flex: 1,
+     },
+     scrollViewContent: {
+          flexGrow: 1,
+          paddingBottom: 40,
      },
      form: {
           width: "100%",
