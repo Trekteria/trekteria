@@ -64,7 +64,6 @@ function Trip() {
     // Pass the tripData and tripId to each tab component
     switch (route.key) {
       case "info":
-        //    return <InfoTab tripData={tripData} />;
         return <InfoTab tripId={tripData.id} tripData={tripData} />;
       case "schedule":
         return <ScheduleTab tripId={tripData.id} tripData={tripData} />;

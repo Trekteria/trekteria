@@ -15,6 +15,13 @@ interface InfoTabProps {
   tripData?: any;
 }
 
+const apiKey = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
+if (!apiKey) {
+  throw new Error(
+    "EXPO_PUBLIC_GEMINI_API_KEY is not defined in environment variables"
+  );
+}
+
 const getDisplayUrl = (url: string) => {
   try {
     const { hostname } = new URL(url);
@@ -23,13 +30,6 @@ const getDisplayUrl = (url: string) => {
     return url;
   }
 };
-
-const apiKey = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
-if (!apiKey) {
-  throw new Error(
-    "EXPO_PUBLIC_GEMINI_API_KEY is not defined in environment variables"
-  );
-}
 
 const getDifficultyIcon = (difficulty: string) => {
   if (!difficulty) return "star";
@@ -42,6 +42,7 @@ const getDifficultyIcon = (difficulty: string) => {
   return "star";
 };
 
+// Info Tab Component
 export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   const { colorScheme } = useColorScheme();
   const { temperatureUnit, convertTemperature } = useTemperatureUnit();
