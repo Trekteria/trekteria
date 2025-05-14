@@ -47,7 +47,7 @@ export const Colors = {
     black: blackColor, // Add black color to dark theme
     borderColor: borderColorDark,
     card: "#2C2C2C", // Dark card background
-    buttonBackground: primaryColorDark,
+    buttonBackground: primaryColor,
     buttonText: "#FFFFFF",
     inactive: inactiveColorDark,
   },
