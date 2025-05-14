@@ -73,7 +73,7 @@ export const generateInfo = async (
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generateInfo");
-    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
   }
 
   try {
@@ -88,10 +88,10 @@ export const generateInfo = async (
     Please provide me with some information about the trip ${tripName}.
     For context, here are my preferences: ${preferences}. 
     Return the information in this format:
-    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel. Do not return anything else.
+    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel#warnings. Do not return anything else.
 
     Example format:
-    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy.
+    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy#Trail closure in north section; bring extra water during summer months; watch for wildlife.
 
     Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The address should be the address of the park and phone number, and website should be correct. If you are not sure about the info, return "N/A" for that field.
     `;
@@ -104,7 +104,7 @@ export const generateInfo = async (
         "Empty response from Gemini in generateInfo for trip:",
         tripName
       );
-      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+      return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
     }
 
     console.log(`Trip Info from Gemini for trip "${tripName}":`, response);
@@ -115,13 +115,13 @@ export const generateInfo = async (
         "Invalid response format from Gemini in generateInfo:",
         response
       );
-      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+      return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
     }
 
     return response;
   } catch (error) {
     console.error("Error generating trip info:", error);
-    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
   }
 };
 
