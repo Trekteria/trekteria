@@ -30,6 +30,7 @@ import { Plan as PlanType, Trip as TripType } from "../../types/Types";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -487,6 +488,13 @@ export default function Home() {
                     deleteDoc(doc(db, "trips", tripId))
                   );
                   await Promise.all(deletePromises);
+
+                  // --- Delete cache for each trip ---
+                  for (const tripId of tripIdsToDelete) {
+                    await deleteCachedTrailData(tripId);
+                    await deleteCachedChatMessages(tripId);
+                  }
+                  // --- End cache deletion ---
 
                   // 3. Update local trips state
                   setTrips((prevTrips) =>

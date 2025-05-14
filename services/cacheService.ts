@@ -164,4 +164,22 @@ export async function markChatMessageAsSynced(message_id: string): Promise<void>
     `UPDATE ${CHAT_TABLE} SET pending = 0 WHERE message_id = ?`,
     message_id
   );
+}
+
+export async function deleteCachedTrailData(trailId: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `DELETE FROM ${TRAIL_TABLE} WHERE id = ?`,
+    trailId
+  );
+  console.log('Deleted trail cache for trip:', trailId);
+}
+
+export async function deleteCachedChatMessages(tripId: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `DELETE FROM ${CHAT_TABLE} WHERE trip_id = ?`,
+    tripId
+  );
+  console.log('Deleted chat cache for trip:', tripId);
 } 

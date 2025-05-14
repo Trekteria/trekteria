@@ -90,7 +90,7 @@ export const fetchUnsplashImage = async (
     await cacheImageUrl(cacheKey, imageUrl);
     
     console.log("-------Successfully fetched image from API-------");
-    logAllImageCache(); // This will print all cached Unsplash image entries to the console
+    // logAllImageCache(); // This will print all cached Unsplash image entries to the console
 
     return imageUrl;
   } catch (error) {
