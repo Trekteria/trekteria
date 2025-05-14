@@ -328,7 +328,15 @@ export const generatePackingList = async (
 
 export const generateChatResponse = async (
   message: string,
-  chatHistory: { role: "user" | "model"; text: string }[] = []
+  chatHistory: { role: "user" | "model"; text: string }[] = [],
+  tripDetails?: {
+    name: string;
+    location: string;
+    dateRange?: { startDate: string; endDate: string };
+    description?: string;
+    difficultyLevel?: string;
+    warnings?: string[];
+  }
 ): Promise<string> => {
   try {
     // Initialize chat session with history
@@ -363,6 +371,34 @@ Follow these guidelines in your responses:
 - Do not use bold text, or any other formatting
 - Write in clean format, with proper spacing and punctuation
 - Use emojis to make the response more engaging
+
+${
+  tripDetails
+    ? `
+Current Trip Information:
+- Trip Name: ${tripDetails.name}
+- Location: ${tripDetails.location}
+${
+  tripDetails.dateRange
+    ? `- Dates: ${tripDetails.dateRange.startDate} to ${tripDetails.dateRange.endDate}`
+    : ""
+}
+${tripDetails.description ? `- Description: ${tripDetails.description}` : ""}
+${
+  tripDetails.difficultyLevel
+    ? `- Difficulty: ${tripDetails.difficultyLevel}`
+    : ""
+}
+${
+  tripDetails.warnings && tripDetails.warnings.length > 0
+    ? `- Warnings: ${tripDetails.warnings.join(", ")}`
+    : ""
+}
+
+Please tailor your responses to provide specific information relevant to this trip when appropriate.
+`
+    : ""
+}
 
 The user is planning a hiking trip. Help them with their questions. If the user asks about the things that are not related to hiking, please say "I'm sorry, I can't help with that."
 `;
@@ -400,6 +436,7 @@ The user is planning a hiking trip. Help them with their questions. If the user 
     return "I'm sorry, I encountered an issue while processing your request. Please try again later.";
   }
 };
+
 export const checkImageRelevance = async (
   description: string,
   altDescription: string

@@ -8,6 +8,8 @@ import { saveChatMessage, getChatMessages, ChatMessage as FirestoreChatMessage }
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { getCachedChatMessages, cacheChatMessage, getPendingChatMessages, markChatMessageAsSynced } from '../../../services/cacheService';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../../services/firebaseConfig";
 
 // Message type for the chat
 type Message = {
@@ -15,6 +17,16 @@ type Message = {
      text: string;
      sender: "user" | "bot";
 };
+
+// Trip details interface
+interface TripDetails {
+     name: string;
+     location: string;
+     dateRange?: { startDate: string; endDate: string };
+     description?: string;
+     difficultyLevel?: string;
+     warnings?: string[];
+}
 
 // Loading bubble animation component
 const TypingIndicator = () => {
@@ -126,10 +138,38 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      const [inputText, setInputText] = useState("");
      const [isLoading, setIsLoading] = useState(false);
      const [isInitialLoading, setIsInitialLoading] = useState(true);
+     const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
      const flatListRef = useRef<FlatList>(null);
      const { colorScheme } = useColorScheme();
      const isDarkMode = colorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
+
+     // Load trip details
+     useEffect(() => {
+          const fetchTripDetails = async () => {
+               try {
+                    const tripDoc = await getDoc(doc(db, "trips", tripId));
+                    if (tripDoc.exists()) {
+                         const data = tripDoc.data();
+                         setTripDetails({
+                              name: data.name || '',
+                              location: data.location || '',
+                              dateRange: data.dateRange || undefined,
+                              description: data.description || undefined,
+                              difficultyLevel: data.difficultyLevel || undefined,
+                              warnings: data.warnings || [],
+                         });
+                         console.log("Trip details loaded for chat:", data.name);
+                    } else {
+                         console.error("Trip not found:", tripId);
+                    }
+               } catch (error) {
+                    console.error("Error fetching trip details:", error);
+               }
+          };
+
+          fetchTripDetails();
+     }, [tripId]);
 
      // Load existing messages when component mounts
      useEffect(() => {
@@ -291,8 +331,8 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                     text: userMessage.text,
                });
 
-               // Get response from Gemini
-               const response = await generateChatResponse(userMessage.text, conversationHistory);
+               // Get response from Gemini with trip details
+               const response = await generateChatResponse(userMessage.text, conversationHistory, tripDetails || undefined);
 
                const botMessage: Message = {
                     id: (Date.now() + 1).toString(),
