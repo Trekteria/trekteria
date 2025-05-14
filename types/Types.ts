@@ -24,12 +24,10 @@ export interface Plan {
       toddlers: number;
       youngKids: number;
     };
-    hikeDuration?: string;
     location?: string;
     mustHaves?: string[];
     radius?: number;
     sceneryPreferences?: string[];
-    terrainPreference?: string;
     timeOfDay?: string;
     tripFeatures?: string[];
   };

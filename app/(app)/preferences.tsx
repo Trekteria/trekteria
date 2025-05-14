@@ -118,14 +118,6 @@ export default function Preferences() {
           },
           {
                id: 6,
-               type: 'select',
-               question: 'How long do you wanna hike?',
-               options: ['1-2 hours', '2-4 hours', '4-6 hours', '6+ hours'],
-               value: '',
-               icon: 'time-outline',
-          },
-          {
-               id: 7,
                type: 'multiselect',
                question: 'What kind of scenery do you enjoy?',
                options: ['Epic viewpoints', 'Lakes and waterfalls', 'Wildlife spotting', 'Cool rock formations', 'Dense forest trails', 'Historical sites', 'Other'],
@@ -133,15 +125,7 @@ export default function Preferences() {
                icon: 'heart-outline',
           },
           {
-               id: 8,
-               type: 'select',
-               question: 'Preferred terrian?',
-               options: ['Flat', 'Hilly', 'Mountainous', 'Other'],
-               value: '',
-               icon: 'map-outline',
-          },
-          {
-               id: 9,
+               id: 7,
                type: 'multiselect',
                question: 'Are you looking for trips with:',
                options: ['Camping areas', 'Mountain biking access', 'Snow trails', 'Other'],
@@ -149,7 +133,7 @@ export default function Preferences() {
                icon: 'trail-sign-outline',
           },
           {
-               id: 10,
+               id: 8,
                type: 'multiselect',
                question: 'Any must-haves for your trip?',
                options: ['Well-marked paths', 'Cell service', 'Easy parking', 'Restrooms nearby', 'Pet-friendly', 'Shaded trails', 'Other'],
@@ -157,7 +141,7 @@ export default function Preferences() {
                icon: 'shield-outline',
           },
           {
-               id: 11,
+               id: 9,
                type: 'select',
                question: 'Best time of the day for you?',
                options: ['Early bird - Catch the sunrise', 'Morning - Beat the crowds', 'Afternoon - When it warms up', 'Evening - Chase the sunset'],
@@ -295,38 +279,26 @@ export default function Preferences() {
                               summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
                          }
 
-                         // Hike duration (Question 6)
-                         const duration = formattedData[5].value;
-                         if (duration) {
-                              summary += ` I want to hike for ${duration}.`;
-                         }
-
-                         // Scenery preferences (Question 7)
-                         const scenery = formattedData[6].value;
+                         // Scenery preferences (Question 6)
+                         const scenery = formattedData[5].value;
                          if (scenery && scenery.length > 0) {
                               summary += ` I enjoy ${scenery.join(', ')} scenery.`;
                          }
 
-                         // Terrain preference (Question 8)
-                         const terrain = formattedData[7].value;
-                         if (terrain) {
-                              summary += ` I prefer ${terrain.toLowerCase()} terrain.`;
-                         }
-
-                         // Trip features (Question 9)
-                         const features = formattedData[8].value;
+                         // Trip features (Question 7)
+                         const features = formattedData[6].value;
                          if (features && features.length > 0) {
                               summary += ` I'm looking for trips with ${features.join(', ')}.`;
                          }
 
-                         // Must-haves (Question 10)
-                         const mustHaves = formattedData[9].value;
+                         // Must-haves (Question 8)
+                         const mustHaves = formattedData[7].value;
                          if (mustHaves && mustHaves.length > 0) {
                               summary += ` My trip must-haves are: ${mustHaves.join(', ')}.`;
                          }
 
-                         // Time of day (Question 11)
-                         const timeOfDay = formattedData[10].value;
+                         // Time of day (Question 9)
+                         const timeOfDay = formattedData[8].value;
                          if (timeOfDay) {
                               const preferredTime = timeOfDay.split(' - ')[0];
                               summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
