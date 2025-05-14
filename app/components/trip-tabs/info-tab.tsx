@@ -206,6 +206,9 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("wifi")) return "wifi";
     if (name.includes("view")) return "eye";
     if (name.includes("pet") || name.includes("dog")) return "paw";
+    if (name.includes("cafe") || name.includes("coffee")) return "cafe";
+    if (name.includes("bike") || name.includes("biking")) return "bicycle";
+    if (name.includes("boat")) return "boat";
     return "trail-sign";
   };
 
@@ -229,6 +232,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("snow")) return "snow";
     if (name.includes("shade")) return "umbrella";
     if (name.includes("challenge") || name.includes("challenging")) return "alert-circle";
+    if (name.includes("bike") || name.includes("biking")) return "bicycle";
     return "star";
   };
 
