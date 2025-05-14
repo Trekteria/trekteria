@@ -214,7 +214,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     const name = highlight.toLowerCase();
     if (name.includes("view") || name.includes("scenic")) return "eye";
     if (name.includes("water") || name.includes("lake") || name.includes("river")) return "water";
-    if (name.includes("wildlife") || name.includes("animal")) return "paw";
+    if (name.includes("wildlife") || name.includes("animal") || name.includes("pet")) return "paw";
     if (name.includes("photo")) return "camera";
     if (name.includes("forest") || name.includes("tree")) return "leaf";
     if (name.includes("historic")) return "time";
@@ -228,6 +228,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
     if (name.includes("evening") || name.includes("night")) return "moon";
     if (name.includes("snow")) return "snow";
     if (name.includes("shade")) return "umbrella";
+    if (name.includes("challenge") || name.includes("challenging")) return "alert-circle";
     return "star";
   };
 
