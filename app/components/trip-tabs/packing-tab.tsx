@@ -161,35 +161,12 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
         return;
       }
 
-      const tripRef = doc(db, "trips", currentTripId);
-      const tripDoc = await getDoc(tripRef);
+      const updatedItems = packingItems.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item
+      );
 
-      if (tripDoc.exists()) {
-        const tripData = tripDoc.data();
-
-        if (
-          tripData.packingChecklist &&
-          Array.isArray(tripData.packingChecklist)
-        ) {
-          const updatedPackingItems = tripData.packingChecklist.map(
-            (item: any) =>
-              item.id === id
-                ? { ...item, checked: !item.checked } // Toggle checked status using item.id
-                : item
-          );
-
-          // Update Firestore with the new packing checklist
-          await updateDoc(tripRef, {
-            packingChecklist: updatedPackingItems,
-          });
-
-          console.log("Updated packing item status in Firestore");
-        } else {
-          console.error("Packing checklist not found in Firestore data");
-        }
-      } else {
-        console.error("Trip document not found in Firestore");
-      }
+      // Update Firestore with the new packing checklist
+      await updatePackingListInFirestore(updatedItems);
     } catch (error) {
       console.error("Error toggling packing item:", error);
     }
