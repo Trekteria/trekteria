@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
 
 // Add interface for component props
 interface ScheduleTabProps {
@@ -59,11 +60,22 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
         }
 
         if (currentTripId) {
+          // Try cache first
+          const cached = await getCachedTrailData(currentTripId);
+          if (cached && Array.isArray(cached.schedule)) {
+            console.log('Schedule loaded from CACHE for ScheduleTab:', currentTripId);
+            setSchedule(cached.schedule);
+            setLoading(false);
+            return;
+          }
+          // Fallback to Firestore
           const tripDoc = await getDoc(doc(db, "trips", currentTripId));
           if (tripDoc.exists()) {
             const tripData = tripDoc.data();
             if (tripData.schedule && Array.isArray(tripData.schedule)) {
+              console.log('Schedule loaded from FIREBASE for ScheduleTab:', currentTripId);
               setSchedule(tripData.schedule);
+              await cacheTrailData(currentTripId, tripData);
             }
           }
         }
