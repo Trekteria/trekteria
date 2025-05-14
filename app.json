@@ -2,8 +2,9 @@
   "expo": {
     "name": "trail-mate",
     "slug": "trail-mate",
-    "owner": "aungbobo",
+    "owner": "trail-mate",
     "version": "1.0.0",
+    "description": "Trail Mate helps you plan, pack, and chat for your next adventure.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -11,16 +12,29 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.erikhein.trail-mate",
-      "appleTeamId": "9XG4F7L9Z4"
+      "bundleIdentifier": "com.trailmate.app",
+      "appleTeamId": "5H4VD3F5J6",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Trail Mate to access your camera for trip photos.",
+        "NSLocationWhenInUseUsageDescription": "Allow Trail Mate to access your location for trail features.",
+        "NSPhotoLibraryUsageDescription": "Allow Trail Mate to access your photos for sharing and saving trip memories.",
+        "NSHumanReadableCopyright": "Copyright © 2024 Trail Mate"
+      }
     },
     "android": {
-      "package": "com.erikhein.trailmate",
+      "package": "com.trailmate.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+  ]
     },
     "web": {
       "bundler": "metro",
