@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "trail-mate",
+    "name": "TrailMate",
     "slug": "trail-mate",
     "owner": "trail-mate",
     "version": "1.0.0",
@@ -14,7 +14,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.trailmate.app",
       "appleTeamId": "5H4VD3F5J6",
-      "buildNumber": "2.0.0",
+      "buildNumber": "2",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Trail Mate to access your camera for trip photos.",
         "NSLocationWhenInUseUsageDescription": "Allow Trail Mate to access your location for trail features.",
