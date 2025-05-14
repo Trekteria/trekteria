@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image, ScrollView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../../services/firebaseConfig";
@@ -332,9 +332,18 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         <TouchableOpacity
           style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
           onPress={() => {
-            const address = encodeURIComponent(tripInfo.address || tripInfo.location);
-            const url = `https://maps.apple.com/?q=${address}`;
-            Linking.openURL(url);
+            const { latitude, longitude } = tripInfo.coordinates;
+            const label = encodeURIComponent(tripInfo.name);
+
+            const scheme = Platform.select({
+              ios: "maps:",
+              android: "geo:",
+            });
+            const url = Platform.select({
+              ios: `${scheme}${latitude},${longitude}?q=${label}`,
+              android: `${scheme}${latitude},${longitude}?q=${label}`,
+            });
+            Linking.openURL(url!);
           }}
         >
           <Ionicons name="car" size={32} color={theme.tint} />
