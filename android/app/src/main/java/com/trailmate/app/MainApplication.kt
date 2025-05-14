@@ -1,4 +1,4 @@
-package com.erikhein.trailmate
+package com.trailmate.app
 
 import android.app.Application
 import android.content.res.Configuration
