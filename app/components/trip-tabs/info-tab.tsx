@@ -338,7 +338,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           color={tripInfo.cellService.toLowerCase().includes("no") ? theme.inactive : theme.tint}
           style={styles.cellServiceIcon}
         />
-        <Text style={[styles.cellServiceText, { color: theme.text }]} numberOfLines={2}>
+        <Text style={[styles.cellServiceText, { color: theme.text }]}>
           Cell Service: {tripInfo.cellService}
         </Text>
       </View>
