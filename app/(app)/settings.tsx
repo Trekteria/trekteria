@@ -82,7 +82,7 @@ export default function SettingsPage() {
           <Switch
             value={isDarkMode}
             onValueChange={toggleColorScheme}
-            trackColor={{ false: "#767577", true: Colors.primary }}
+            trackColor={{ false: "#767577", true: theme.buttonBackground }}
             thumbColor="#f4f3f4"
           />
         </View>
@@ -173,7 +173,7 @@ export default function SettingsPage() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.modalCloseButton}
+                style={[styles.modalCloseButton, { backgroundColor: theme.buttonBackground }]}
                 onPress={() => setShowTemperatureModal(false)}
               >
                 <Text style={styles.modalCloseText}>Cancel</Text>
@@ -245,25 +245,25 @@ export default function SettingsPage() {
           <Text style={[styles.label, { color: theme.text }]}>Share with friends</Text>
         </TouchableOpacity> */}
 
-        <TouchableOpacity onPress={handleAppShare} style={[styles.row, { borderBottomColor: theme.borderColor }]}>
+        {/* <TouchableOpacity onPress={handleAppShare} style={[styles.row, { borderBottomColor: theme.borderColor }]}>
           <Text style={[styles.label, { color: theme.text }]}>Share TrailMate with Friends</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Feedback */}
         <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
-          onPress={() => router.push("/result")}
+          onPress={() => router.push("/(app)/settings/feedback")}
         >
           <Text style={[styles.label, { color: theme.text }]}>Feedback</Text>
         </TouchableOpacity>
 
         {/* Rate the app */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
           onPress={() => router.push("/result")}
         >
           <Text style={[styles.label, { color: theme.text }]}>Rate on App Store</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Log Out Button */}
         <TouchableOpacity

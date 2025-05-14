@@ -164,14 +164,6 @@ export default function AuthIndex() {
           </View>
         </View>
 
-        {/* Forgot password link */}
-        <TouchableOpacity
-          style={styles.forgotPassword}
-          onPress={handleForgotPassword}
-        >
-          <Text style={[styles.forgotPasswordText, { color: theme.text }]}>Forgot your Password?</Text>
-        </TouchableOpacity>
-
         {/* Login button */}
         <TouchableOpacity
           style={[styles.loginButton, { backgroundColor: theme.buttonBackground }]}
@@ -180,15 +172,23 @@ export default function AuthIndex() {
           <Text style={[styles.loginButtonText, { color: theme.buttonText }]}>Log In</Text>
         </TouchableOpacity>
 
+        {/* Forgot password link */}
+        <TouchableOpacity
+          style={styles.forgotPassword}
+          onPress={handleForgotPassword}
+        >
+          <Text style={[styles.forgotPasswordText, { color: theme.text }]}>Forgot your Password?</Text>
+        </TouchableOpacity>
+
         {/* Divider for social login */}
-        <View style={styles.dividerContainer}>
+        {/* <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
           <Text style={[styles.dividerText, { color: theme.inactive }]}>or</Text>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
-        </View>
+        </View> */}
 
         {/* Social login buttons */}
-        <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
+        {/* <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
           <FontAwesome
             name="google"
             size={24}
@@ -206,7 +206,7 @@ export default function AuthIndex() {
             style={styles.socialIcon}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Registration link */}
         <View style={styles.registerContainer}>
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: "center",
     marginBottom: 15,
+    marginTop: 20,
   },
   loginButtonText: {
     ...Typography.text.button,

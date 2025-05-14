@@ -328,6 +328,18 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           <Ionicons name="globe" size={32} color={theme.tint} />
           <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Website</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
+          onPress={() => {
+            const address = encodeURIComponent(tripInfo.address || tripInfo.location);
+            const url = `https://maps.apple.com/?q=${address}`;
+            Linking.openURL(url);
+          }}
+        >
+          <Ionicons name="car" size={32} color={theme.tint} />
+          <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Directions</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Cell Service Info */}
@@ -338,7 +350,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           color={tripInfo.cellService.toLowerCase().includes("no") ? theme.inactive : theme.tint}
           style={styles.cellServiceIcon}
         />
-        <Text style={[styles.cellServiceText, { color: theme.text }]} numberOfLines={2}>
+        <Text style={[styles.cellServiceText, { color: theme.text }]}>
           Cell Service: {tripInfo.cellService}
         </Text>
       </View>
@@ -421,6 +433,58 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         <Text style={[styles.featureTitle, { color: theme.text }]}>Highlights</Text>
         {renderHighlights()}
       </View>
+
+      {tripInfo.warnings && tripInfo.warnings.length > 0 && (
+        <View style={[styles.warningsSection, { backgroundColor: theme.card }]}>
+          <View style={styles.warningSectionHeader}>
+            <Ionicons name="warning" size={24} color="#FF9500" style={styles.warningIcon} />
+            <Text style={[styles.warningSectionTitle, { color: theme.text }]}>Trail Advisories</Text>
+          </View>
+
+          <View style={styles.warningsContent}>
+            {Array.isArray(tripInfo.warnings) ? (
+              tripInfo.warnings.map((warning: string, index: number) => (
+                <View
+                  key={`warning-${index}`}
+                  style={[
+                    styles.warningCard,
+                    { backgroundColor: 'rgba(255, 149, 0, 0.08)' }
+                  ]}
+                >
+                  <View style={styles.warningCardContent}>
+                    <Ionicons
+                      name="information-circle"
+                      size={20}
+                      color="#FF9500"
+                      style={styles.warningItemIcon}
+                    />
+                    <Text style={[styles.warningText, { color: theme.text }]}>
+                      {warning}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View
+                style={[
+                  styles.warningCard,
+                  { backgroundColor: 'rgba(255, 149, 0, 0.08)' }
+                ]}
+              >
+                <View style={styles.warningCardContent}>
+                  <Ionicons
+                    name="information-circle"
+                    size={20}
+                    color="#FF9500"
+                    style={styles.warningItemIcon}
+                  />
+                  <Text style={[styles.warningText, { color: theme.text }]}>{tripInfo.warnings}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -512,9 +576,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 16,
+    flexWrap: "wrap",
   },
   quickInfoItem: {
-    width: "48%",
+    width: "31%",
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
@@ -648,5 +713,59 @@ const styles = StyleSheet.create({
     ...Typography.text.caption,
     textAlign: "center",
     paddingHorizontal: 4,
+  },
+  warningsSection: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  warningSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  warningIcon: {
+    marginRight: 8,
+  },
+  warningSectionTitle: {
+    ...Typography.text.h4,
+  },
+  warningsContent: {
+    marginLeft: 4,
+  },
+  warningCard: {
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
+    elevation: 1,
+    shadowColor: "#FF9500",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: "#FF9500",
+  },
+  warningCardContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  warningItemIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  warningTitle: {
+    ...Typography.text.body,
+    fontWeight: "600",
+  },
+  warningText: {
+    ...Typography.text.body,
+    fontSize: 14,
+    flex: 1,
   },
 });

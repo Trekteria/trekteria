@@ -94,3 +94,13 @@ export interface Trip {
     timestamp: Timestamp;
   }[];
 }
+
+export interface Feedback {
+  id?: string;
+  userId: string;
+  email?: string;
+  subject: string;
+  message: string;
+  createdAt: Timestamp;
+  category?: "bug" | "feature" | "improvement" | "other";
+}

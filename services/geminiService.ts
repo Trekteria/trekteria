@@ -73,7 +73,7 @@ export const generateInfo = async (
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generateInfo");
-    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
   }
 
   try {
@@ -88,10 +88,10 @@ export const generateInfo = async (
     Please provide me with some information about the trip ${tripName}.
     For context, here are my preferences: ${preferences}. 
     Return the information in this format:
-    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel. Do not return anything else.
+    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel#warnings. Do not return anything else.
 
     Example format:
-    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy.
+    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy#Trail closure in north section; bring extra water during summer months; watch for wildlife.
 
     Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The address should be the address of the park and phone number, and website should be correct. If you are not sure about the info, return "N/A" for that field.
     `;
@@ -104,7 +104,7 @@ export const generateInfo = async (
         "Empty response from Gemini in generateInfo for trip:",
         tripName
       );
-      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+      return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
     }
 
     console.log(`Trip Info from Gemini for trip "${tripName}":`, response);
@@ -115,13 +115,13 @@ export const generateInfo = async (
         "Invalid response format from Gemini in generateInfo:",
         response
       );
-      return "#N/A#N/A#N/A#N/A#N/A#N/A";
+      return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
     }
 
     return response;
   } catch (error) {
     console.error("Error generating trip info:", error);
-    return "#N/A#N/A#N/A#N/A#N/A#N/A";
+    return "#N/A#N/A#N/A#N/A#N/A#N/A#N/A";
   }
 };
 
@@ -143,7 +143,7 @@ export const generateSchedule = async (
 
     // Construct the prompt with the form summary
     const prompt = `
-    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation.
+    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation. If the trip is only one day, plan only for that day.
     Return in this format: $Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2. Do not return anything else.   
     For example: $02/25/2025(Tue)#Drive from San Jose to Park@11:00AM-12:00PM#Check-in at the park office@12:00PM-1:00PM#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day2#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day3#Drive from Park to San Jose@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$
     Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.

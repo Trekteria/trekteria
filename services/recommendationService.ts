@@ -132,6 +132,15 @@ export const parseRecommendations = async (
       const parkWebsite = infoParts[4]?.trim() || "N/A";
       const parkContact = infoParts[5]?.trim() || "N/A";
       const difficultyLevel = infoParts[6]?.trim() || "N/A";
+      const warningsString = infoParts[7]?.trim() || "";
+
+      // Process warnings into an array
+      const warningsArr = warningsString
+        ? warningsString
+            .split(";")
+            .map((warning) => warning.trim())
+            .filter(Boolean)
+        : [];
 
       // Generate schedule based on the trip name
       const scheduleString = await generateSchedule(name, formattedSummary);
@@ -257,23 +266,9 @@ export const parseRecommendations = async (
         parkContact: parkContact,
 
         schedule: scheduleArr,
-        // packingChecklist: [
-        //   {
-        //     item: "Water bottle",
-        //     checked: false,
-        //   },
-        //   {
-        //     item: "Hiking boots",
-        //     checked: false,
-        //   },
-        //   {
-        //     item: "Sunscreen",
-        //     checked: false,
-        //   },
-        // ],
         packingChecklist: packingChecklistArr,
         missions: missionsArr,
-        warnings: [],
+        warnings: warningsArr,
         thingsToKnow: [],
       } as Trip;
     })

@@ -251,6 +251,9 @@ export default function Preferences() {
                               const startDate = new Date(dateInfo.startDate).toLocaleDateString();
                               const endDate = new Date(dateInfo.endDate).toLocaleDateString();
                               summary += ` from ${startDate} to ${endDate}.`;
+                         } else if (!dateInfo.endDate) {
+                              const startDate = new Date(dateInfo.startDate).toLocaleDateString();
+                              summary += ` on ${startDate}.`;
                          } else {
                               summary += '.';
                          }

@@ -19,6 +19,7 @@
     "@google/generative-ai": "^0.24.0",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.3.0",
+    "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/material-top-tabs": "^7.2.3",
     "@react-navigation/native": "^7.0.14",
@@ -37,6 +38,7 @@
     "expo-location": "^18.0.8",
     "expo-router": "~4.0.17",
     "expo-splash-screen": "~0.29.22",
+    "expo-sqlite": "~15.1.4",
     "expo-status-bar": "~2.0.1",
     "expo-symbols": "~0.2.2",
     "expo-system-ui": "~4.0.8",
@@ -48,6 +50,7 @@
     "react-native": "0.76.7",
     "react-native-actions-sheet": "^0.9.7",
     "react-native-calendars": "^1.1310.0",
+    "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-maps": "^1.20.1",
     "react-native-maps-directions": "^1.9.0",
@@ -60,9 +63,7 @@
     "react-native-tabler-icons": "^1.0.3",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5",
-    "expo-sqlite": "~15.1.4",
-    "@react-native-community/netinfo": "11.4.1"
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
