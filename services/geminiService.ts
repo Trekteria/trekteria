@@ -143,7 +143,7 @@ export const generateSchedule = async (
 
     // Construct the prompt with the form summary
     const prompt = `
-    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation.
+    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation. If the trip is only one day, plan only for that day.
     Return in this format: $Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2. Do not return anything else.   
     For example: $02/25/2025(Tue)#Drive from San Jose to Park@11:00AM-12:00PM#Check-in at the park office@12:00PM-1:00PM#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day2#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day3#Drive from Park to San Jose@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$
     Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.
