@@ -6,6 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { generateChatResponse } from "../../../services/geminiService";
 import { saveChatMessage, getChatMessages, ChatMessage as FirestoreChatMessage } from "../../../services/chatService";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { getCachedChatMessages, cacheChatMessage, getPendingChatMessages, markChatMessageAsSynced } from '../../../services/cacheService';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
 // Message type for the chat
 type Message = {
@@ -133,32 +135,59 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      useEffect(() => {
           const loadMessages = async () => {
                try {
-                    const firestoreMessages = await getChatMessages(tripId);
-
-                    // If no messages exist, add the welcome message
-                    if (firestoreMessages.length === 0) {
-                         const welcomeMessage: Message = {
-                              id: "welcome",
-                              text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
-                              sender: "bot",
-                         };
-                         await saveChatMessage(tripId, {
-                              text: welcomeMessage.text,
-                              sender: welcomeMessage.sender,
-                         });
-                         setMessages([welcomeMessage]);
-                    } else {
-                         // Convert Firestore messages to local message format
-                         const localMessages: Message[] = firestoreMessages.map(msg => ({
-                              id: msg.id || Date.now().toString(),
+                    // 1. Load from SQLite cache first
+                    const cachedMessages = await getCachedChatMessages(tripId);
+                    let localMessages: Message[] = [];
+                    if (cachedMessages.length > 0) {
+                         console.log('Chat messages loaded from CACHE for ChatTab:', tripId);
+                         localMessages = cachedMessages.map(msg => ({
+                              id: msg.message_id,
                               text: msg.text,
                               sender: msg.sender,
                          }));
                          setMessages(localMessages);
                     }
+
+                    // 2. Fetch from Firestore and merge new messages
+                    const firestoreMessages = await getChatMessages(tripId);
+                    const newMessages: Message[] = [];
+                    for (const msg of firestoreMessages) {
+                         if (!cachedMessages.find(c => c.message_id === msg.id)) {
+                              await cacheChatMessage(tripId, {
+                                   message_id: msg.id,
+                                   sender: msg.sender,
+                                   text: msg.text,
+                                   timestamp: msg.timestamp?.toMillis?.() || Date.now(),
+                                   pending: false
+                              });
+                              newMessages.push({
+                                   id: msg.id,
+                                   text: msg.text,
+                                   sender: msg.sender,
+                              });
+                         }
+                    }
+                    if (newMessages.length > 0) {
+                         console.log('Chat messages loaded from FIRESTORE for ChatTab:', tripId);
+                         setMessages([...localMessages, ...newMessages]);
+                    } else if (localMessages.length === 0 && firestoreMessages.length === 0) {
+                         // If no messages exist, add the welcome message
+                         const welcomeMessage: Message = {
+                              id: "welcome",
+                              text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
+                              sender: "bot",
+                         };
+                         await cacheChatMessage(tripId, {
+                              message_id: welcomeMessage.id,
+                              sender: welcomeMessage.sender,
+                              text: welcomeMessage.text,
+                              timestamp: Date.now(),
+                              pending: false
+                         });
+                         setMessages([welcomeMessage]);
+                    }
                } catch (error) {
                     console.error("Error loading messages:", error);
-                    // Add welcome message as fallback
                     setMessages([{
                          id: "welcome",
                          text: "👋 Hi there! I'm your TrailMate AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?",
@@ -171,6 +200,28 @@ export default function ChatTab({ tripId }: ChatTabProps) {
 
           loadMessages();
      }, [tripId]);
+
+     // Sync pending messages when online
+     useEffect(() => {
+          const unsubscribe = NetInfo.addEventListener(async (state: NetInfoState) => {
+               if (state.isConnected) {
+                    const pending = await getPendingChatMessages();
+                    for (const msg of pending) {
+                         try {
+                              await saveChatMessage(msg.trip_id, {
+                                   text: msg.text,
+                                   sender: msg.sender,
+                              });
+                              await markChatMessageAsSynced(msg.message_id);
+                         } catch (e) {
+                              // If sync fails, keep as pending
+                              console.error('Failed to sync pending chat message', msg, e);
+                         }
+                    }
+               }
+          });
+          return () => unsubscribe();
+     }, []);
 
      // Scroll to bottom when messages change or when loading state changes
      useEffect(() => {
@@ -190,18 +241,32 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                sender: "user",
           };
 
-          // Save user message to Firestore
-          try {
-               await saveChatMessage(tripId, {
-                    text: userMessage.text,
-                    sender: userMessage.sender,
-               });
-          } catch (error) {
-               console.error("Error saving user message:", error);
-          }
-
-          setMessages(prevMessages => [...prevMessages, userMessage]);
+          setMessages(prev => [...prev, userMessage]);
           setInputText("");
+
+          // Save to SQLite cache immediately (pending if offline)
+          const netState = await NetInfo.fetch();
+          const isOnline = netState.isConnected;
+          await cacheChatMessage(tripId, {
+               message_id: userMessage.id,
+               sender: userMessage.sender,
+               text: userMessage.text,
+               timestamp: Date.now(),
+               pending: !isOnline
+          });
+
+          if (isOnline) {
+               // Save user message to Firestore
+               try {
+                    await saveChatMessage(tripId, {
+                         text: userMessage.text,
+                         sender: userMessage.sender,
+                    });
+                    await markChatMessageAsSynced(userMessage.id);
+               } catch (error) {
+                    console.error("Error saving user message:", error);
+               }
+          }
 
           // Set loading state and scroll to bottom to show the typing indicator
           setIsLoading(true);

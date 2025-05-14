@@ -4,6 +4,7 @@ const DB_NAME = 'weather_cache.db';
 const WEATHER_TABLE = 'weather_cache';
 const IMAGE_TABLE = 'image_cache';
 const TRAIL_TABLE = 'trail_cache';
+const CHAT_TABLE = 'chat_cache';
 const ONE_HOUR = 60 * 60 * 1000;
 
 let db: SQLite.SQLiteDatabase | null = null;
@@ -24,6 +25,14 @@ async function getDb() {
       CREATE TABLE IF NOT EXISTS ${TRAIL_TABLE} (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS ${CHAT_TABLE} (
+        trip_id TEXT,
+        message_id TEXT PRIMARY KEY,
+        sender TEXT,
+        text TEXT,
+        timestamp INTEGER,
+        pending INTEGER DEFAULT 0
       );
     `);
   }
@@ -116,5 +125,43 @@ export async function cacheTrailData(trailId: string, data: any): Promise<void> 
     `INSERT OR REPLACE INTO ${TRAIL_TABLE} (id, data) VALUES (?, ?)`,
     trailId,
     JSON.stringify(data)
+  );
+}
+
+export async function getCachedChatMessages(tripId: string): Promise<any[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<any>(
+    `SELECT * FROM ${CHAT_TABLE} WHERE trip_id = ? ORDER BY timestamp ASC`,
+    [tripId]
+  );
+  return rows;
+}
+
+export async function cacheChatMessage(tripId: string, message: { message_id: string, sender: string, text: string, timestamp: number, pending?: boolean }): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO ${CHAT_TABLE} (trip_id, message_id, sender, text, timestamp, pending) VALUES (?, ?, ?, ?, ?, ?)`,
+    tripId,
+    message.message_id,
+    message.sender,
+    message.text,
+    message.timestamp,
+    message.pending ? 1 : 0
+  );
+}
+
+export async function getPendingChatMessages(): Promise<any[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<any>(
+    `SELECT * FROM ${CHAT_TABLE} WHERE pending = 1`
+  );
+  return rows;
+}
+
+export async function markChatMessageAsSynced(message_id: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `UPDATE ${CHAT_TABLE} SET pending = 0 WHERE message_id = ?`,
+    message_id
   );
 } 
