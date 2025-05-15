@@ -48,6 +48,13 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 - **Aung Bo Bo** - _Back-end Developer_ - [LinkedIn](https://www.linkedin.com/in/aungbbo/)
 - **Aung Aung** - _Front-end Developer & Researcher_ - [LinkedIn](https://www.linkedin.com/in/aung-aung-35b4ab314/)
 
+## Diagrams
+
+Class Diagram 
+```
+/diagrams/TrailMate Class Diagram.pdf
+```
+
 ## License
 
 © 2025 TrailMate. All rights reserved.
