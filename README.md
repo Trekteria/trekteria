@@ -1,4 +1,4 @@
-# TrailMate 🌲
+# TrailMate ⛰️
 
 ![TrailMate App](assets/images/app-cover.jpg)
 
