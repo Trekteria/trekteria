@@ -1,5 +1,7 @@
 # TrailMate 🌲
 
+![TrailMate App](assets/images/app-cover.jpg)
+
 TrailMate is an eco-friendly trail exploration app helping outdoor enthusiasts discover and enjoy nature sustainably.
 
 ## About
@@ -36,8 +38,14 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 ## Links
 
 - [Website](https://trytrailmate.vercel.app/)
-- [Features](https://trytrailmate.vercel.app/features)
-- [Contact Us](https://trytrailmate.vercel.app/contact)
+- [Features](https://trytrailmate.vercel.app/#features)
+- [Contact Us](https://trytrailmate.vercel.app/#contact)
+
+## Development Team
+
+- **Erik Hein** - _Full-stack Developer & Visual Designer_ - [LinkedIn](https://www.linkedin.com/in/erikhein/)
+- **Aung Bo Bo** - _Back-end Developer_ - [LinkedIn](https://www.linkedin.com/in/aungbbo/)
+- **Aung Aung** - _Front-end Developer & Researcher_ - [LinkedIn](https://www.linkedin.com/in/aung-aung-35b4ab314/)
 
 ## License
 
