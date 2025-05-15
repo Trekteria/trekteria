@@ -9,6 +9,7 @@ import {
   Animated,
   useWindowDimensions,
   ViewStyle,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Typography } from "../../constants/Typography";
@@ -19,12 +20,19 @@ import * as Linking from "expo-linking";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { TabView, SceneMap } from "react-native-tab-view";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../services/firebaseConfig";
+import { Trip as TripType } from "../../types/Types";
+import * as FileSystem from "expo-file-system";
+import { format } from "date-fns";
+import RNPrint from 'react-native-print';
 
 import InfoTab from "../components/trip-tabs/info-tab";
 import ScheduleTab from "../components/trip-tabs/schedule-tab";
 import PackingTab from "../components/trip-tabs/packing-tab";
 import MissionTab from "../components/trip-tabs/mission-tab";
 import ChatTab from "../components/trip-tabs/chat-tab";
+import TripPdfGenerator from "../components/TripPdfGenerator";
 
 // Simple routes with titles
 const routes = [
@@ -111,21 +119,6 @@ function Trip() {
     longitudeDelta: 0.0421,
   };
 
-  const openDirections = () => {
-    const { latitude, longitude } = initialRegion;
-    const label = encodeURIComponent(tripData.name);
-
-    const scheme = Platform.select({
-      ios: "maps:",
-      android: "geo:",
-    });
-    const url = Platform.select({
-      ios: `${scheme}${latitude},${longitude}?q=${label}`,
-      android: `${scheme}${latitude},${longitude}?q=${label}`,
-    });
-    Linking.openURL(url!);
-  };
-
   // Custom TabBar renderer with just icons
   const renderTabBar = (props: any) => {
     return (
@@ -200,15 +193,8 @@ function Trip() {
           </TouchableOpacity>
         </View>
 
-        {/* <View style={styles.bottomButtonsContainer}>
-                         <TouchableOpacity
-                              style={[styles.directionsButton, { flex: 1 }]}
-                              onPress={openDirections}
-                         >
-                              <Ionicons name="navigate" size={24} color="white" />
-                              <Text style={styles.buttonText}>Get Directions</Text>
-                         </TouchableOpacity>
-                    </View> */}
+        {/* Use the TripPdfGenerator component */}
+        <TripPdfGenerator tripId={tripData.id} tripData={tripData} />
 
         <ActionSheet
           ref={actionSheetRef}
@@ -219,72 +205,6 @@ function Trip() {
           backgroundInteractionEnabled={true}
         >
           <View style={styles.sheetContent}>
-            {/* <View style={styles.tabContainer}>
-                                   <View style={styles.tabButtonsContainer}>
-                                        <TouchableOpacity
-                                             style={[styles.tabButton, activeTab === 'info' && { backgroundColor: Colors.primary }]}
-                                             onPress={() => setActiveTab('info')}
-                                        >
-                                             <Ionicons
-                                                  name="information"
-                                                  size={25}
-                                                  color={activeTab === 'info' ? Colors.white : '#999'}
-                                             />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                             style={[styles.tabButton, activeTab === 'navigation' && { backgroundColor: Colors.primary }]}
-                                             onPress={() => setActiveTab('navigation')}
-                                        >
-                                             <Ionicons
-                                                  name="navigate"
-                                                  size={25}
-                                                  color={activeTab === 'navigation' ? Colors.white : '#999'}
-                                             />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                             style={[styles.tabButton, activeTab === 'packing' && { backgroundColor: Colors.primary }]}
-                                             onPress={() => setActiveTab('packing')}
-                                        >
-                                             <Ionicons
-                                                  name="bag"
-                                                  size={25}
-                                                  color={activeTab === 'packing' ? Colors.white : '#999'}
-                                             />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                             style={[styles.tabButton, activeTab === 'mission' && { backgroundColor: Colors.primary }]}
-                                             onPress={() => setActiveTab('mission')}
-                                        >
-                                             <Ionicons
-                                                  name="trophy"
-                                                  size={25}
-                                                  color={activeTab === 'mission' ? Colors.white : '#999'}
-                                             />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                             style={[styles.tabButton, activeTab === 'chat' && { backgroundColor: Colors.primary }]}
-                                             onPress={() => setActiveTab('chat')}
-                                        >
-                                             <Ionicons
-                                                  name="chatbubble-ellipses"
-                                                  size={25}
-                                                  color={activeTab === 'chat' ? Colors.white : '#999'}
-                                             />
-                                        </TouchableOpacity>
-                                   </View>
-                                   <View style={styles.tabIndicatorContainer}>
-                                        <Animated.View
-                                             style={[
-                                                  styles.tabIndicator,
-                                                  {
-                                                       transform: [{ translateX: animatedValue }]
-                                                  }
-                                             ]}
-                                        >
-                                             <View style={styles.tabIndicatorSmall} />
-                                        </Animated.View>
-                                   </View> 
-                              </View> */}
             <View style={[styles.tabContent, { borderColor: theme.background }]}>
               <TabView
                 renderScene={renderScene}
@@ -357,39 +277,6 @@ const styles = StyleSheet.create({
     ...Typography.text.h4,
     textAlign: "center",
   },
-  // Commenting out unused styles for bottom buttons
-  /* bottomButtonsContainer: {
-          position: 'absolute',
-          bottom: 40,
-          left: 20,
-          right: 20,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          gap: 10,
-     },
-     directionsButton: {
-          flex: 1,
-          backgroundColor: '#007AFF',
-          padding: 18,
-          borderRadius: 30,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          shadowColor: '#000',
-          shadowOffset: {
-               width: 0,
-               height: 2,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          elevation: 5,
-     },
-     buttonText: {
-          ...Typography.text.h4,
-          color: 'white',
-          fontWeight: 'bold',
-     }, */
   actionSheet: {
     flex: 1,
     borderTopLeftRadius: 30,
@@ -400,47 +287,6 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
   },
-  // Commenting out unused tabContainer styles
-  /* tabContainer: {
-          backgroundColor: 'white',
-          // boxShadow: '0px -4px 31px 0px rgba(0, 0, 0, 0.15)',
-          // borderRadius: 50,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          height: 70,
-     }, */
-  // Commenting out unused tabButtonsContainer styles
-  /* tabButtonsContainer: {
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          width: '100%',
-     }, */
-  // Commenting out unused tabIndicator styles
-  /* tabIndicatorContainer: {
-          width: '100%',
-          height: '10%',
-          display: 'flex',
-     },
-     tabIndicator: {
-          position: 'absolute',
-          bottom: 7,
-          height: 7,
-          width: '20%',
-          backgroundColor: 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-     },
-     tabIndicatorSmall: {
-          width: '70%',
-          height: 7,
-          backgroundColor: Colors.primary,
-          borderTopRightRadius: 20,
-          borderTopLeftRadius: 20,
-     }, */
   tabContent: {
     padding: 5,
     height: "100%",
@@ -460,11 +306,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginHorizontal: 5,
   },
-  // Commenting out unused customTabIndicator
-  /* customTabIndicator: {
-          backgroundColor: Colors.primary,
-          height: 3,
-     }, */
 });
 
 export default Trip;
