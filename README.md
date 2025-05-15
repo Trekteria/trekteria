@@ -41,6 +41,7 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 - [Features](https://trytrailmate.vercel.app/#features)
 - [Contact Us](https://trytrailmate.vercel.app/#contact)
 - [Architectural Design](https://github.com/Trail-Mate/trail-mate/blob/main/Architecture.png)
+- [Additional Diagrams](https://github.com/Trail-Mate/trail-mate/tree/main/diagrams)
   
 ## Development Team
 
