@@ -40,7 +40,8 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 - [Website](https://trytrailmate.vercel.app/)
 - [Features](https://trytrailmate.vercel.app/#features)
 - [Contact Us](https://trytrailmate.vercel.app/#contact)
-
+- [Architectural Design]('''/Architecture.png''')
+  
 ## Development Team
 
 - **Erik Hein** - _Full-stack Developer & Visual Designer_ - [LinkedIn](https://www.linkedin.com/in/erikhein/)
