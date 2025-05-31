@@ -128,7 +128,7 @@ const useJiggleAnimation = (isEditing: boolean, maxDelayMs: number = 0) => {
 // --- TripBox Component ---
 interface TripBoxProps {
   item: Trip;
-  tripDate: string;
+  tripDate: { startDate: string; endDate?: string };
   isEditing: boolean;
   onPress: (item: Trip) => void;
   onDelete: (id: string) => void;
@@ -148,17 +148,8 @@ const TripBox: React.FC<TripBoxProps> = ({
   const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
 
   let dateText = "No date";
-  if (tripDate) {
-    try {
-      const dateObj = new Date(tripDate);
-      dateText = dateObj.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch (error) {
-      dateText = tripDate; // Fallback to the raw date string if parsing fails
-    }
+  if (tripDate?.startDate) {
+    dateText = formatDateRange(tripDate.startDate, tripDate.endDate);
   }
 
   return (
@@ -219,16 +210,10 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   const location = item.preferences?.location || "No location";
   let dateText = "No date";
   if (item.preferences?.dateRange?.startDate) {
-    try {
-      const dateObj = new Date(item.preferences.dateRange.startDate);
-      dateText = dateObj.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch (error) {
-      dateText = item.preferences.dateRange.startDate; // Fallback
-    }
+    dateText = formatDateRange(
+      item.preferences.dateRange.startDate,
+      item.preferences.dateRange.endDate
+    );
   }
 
   return (
@@ -304,7 +289,7 @@ export default function Home() {
   const [ecoPoints, setEcoPoints] = useState(0); // Add state for eco points
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [tripDates, setTripDates] = useState<{ [tripId: string]: string }>({});
+  const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
   const [isPlansEditing, setIsPlansEditing] = useState(false);
   const [isTripsEditing, setIsTripsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('favorites');
@@ -402,7 +387,7 @@ export default function Home() {
         // console.log("Bookmarked Trips:", tripsList);
 
         // Fetch dates for trips from plans collection
-        const dates: { [tripId: string]: string } = {};
+        const dates: { [tripId: string]: { startDate: string; endDate?: string } } = {};
         const plansCollection = collection(db, "plans");
         const userPlansQuery = query(
           plansCollection,
@@ -413,9 +398,12 @@ export default function Home() {
         plansSnapshot.docs.forEach((planDoc) => {
           const planData = planDoc.data();
           if (planData.tripIds && planData.preferences?.dateRange?.startDate) {
-            // For each trip ID in this plan
+            // For each trip ID in this plan, store both start and end dates
             planData.tripIds.forEach((tripId: string) => {
-              dates[tripId] = planData.preferences.dateRange.startDate;
+              dates[tripId] = {
+                startDate: planData.preferences.dateRange.startDate,
+                endDate: planData.preferences.dateRange.endDate
+              };
             });
           }
         });
@@ -424,11 +412,11 @@ export default function Home() {
 
         // Sort trips by date (newest first)
         const sortedTrips = tripsList.sort((a, b) => {
-          const dateA = dates[a.id || ""]
-            ? new Date(dates[a.id || ""]).getTime()
+          const dateA = dates[a.id || ""]?.startDate
+            ? new Date(dates[a.id || ""]?.startDate).getTime()
             : 0;
-          const dateB = dates[b.id || ""]
-            ? new Date(dates[b.id || ""]).getTime()
+          const dateB = dates[b.id || ""]?.startDate
+            ? new Date(dates[b.id || ""]?.startDate).getTime()
             : 0;
           return dateB - dateA; // Descending order (newest first)
         });
@@ -644,7 +632,7 @@ export default function Home() {
                 renderItem={({ item, index }) => (
                   <TripBox
                     item={item}
-                    tripDate={tripDates[item.id || ""]}
+                    tripDate={tripDates[item.id || ""] || { startDate: "" }}
                     isEditing={isTripsEditing}
                     onPress={handleTripPress}
                     onDelete={handleDeleteTrip}
@@ -689,7 +677,7 @@ export default function Home() {
           onPress={toggleEditMode}
         >
           <Ionicons
-            name={(activeTab === 'favorites' ? isTripsEditing : isPlansEditing) ? "close" : "pencil"}
+            name={(activeTab === 'favorites' ? isTripsEditing : isPlansEditing) ? "checkmark-outline" : "pencil"}
             size={24}
             color={isDarkMode ? '#FFFFFF' : theme.primary}
           />
@@ -885,3 +873,32 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+
+// Helper function to format dates
+const formatDateRange = (startDate: string, endDate?: string) => {
+  try {
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : null;
+
+    // If no end date or same day, just show one date
+    if (!end || start.toDateString() === end.toDateString()) {
+      return start.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    // If different days, show date range
+    return `${start.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })} - ${end.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
+  } catch (error) {
+    return startDate; // Fallback to raw string if parsing fails
+  }
+};
