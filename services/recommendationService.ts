@@ -310,7 +310,7 @@ export const savePlan = async (
         youngKids: formData[2]?.value?.youngKids || 0,
       },
       hikeDuration: formData[5]?.value || "",
-      location: formData[0]?.value?.location || "",
+      location: formData[0]?.value?.toLocation || "",
       mustHaves: formData[9]?.value || [],
       radius: formData[0]?.value?.radius || 25,
       sceneryPreferences: formData[6]?.value || [],
@@ -321,7 +321,7 @@ export const savePlan = async (
 
     // Fetch image URL for the plan
     const imageUrl =
-      (await fetchUnsplashImage(formData[0]?.value?.location, false)) || "";
+      (await fetchUnsplashImage(formData[0]?.value?.toLocation, false)) || "";
 
     // Create a new plan in Firestore
     const planData = {

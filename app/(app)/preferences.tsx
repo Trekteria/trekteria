@@ -30,7 +30,7 @@ type TravelerGroup = {
 
 type Question = {
      id: number;
-     type: 'text' | 'date' | 'number' | 'select' | 'multiselect';
+     type: 'text' | 'date' | 'number' | 'select' | 'multiselect' | 'location';
      question: string;
      options?: string[];
      value: any;
@@ -68,9 +68,9 @@ export default function Preferences() {
      const [formData, setFormData] = useState<Question[]>([
           {
                id: 1,
-               type: 'text',
-               question: 'Where would you like to go?',
-               value: { location: '', radius: 25 },
+               type: 'location',
+               question: 'Where are you traveling from and to?',
+               value: { fromLocation: '', toLocation: '', radius: 25 },
                icon: 'location-outline',
           },
           {
@@ -225,8 +225,13 @@ export default function Preferences() {
 
                          // Location and radius (Question 1)
                          const locationData = formattedData[0].value;
-                         if (locationData.location) {
-                              summary += `I would like to go within ${locationData.radius} miles of ${locationData.location}`;
+                         if (locationData.toLocation) {
+                              if (locationData.fromLocation) {
+                                   summary += `I would like to travel from ${locationData.fromLocation} to ${locationData.toLocation}`;
+                              } else {
+                                   summary += `I would like to go to ${locationData.toLocation}`;
+                              }
+                              summary += ` within ${locationData.radius} miles of the destination`;
                          }
 
                          // Date range (Question 2)
@@ -529,33 +534,61 @@ export default function Preferences() {
      const renderQuestion = () => {
           const question = formData[currentQuestion];
           switch (question.type) {
-               case 'text':
+               case 'location':
                     return (
                          <View style={styles.locationContainer}>
-                              <TextInput
-                                   style={[styles.input, {
-                                        color: theme.text,
-                                        borderColor: theme.borderColor,
-                                        backgroundColor: theme.card
-                                   }]}
-                                   value={question.value.location}
-                                   onChangeText={(text) => {
-                                        const newValue = {
-                                             ...question.value,
-                                             location: text
-                                        };
-                                        updateValue(newValue);
-                                   }}
-                                   placeholder="Enter city, or region name"
-                                   placeholderTextColor={theme.inactive}
-                              />
-                              <View style={styles.radiusContainer}>
-                                   <Text style={[styles.radiusLabel, { color: theme.text }]}>Search radius:</Text>
+                              <View style={[styles.locationInputWrapper, { borderColor: theme.borderColor }]}>
+                                   <View style={[styles.locationInputContainer, { backgroundColor: theme.card }]}>
+                                        <Ionicons name="locate-outline" size={20} color={theme.icon} style={styles.locationIcon} />
+                                        <TextInput
+                                             style={[styles.locationInput, {
+                                                  color: theme.text,
+                                                  borderColor: theme.borderColor,
+                                                  backgroundColor: theme.card
+                                             }]}
+                                             value={question.value.fromLocation}
+                                             onChangeText={(text) => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       fromLocation: text
+                                                  };
+                                                  updateValue(newValue);
+                                             }}
+                                             placeholder="Starting Location"
+                                             placeholderTextColor={theme.inactive}
+                                        />
+                                   </View>
+                                   <View style={[styles.locationDivider, { backgroundColor: theme.borderColor }]} />
+                                   <View style={[styles.locationInputContainer, { backgroundColor: theme.card }]}>
+                                        <Ionicons name="location-outline" size={20} color={theme.icon} style={styles.locationIcon} />
+                                        <TextInput
+                                             style={[styles.locationInput, {
+                                                  color: theme.text,
+                                                  borderColor: theme.borderColor,
+                                                  backgroundColor: theme.card
+                                             }]}
+                                             value={question.value.toLocation}
+                                             onChangeText={(text) => {
+                                                  const newValue = {
+                                                       ...question.value,
+                                                       toLocation: text
+                                                  };
+                                                  updateValue(newValue);
+                                             }}
+                                             placeholder="Destination"
+                                             placeholderTextColor={theme.inactive}
+                                        />
+                                   </View>
+                              </View>
+                              <View style={[styles.radiusContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
+                                   <View style={styles.radiusLabelContainer}>
+                                        <Text style={[styles.radiusLabel, { color: theme.text }]}>Search radius</Text>
+                                   </View>
                                    <View style={styles.radiusInputContainer}>
                                         <TouchableOpacity
                                              style={[styles.numberButton, {
                                                   borderColor: theme.borderColor,
-                                                  backgroundColor: theme.card
+                                                  backgroundColor: theme.background
                                              }]}
                                              onPress={() => {
                                                   const newValue = {
@@ -564,13 +597,13 @@ export default function Preferences() {
                                                   };
                                                   updateValue(newValue);
                                              }}>
-                                             <Ionicons name="remove" size={18} color={theme.text} />
+                                             <Ionicons name="remove" size={16} color={theme.text} />
                                         </TouchableOpacity>
-                                        <Text style={[styles.numberText, { color: theme.text }]}>{question.value.radius} miles</Text>
+                                        <Text style={[styles.numberText, { color: theme.text }]}>{question.value.radius} mi</Text>
                                         <TouchableOpacity
                                              style={[styles.numberButton, {
                                                   borderColor: theme.borderColor,
-                                                  backgroundColor: theme.card
+                                                  backgroundColor: theme.background
                                              }]}
                                              onPress={() => {
                                                   const newValue = {
@@ -579,7 +612,7 @@ export default function Preferences() {
                                                   };
                                                   updateValue(newValue);
                                              }}>
-                                             <Ionicons name="add" size={18} color={theme.text} />
+                                             <Ionicons name="add" size={16} color={theme.text} />
                                         </TouchableOpacity>
                                    </View>
                               </View>
@@ -766,7 +799,7 @@ export default function Preferences() {
                     return value.length > 0;
                }
                if ('startDate' in value && 'endDate' in value) return !!value.startDate && !!value.endDate;
-               if ('location' in value) return !!value.location.trim();
+               if ('fromLocation' in value && 'toLocation' in value) return !!value.toLocation.trim();
                // For the groups/number question, check if any count is > 0
                const values = Object.values(value);
                return values.some(v => typeof v === 'number' ? v > 0 : !!v);
@@ -1000,7 +1033,7 @@ const styles = StyleSheet.create({
      },
      calendarContainer: {
           width: '100%',
-          borderRadius: 12,
+          borderRadius: 30,
           overflow: 'hidden',
           borderWidth: 1,
      },
@@ -1094,20 +1127,55 @@ const styles = StyleSheet.create({
      },
      locationContainer: {
           width: '100%',
-          gap: 15,
+          gap: 20,
+     },
+     locationInputWrapper: {
+          width: '100%',
+          borderRadius: 30,
+          overflow: 'hidden',
+          borderWidth: 1,
+     },
+     locationInputContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 20,
+     },
+     locationIcon: {
+          marginRight: 12,
+     },
+     locationInput: {
+          flex: 1,
+          fontSize: 16,
+          padding: 0,
+          ...Typography.text.body,
+     },
+     locationDivider: {
+          height: 1,
+          width: '100%',
+          opacity: 0.5,
      },
      radiusContainer: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: 5,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderRadius: 100,
+          borderWidth: 1,
+     },
+     radiusLabelContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
      },
      radiusLabel: {
           ...Typography.text.body,
+          fontSize: 15,
      },
      radiusInputContainer: {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 15,
+          gap: 12,
      },
 }); 
