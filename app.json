@@ -34,7 +34,7 @@
         "ACCESS_FINE_LOCATION",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-  ]
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +49,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 80,
           "resizeMode": "contain",
-          "backgroundColor": "#42643D"
+          "backgroundColor": "#1D6A54"
         }
       ],
       "expo-sqlite"
