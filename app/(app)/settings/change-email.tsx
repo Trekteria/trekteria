@@ -55,19 +55,19 @@ export default function ChangeEmail() {
   const handleUpdateEmail = async () => {
     // Validate if the new email is provided
     if (!newEmail.trim()) {
-      Alert.alert("Error", "New email is required.");
+      Alert.alert("Error ✗", "New email is required.");
       return;
     }
 
     // Check if new email is different from current email
     if (newEmail.trim() === currentEmail) {
-      Alert.alert("Error", "New email must be different from current email.");
+      Alert.alert("Error ✗", "New email must be different from current email.");
       return;
     }
 
     // Validate if the password is provided
     if (!password.trim()) {
-      Alert.alert("Error", "Password is required for security verification.");
+      Alert.alert("Error ✗", "Password is required for security verification.");
       return;
     }
 
@@ -75,7 +75,7 @@ export default function ChangeEmail() {
     try {
       const user = auth.currentUser; // Get the currently logged-in user
       if (!user || !user.email) {
-        Alert.alert("Error", "No user is currently logged in.");
+        Alert.alert("Error ✗", "No user is currently logged in.");
         setLoading(false);
         return;
       }
@@ -88,7 +88,7 @@ export default function ChangeEmail() {
       await verifyBeforeUpdateEmail(user, newEmail.trim());
 
       Alert.alert(
-        "Verification Email Sent",
+        "Verification Email Sent ↗",
         "A verification email has been sent to your new email address. Please verify it by clicking the link in the email. After verification, sign back in to complete the process."
       );
 
@@ -112,7 +112,7 @@ export default function ChangeEmail() {
         errorMessage = error.message;
       }
 
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error ✗", errorMessage);
     } finally {
       setLoading(false); // Reset loading state
     }

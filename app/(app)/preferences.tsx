@@ -50,9 +50,9 @@ export default function Preferences() {
      const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
 
-     const [currentQuestion, setCurrentQuestion] = useState(0);
-     const [loading, setLoading] = useState(false);
-     const [success, setSuccess] = useState(false);
+     const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+     const [loading, setLoading] = useState<boolean>(false);
+     const [success, setSuccess] = useState<boolean>(false);
      const [dateRange, setDateRange] = useState<DateRange>({
           startDate: null,
           endDate: null,
@@ -60,95 +60,110 @@ export default function Preferences() {
 
      // Clear previous storage data when component mounts
      useEffect(() => {
-          // Clear any previous recommendations, summary, and errors
           AsyncStorage.multiRemove(['tripSummary', 'tripError', 'lastPlanId'])
-               .catch((err: any) => console.error("Error clearing previous data:", err));
+               .catch((err: Error) => console.error("Error clearing previous data:", err));
      }, []);
 
-     const [formData, setFormData] = useState<Question[]>([
+     const initialFormData: Question[] = [
           {
                id: 1,
                type: 'location',
-               question: 'Where are you traveling from and to?',
+               question: 'Where would you like to go camping?',
                value: { fromLocation: '', toLocation: '', radius: 25 },
                icon: 'location-outline',
           },
           {
                id: 2,
                type: 'date',
-               question: 'When are you planning to go?',
+               question: 'When are you planning your camping trip?',
                value: { startDate: null, endDate: null },
                icon: 'calendar-clear-outline',
           },
           {
                id: 3,
                type: 'number',
-               question: "Who's joining you on the trails?",
+               question: "Who's joining your camping trip?",
                value: {
                     adults: 1,
-                    olderKids: 0,
-                    youngKids: 0,
+                    kids: 0,
                     toddlers: 0,
-                    pets: 0
+                    pets: 0,
+                    wheelchairUsers: 0,
+                    serviceAnimals: 0
                },
                icon: 'people-outline',
                groups: [
                     { label: 'Adults', subtitle: 'Ages 13 or above', count: 1 },
-                    { label: 'Older kids', subtitle: 'Ages 9 - 12', count: 0 },
-                    { label: 'Young kids', subtitle: 'Ages 5 - 8', count: 0 },
+                    { label: 'Kids', subtitle: 'Ages 5 - 12', count: 0 },
                     { label: 'Toddlers', subtitle: 'Ages 0 - 4', count: 0 },
                     { label: 'Pets', subtitle: '', count: 0 },
+                    { label: 'Wheelchair users', subtitle: 'Requires accessible facilities', count: 0 },
+                    { label: 'Service animals', subtitle: 'Assistance animals', count: 0 }
                ]
           },
           {
                id: 4,
                type: 'select',
-               question: "What's your hiking experience?",
-               options: ['First-timer', 'Done a few trails', 'Regular hiker', 'Trail expert'],
+               question: "What's your camping experience level?",
+               options: ['First-time camper', 'Camped a few times', 'Regular camper', 'Camping expert'],
                value: '',
                icon: 'footsteps-outline',
           },
           {
                id: 5,
                type: 'select',
-               question: 'What difficulty level do you prefer?',
-               options: ['Easy - Gentle paths, perfect for relaxing', 'Moderate - Some hills, nice workout', 'Difficult - Challenging climbs ahead', 'Expert - Serious elevation gain'],
+               question: 'What type of camping do you prefer?',
+               options: [
+                    "Campground camping - Reserved sites with facilities",
+                    "Car camping - Drive-up sites near parking",
+                    "RV camping - Full hookups and amenities",
+                    "Backpacking - Remote wilderness camping",
+                    "Other"
+               ],
                value: '',
-               icon: 'trending-up-outline',
+               icon: 'car-outline',
           },
           {
                id: 6,
                type: 'multiselect',
-               question: 'What kind of scenery do you enjoy?',
-               options: ['Epic viewpoints', 'Lakes and waterfalls', 'Wildlife spotting', 'Cool rock formations', 'Dense forest trails', 'Historical sites', 'Other'],
+               question: 'What camping amenities are important to you?',
+               options: ['Restrooms', 'Showers', 'Drinking water', 'Fire pits', 'Picnic tables', 'Electric hookups', 'RV dump station', 'Camp store', 'Other'],
                value: [],
-               icon: 'heart-outline',
+               icon: 'water-outline',
           },
           {
                id: 7,
                type: 'multiselect',
-               question: 'Are you looking for trips with:',
-               options: ['Camping areas', 'Mountain biking access', 'Snow trails', 'Other'],
+               question: 'What activities are you interested in while camping?',
+               options: ['Hiking', 'Fishing', 'Swimming', 'Boating', 'Wildlife viewing', 'Photography', 'Stargazing', 'Other'],
                value: [],
                icon: 'trail-sign-outline',
           },
           {
                id: 8,
                type: 'multiselect',
-               question: 'Any must-haves for your trip?',
-               options: ['Well-marked paths', 'Cell service', 'Easy parking', 'Restrooms nearby', 'Pet-friendly', 'Shaded trails', 'Other'],
+               question: 'What are your must-haves for the campsite?',
+               options: ['Shaded spots', 'Privacy from other campsites', 'Cell service', 'Pet-friendly', 'Accessible facilities', 'Quiet hours', 'Other'],
                value: [],
                icon: 'shield-outline',
           },
           {
                id: 9,
                type: 'select',
-               question: 'Best time of the day for you?',
-               options: ['Early bird - Catch the sunrise', 'Morning - Beat the crowds', 'Afternoon - When it warms up', 'Evening - Chase the sunset'],
+               question: "What weather conditions do you prefer for camping?",
+               options: [
+                    "Warm and sunny - 70-85°F (21-29°C)",
+                    "Mild and pleasant - 60-75°F (15-24°C)",
+                    "Cool and crisp - 45-65°F (7-18°C)",
+                    "Cold weather - Below 45°F (7°C)",
+                    "Other"
+               ],
                value: '',
-               icon: 'sunny-outline',
-          },
-     ]);
+               icon: 'partly-sunny-outline',
+          }
+     ];
+
+     const [formData, setFormData] = useState<Question[]>(initialFormData);
 
      const slideAnimation = useSharedValue(0);
      const progressAnimation = useSharedValue(0);
@@ -166,7 +181,7 @@ export default function Preferences() {
           });
 
           // Animate each segment
-          formData.forEach((_, index) => {
+          formData.forEach((_, index: number) => {
                progressSegments[index].value = withTiming(
                     index <= currentQuestion ? 1 : 0,
                     {
@@ -175,7 +190,7 @@ export default function Preferences() {
                     }
                );
           });
-     }, [currentQuestion]);
+     }, [currentQuestion, formData.length, progressAnimation, progressSegments]);
 
      const handleClose = () => {
           router.back();
@@ -200,10 +215,11 @@ export default function Preferences() {
 
                try {
                     const formattedData = formData.map((question) => {
+                         // Handle 'Other' values first
                          if (question.type === 'select' && question.value === 'Other') {
                               return {
                                    ...question,
-                                   value: question.otherValue
+                                   value: question.otherValue || ''
                               };
                          }
                          if (question.type === 'multiselect' && question.value.includes('Other')) {
@@ -214,6 +230,21 @@ export default function Preferences() {
                               return {
                                    ...question,
                                    value: otherValues
+                              };
+                         }
+                         // Special handling for group composition
+                         if (question.type === 'number' && question.groups) {
+                              const groupValue: Record<string, number> = {};
+                              question.groups.forEach(group => {
+                                   // Convert label to camelCase key
+                                   const key = group.label
+                                        .toLowerCase()
+                                        .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
+                                   groupValue[key] = group.count;
+                              });
+                              return {
+                                   ...question,
+                                   value: groupValue
                               };
                          }
                          return question;
@@ -240,7 +271,7 @@ export default function Preferences() {
                               const startDate = new Date(dateInfo.startDate).toLocaleDateString();
                               const endDate = new Date(dateInfo.endDate).toLocaleDateString();
                               summary += ` from ${startDate} to ${endDate}.`;
-                         } else if (!dateInfo.endDate) {
+                         } else if (dateInfo.startDate) {
                               const startDate = new Date(dateInfo.startDate).toLocaleDateString();
                               summary += ` on ${startDate}.`;
                          } else {
@@ -254,17 +285,20 @@ export default function Preferences() {
                          if (groupInfo.adults > 0) {
                               groupParts.push(`${groupInfo.adults} adult${groupInfo.adults > 1 ? 's' : ''}`);
                          }
-                         if (groupInfo.olderkids > 0) {
-                              groupParts.push(`${groupInfo.olderkids} older kid${groupInfo.olderkids > 1 ? 's' : ''}`);
-                         }
-                         if (groupInfo.youngkids > 0) {
-                              groupParts.push(`${groupInfo.youngkids} young kid${groupInfo.youngkids > 1 ? 's' : ''}`);
+                         if (groupInfo.kids > 0) {
+                              groupParts.push(`${groupInfo.kids} kid${groupInfo.kids > 1 ? 's' : ''}`);
                          }
                          if (groupInfo.toddlers > 0) {
                               groupParts.push(`${groupInfo.toddlers} toddler${groupInfo.toddlers > 1 ? 's' : ''}`);
                          }
                          if (groupInfo.pets > 0) {
                               groupParts.push(`${groupInfo.pets} pet${groupInfo.pets > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.wheelchairUsers > 0) {
+                              groupParts.push(`${groupInfo.wheelchairUsers} wheelchair user${groupInfo.wheelchairUsers > 1 ? 's' : ''}`);
+                         }
+                         if (groupInfo.serviceAnimals > 0) {
+                              groupParts.push(`${groupInfo.serviceAnimals} service animal${groupInfo.serviceAnimals > 1 ? 's' : ''}`);
                          }
 
                          if (groupParts.length > 0) {
@@ -274,50 +308,40 @@ export default function Preferences() {
                          // Experience level (Question 4)
                          const experience = formattedData[3].value;
                          if (experience) {
-                              summary += ` My hiking experience is: ${experience}.`;
+                              summary += ` I am a ${experience.toLowerCase()}.`;
                          }
 
-                         // Difficulty preference (Question 5)
-                         const difficulty = formattedData[4].value;
-                         if (difficulty) {
-                              const difficultyLevel = difficulty.split(' - ')[0];
-                              summary += ` I prefer my trail to be ${difficultyLevel.toLowerCase()}`;
+                         // Camping type preference (Question 5)
+                         const campingType = formattedData[4].value;
+                         if (campingType) {
+                              const type = campingType.split(' - ')[0];
+                              summary += ` I prefer ${type.toLowerCase()}.`;
                          }
 
-                         // Scenery preferences (Question 6)
-                         const scenery = formattedData[5].value;
-                         if (scenery && scenery.length > 0) {
-                              summary += ` I enjoy ${scenery.join(', ')} scenery.`;
+                         // Amenities (Question 6)
+                         const amenities = formattedData[5].value;
+                         if (amenities && amenities.length > 0) {
+                              summary += ` I need these amenities: ${amenities.join(', ')}.`;
                          }
 
-                         // Trip features (Question 7)
-                         const features = formattedData[6].value;
-                         if (features && features.length > 0) {
-                              summary += ` I'm looking for trips with ${features.join(', ')}.`;
+                         // Activities (Question 7)
+                         const activities = formattedData[6].value;
+                         if (activities && activities.length > 0) {
+                              summary += ` I'm interested in: ${activities.join(', ')}.`;
                          }
 
                          // Must-haves (Question 8)
                          const mustHaves = formattedData[7].value;
                          if (mustHaves && mustHaves.length > 0) {
-                              summary += ` My trip must-haves are: ${mustHaves.join(', ')}.`;
+                              summary += ` My must-haves are: ${mustHaves.join(', ')}.`;
                          }
 
-                         // Time of day (Question 9)
-                         const timeOfDay = formattedData[8].value;
-                         if (timeOfDay) {
-                              const preferredTime = timeOfDay.split(' - ')[0];
-                              summary += ` I prefer hiking during the ${preferredTime.toLowerCase()}.`;
+                         // Weather preference (Question 9)
+                         const weatherPreference = formattedData[8].value;
+                         if (weatherPreference) {
+                              const preferredWeather = weatherPreference.split(' - ')[0];
+                              summary += ` I prefer camping in ${preferredWeather.toLowerCase()} weather conditions.`;
                          }
-
-                         // Weather information - properly handle async data
-                         // try {
-                         //      const weatherInfo = await fetchWeatherData(dateRange.startDate!, dateRange.endDate!);
-                         //      if (weatherInfo) {
-                         //           summary += ` The weather forecast shows: ${weatherInfo}`;
-                         //      }
-                         // } catch (error) {
-                         //      console.error("Error fetching weather data:", error);
-                         // }
 
                          return summary;
                     };
@@ -694,13 +718,18 @@ export default function Preferences() {
                          </View>
                     );
                case 'select':
+                    const shouldUseColumns = question.options && question.options.length > 5;
                     return (
-                         <View style={styles.optionsContainer}>
+                         <View style={[
+                              styles.optionsContainer,
+                              shouldUseColumns && styles.optionsContainerTwoColumns
+                         ]}>
                               {question.options?.map((option) => (
                                    <TouchableOpacity
                                         key={option}
                                         style={[
                                              styles.optionButton,
+                                             shouldUseColumns && styles.optionButtonTwoColumns,
                                              { borderColor: theme.borderColor, backgroundColor: theme.card },
                                              question.value === option && [styles.selectedOption, { backgroundColor: theme.primary }],
                                         ]}
@@ -737,13 +766,18 @@ export default function Preferences() {
                          </View>
                     );
                case 'multiselect':
+                    const shouldUseColumnsMulti = question.options && question.options.length > 4;
                     return (
-                         <View style={styles.optionsContainer}>
+                         <View style={[
+                              styles.optionsContainer,
+                              shouldUseColumnsMulti && styles.optionsContainerTwoColumns
+                         ]}>
                               {question.options?.map((option) => (
                                    <TouchableOpacity
                                         key={option}
                                         style={[
                                              styles.optionButton,
+                                             shouldUseColumnsMulti && styles.optionButtonTwoColumns,
                                              { borderColor: theme.borderColor, backgroundColor: theme.card },
                                              question.value.includes(option) && [styles.selectedOption, { backgroundColor: theme.primary }],
                                         ]}
@@ -990,12 +1024,25 @@ const styles = StyleSheet.create({
           width: '100%',
           gap: 20,
      },
+     optionsContainerTwoColumns: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 12,
+          justifyContent: 'space-between',
+     },
      optionButton: {
           paddingVertical: 15,
           paddingHorizontal: 20,
           borderRadius: 100,
           borderWidth: 0.5,
           alignItems: 'flex-start',
+          justifyContent: 'center',
+     },
+     optionButtonTwoColumns: {
+          width: '48%',
+          paddingVertical: 12,
+          paddingHorizontal: 15,
+          minHeight: 50,
      },
      selectedOption: {
           borderColor: Colors.primary,

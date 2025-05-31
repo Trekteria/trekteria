@@ -239,7 +239,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
         />
         <View style={styles.planInfo}>
           <View style={styles.planMetaRow}>
-            <Text style={styles.planLocation}>{location}</Text>
+            <Text style={styles.planLocation}>{item.preferences?.location?.toLocation}</Text>
           </View>
           <View style={styles.dateContainer}>
             <Text style={styles.dateText}>{dateText}</Text>

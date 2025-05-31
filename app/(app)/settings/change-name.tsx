@@ -54,11 +54,11 @@ export default function ChangeName() {
           firstname: firstName.trim(),
           lastname: lastName.trim(),
         });
-        Alert.alert("Success", "Name updated successfully");
+        Alert.alert("Success ✓", "Name updated successfully");
         router.back();
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to update name. Please try again.");
+      Alert.alert("Error ✗", "Failed to update name. Please try again.");
     } finally {
       setLoading(false);
     }

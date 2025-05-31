@@ -293,75 +293,91 @@ export const savePlan = async (
   trips: Trip[]
 ): Promise<string> => {
   try {
-    // Log the entire formData structure
-    console.log("Form Data Structure:", JSON.stringify(formData, null, 2));
-    console.log("Date Range from formData:", formData[1]?.value);
-
-    // Format the preferences data structure to match Firestore
+    // Format the preferences data structure to match our new schema
     const preferences = {
       dateRange: formData[1]?.value || {},
-      difficultyPreference: formData[4]?.value?.split(" - ")[0] || "",
-      experienceLevel: formData[3]?.value || "",
+      location: {
+        fromLocation: formData[0]?.value?.fromLocation || "",
+        toLocation: formData[0]?.value?.toLocation || "",
+        radius: formData[0]?.value?.radius || 25,
+      },
       groupComposition: {
         adults: formData[2]?.value?.adults || 0,
-        olderKids: formData[2]?.value?.olderKids || 0,
-        pets: formData[2]?.value?.pets || 0,
+        kids: formData[2]?.value?.kids || 0,
         toddlers: formData[2]?.value?.toddlers || 0,
-        youngKids: formData[2]?.value?.youngKids || 0,
+        pets: formData[2]?.value?.pets || 0,
+        wheelchairUsers: formData[2]?.value?.wheelchairUsers || 0,
+        serviceAnimals: formData[2]?.value?.serviceAnimals || 0,
       },
-      hikeDuration: formData[5]?.value || "",
-      location: formData[0]?.value?.toLocation || "",
-      mustHaves: formData[9]?.value || [],
-      radius: formData[0]?.value?.radius || 25,
-      sceneryPreferences: formData[6]?.value || [],
-      terrainPreference: formData[7]?.value || "",
-      timeOfDay: formData[10]?.value?.split(" - ")[0] || "",
-      tripFeatures: formData[8]?.value || [],
+      campingExperience: formData[3]?.value || "",
+      campingType: formData[4]?.value ? formData[4].value.split(" - ")[0] : "",
+      amenities: formData[5]?.value || [],
+      activities: formData[6]?.value || [],
+      mustHaves: formData[7]?.value || [],
+      weatherPreference: formData[8]?.value
+        ? formData[8].value.split(" - ")[0]
+        : "",
     };
 
-    // Fetch image URL for the plan
-    const imageUrl =
-      (await fetchUnsplashImage(formData[0]?.value?.toLocation, false)) || "";
+    // Calculate total group size for quick access
+    const totalGroupSize = Object.values(preferences.groupComposition).reduce(
+      (sum: number, count: number) => sum + count,
+      0
+    );
 
-    // Create a new plan in Firestore
+    // Calculate accessibility needs flag
+    const hasAccessibilityNeeds =
+      preferences.groupComposition.wheelchairUsers > 0 ||
+      preferences.groupComposition.serviceAnimals > 0;
+
+    // Fetch image URL for the plan using the destination location
+    const imageUrl =
+      (await fetchUnsplashImage(preferences.location.toLocation, false)) || "";
+
+    // Create a new plan in Firestore with optimized structure
     const planData = {
       createdAt: Timestamp.now(),
+      lastUpdated: Timestamp.now(),
       imageUrl,
       preferences,
       summary: formattedSummary,
       userId,
       tripIds: [],
+      totalGroupSize,
     };
 
     // Save the plan to Firestore
     const planId = await createPlan(planData);
 
-    // Save each trip to Firestore with the planId
-    const tripIds = await Promise.all(
-      trips.map(async (trip) => {
-        const tripWithPlanId = {
-          ...trip,
-          planId,
-          userId,
-          createdAt: Timestamp.now(),
-        };
-        return await createTrip(tripWithPlanId);
-      })
-    );
+    // Process trips in parallel with optimized data
+    const tripPromises = trips.map(async (trip) => {
+      const tripWithPlanId = {
+        ...trip,
+        planId,
+        userId,
+        createdAt: Timestamp.now(),
+        groupSize: totalGroupSize,
+        hasAccessibilityNeeds,
+      };
+      return await createTrip(tripWithPlanId);
+    });
+
+    // Wait for all trips to be created
+    const tripIds = await Promise.all(tripPromises);
 
     // Update the plan with the trip IDs
-    await updatePlan(planId, { tripIds });
+    await updatePlan(planId, {
+      tripIds,
+      lastUpdated: Timestamp.now(),
+    });
 
-    // Save only the summary to AsyncStorage
-    // This is non-Firestore data that we still need to persist
-    await AsyncStorage.setItem("tripSummary", formattedSummary);
-
-    // No need to store trips in AsyncStorage as Firestore persistence will handle this
-    // Removed: await AsyncStorage.setItem("tripRecommendations", JSON.stringify(trips));
-    // Removed: await AsyncStorage.setItem("parsedTrips", JSON.stringify(trips));
-
-    // Instead, store a reference to the plan ID for easy access
-    await AsyncStorage.setItem("lastPlanId", planId);
+    // Store only essential data in AsyncStorage
+    await AsyncStorage.multiSet([
+      ["tripSummary", formattedSummary],
+      ["lastPlanId", planId],
+      ["lastPlanGroupSize", totalGroupSize.toString()],
+      ["lastPlanAccessibility", hasAccessibilityNeeds.toString()],
+    ]);
 
     return planId;
   } catch (error) {

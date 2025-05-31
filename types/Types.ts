@@ -9,27 +9,33 @@ export interface User {
 export interface Plan {
   id?: string;
   createdAt: Timestamp; // Using Firestore Timestamp instead of number
+  lastUpdated?: Timestamp;
   imageUrl?: string;
+  totalGroupSize?: number;
   preferences: {
     dateRange?: {
       startDate: string;
       endDate: string;
     };
-    difficultyPreference?: string;
-    experienceLevel?: string;
+    location?: {
+      fromLocation: string;
+      toLocation: string;
+      radius: number;
+    };
     groupComposition?: {
       adults: number;
-      olderKids: number;
-      pets: number;
+      kids: number;
       toddlers: number;
-      youngKids: number;
+      pets: number;
+      wheelchairUsers: number;
+      serviceAnimals: number;
     };
-    location?: string;
+    campingExperience?: string;
+    campingType?: string;
+    amenities?: string[];
+    activities?: string[];
     mustHaves?: string[];
-    radius?: number;
-    sceneryPreferences?: string[];
-    timeOfDay?: string;
-    tripFeatures?: string[];
+    weatherPreference?: string;
   };
   summary: string;
   tripIds: string[]; // references to trip documents

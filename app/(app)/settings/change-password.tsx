@@ -47,19 +47,19 @@ export default function ChangePassword() {
       !newPassword.trim() ||
       !confirmNewPassword.trim()
     ) {
-      Alert.alert("Error", "All fields are required.");
+      Alert.alert("Error ✗", "All fields are required.");
       return;
     }
 
     // Check if new passwords match
     if (newPassword !== confirmNewPassword) {
-      Alert.alert("Error", "New passwords do not match.");
+      Alert.alert("Error ✗", "New passwords do not match.");
       return;
     }
 
     // Ensure password meets minimum length requirement
     if (newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long.");
+      Alert.alert("Error ✗", "Password must be at least 6 characters long.");
       return;
     }
 
@@ -67,7 +67,7 @@ export default function ChangePassword() {
     try {
       const user = auth.currentUser;
       if (!user || !user.email) {
-        Alert.alert("Error", "No user is currently logged in.");
+        Alert.alert("Error ✗", "No user is currently logged in.");
         setLoading(false);
         return;
       }
@@ -82,7 +82,7 @@ export default function ChangePassword() {
       // Update the user's password
       await updatePassword(user, newPassword);
 
-      Alert.alert("Success", "Your password has been updated successfully.");
+      Alert.alert("Success ✓", "Your password has been updated successfully.");
       router.back(); // Navigate back to the previous screen
     } catch (error: any) {
       console.error("Error changing password:", error.message);
@@ -97,7 +97,7 @@ export default function ChangePassword() {
         errorMessage = error.message;
       }
 
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error ✗", errorMessage);
     } finally {
       setLoading(false); // Reset loading state
     }
