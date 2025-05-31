@@ -27,8 +27,8 @@ export default function AuthIndex() {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const [email, setEmail] = useState(""); // State to store email input
   const [password, setPassword] = useState(""); // State to store password input
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Handles user login

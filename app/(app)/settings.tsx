@@ -22,12 +22,13 @@ import { Share } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme, effectiveColorScheme } = useColorScheme();
   const { temperatureUnit, setTemperatureUnit } = useTemperatureUnit();
-  const isDarkMode = colorScheme === 'dark';
+  const isDarkMode = effectiveColorScheme === 'dark';
   const [measurementUnit, setMeasurementUnit] = useState("Imperial");
   const [showTemperatureModal, setShowTemperatureModal] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -76,16 +77,19 @@ export default function SettingsPage() {
         {/* Preferences Section */}
         <Text style={[styles.sectionHeader, { color: theme.text }]}>Preferences</Text>
 
-        {/* Dark Mode Toggle */}
-        <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
-          <Text style={[styles.label, { color: theme.text }]}>Dark Mode</Text>
-          <Switch
-            value={isDarkMode}
-            onValueChange={toggleColorScheme}
-            trackColor={{ false: "#767577", true: theme.buttonBackground }}
-            thumbColor="#f4f3f4"
-          />
-        </View>
+        {/* Theme Selection */}
+        <TouchableOpacity
+          style={[styles.row, { borderBottomColor: theme.borderColor }]}
+          onPress={() => setShowThemeModal(true)}
+        >
+          <Text style={[styles.label, { color: theme.text }]}>Theme</Text>
+          <View style={styles.valueContainer}>
+            <Text style={[styles.value, { color: theme.icon }]}>
+              {colorScheme === 'system' ? 'System' : colorScheme === 'dark' ? 'Dark' : 'Light'}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.icon} />
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.row, { borderBottomColor: theme.borderColor }]}
@@ -227,6 +231,74 @@ export default function SettingsPage() {
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowUnitModal(false)}
+              >
+                <Text style={styles.modalCloseText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Theme Selection Modal */}
+        <Modal
+          visible={showThemeModal}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Theme</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  colorScheme === "light" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setColorScheme("light");
+                  setShowThemeModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Light</Text>
+                {colorScheme === "light" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  colorScheme === "dark" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setColorScheme("dark");
+                  setShowThemeModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>Dark</Text>
+                {colorScheme === "dark" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  colorScheme === "system" && { backgroundColor: Colors.primary + '20' }
+                ]}
+                onPress={() => {
+                  setColorScheme("system");
+                  setShowThemeModal(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, { color: theme.text }]}>System</Text>
+                {colorScheme === "system" && (
+                  <Ionicons name="checkmark" size={22} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalCloseButton, { backgroundColor: theme.buttonBackground }]}
+                onPress={() => setShowThemeModal(false)}
               >
                 <Text style={styles.modalCloseText}>Cancel</Text>
               </TouchableOpacity>

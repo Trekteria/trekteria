@@ -29,8 +29,8 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch schedule from Firestore or tripData

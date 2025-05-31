@@ -34,8 +34,8 @@ const TypingIndicator = () => {
      const [dot1] = useState(new Animated.Value(0));
      const [dot2] = useState(new Animated.Value(0));
      const [dot3] = useState(new Animated.Value(0));
-     const { colorScheme } = useColorScheme();
-     const isDarkMode = colorScheme === 'dark';
+     const { effectiveColorScheme } = useColorScheme();
+     const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
 
      // Animation function for a single dot
@@ -140,8 +140,8 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      const [isInitialLoading, setIsInitialLoading] = useState(true);
      const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
      const flatListRef = useRef<FlatList>(null);
-     const { colorScheme } = useColorScheme();
-     const isDarkMode = colorScheme === 'dark';
+     const { effectiveColorScheme } = useColorScheme();
+     const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
 
      // Load trip details

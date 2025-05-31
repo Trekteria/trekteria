@@ -29,8 +29,8 @@ export default function ChangeEmail() {
   const [password, setPassword] = useState(""); // State to store the user's password
   const [loading, setLoading] = useState(false); // State to manage loading state
   const [initializing, setInitializing] = useState(true); // State to track initial loading
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch current email on component mount

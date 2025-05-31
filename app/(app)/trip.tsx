@@ -63,8 +63,8 @@ function Trip() {
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
 
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Replace the simple SceneMap with a function that passes props

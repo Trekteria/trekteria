@@ -41,8 +41,8 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   // Get the color scheme
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Ref to hold the current trip ID

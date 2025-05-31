@@ -296,8 +296,8 @@ const VerticalTab = ({ label, isActive, onPress, color, theme }: TabProps) => (
 // --- Home Screen Component ---
 export default function Home() {
   const router = useRouter();
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   const [userName, setUserName] = useState("");

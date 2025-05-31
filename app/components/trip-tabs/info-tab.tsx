@@ -44,9 +44,9 @@ const getDifficultyIcon = (difficulty: string) => {
 
 // Info Tab Component
 export default function InfoTab({ tripId, tripData }: InfoTabProps) {
-  const { colorScheme } = useColorScheme();
+  const { effectiveColorScheme } = useColorScheme();
   const { temperatureUnit, convertTemperature } = useTemperatureUnit();
-  const theme = Colors[colorScheme];
+  const theme = Colors[effectiveColorScheme];
 
   const [tripInfo, setTripInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);

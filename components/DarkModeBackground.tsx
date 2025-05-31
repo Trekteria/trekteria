@@ -8,8 +8,8 @@ interface DarkModeBackgroundProps {
 }
 
 export default function DarkModeBackground({ children }: DarkModeBackgroundProps) {
-     const { colorScheme } = useColorScheme();
-     const isDarkMode = colorScheme === 'dark';
+     const { effectiveColorScheme } = useColorScheme();
+     const isDarkMode = effectiveColorScheme === 'dark';
      const { width, height } = useWindowDimensions();
 
      if (!isDarkMode) {

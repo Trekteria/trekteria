@@ -21,13 +21,11 @@ interface MissionTabProps {
 }
 
 export default function MissionTab({ tripId, tripData }: MissionTabProps) {
-  const [missions, setMissions] = useState<
-    Array<{ id: string; title: string; completed: boolean }>
-  >([]);
+  const [missions, setMissions] = useState<Array<{ id: string; title: string; completed: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Fetch missions from Firestore or tripData

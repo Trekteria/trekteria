@@ -2,35 +2,40 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type ColorSchemeType = 'light' | 'dark';
+type ColorSchemeType = 'light' | 'dark' | 'system';
 type ColorSchemeContextType = {
      colorScheme: ColorSchemeType;
      setColorScheme: (scheme: ColorSchemeType) => void;
      toggleColorScheme: () => void;
+     effectiveColorScheme: 'light' | 'dark'; // The actual theme being used
 };
 
 // Default to system preference, but allow manual override
 const ColorSchemeContext = createContext<ColorSchemeContextType>({
-     colorScheme: 'light',
+     colorScheme: 'system',
      setColorScheme: () => { },
      toggleColorScheme: () => { },
+     effectiveColorScheme: 'light',
 });
 
 export const ColorSchemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-     const deviceColorScheme = useDeviceColorScheme() as ColorSchemeType || 'light';
-     const [colorScheme, setColorScheme] = useState<ColorSchemeType>('light');
+     const deviceColorScheme = useDeviceColorScheme() as 'light' | 'dark' || 'light';
+     const [colorScheme, setColorScheme] = useState<ColorSchemeType>('system');
      const [isLoading, setIsLoading] = useState(true);
+
+     // Calculate the effective color scheme based on preference and system setting
+     const effectiveColorScheme = colorScheme === 'system' ? deviceColorScheme : colorScheme;
 
      // Load saved theme preference
      useEffect(() => {
           const loadColorScheme = async () => {
                try {
                     const savedColorScheme = await AsyncStorage.getItem('@theme');
-                    if (savedColorScheme) {
+                    if (savedColorScheme && (savedColorScheme === 'light' || savedColorScheme === 'dark' || savedColorScheme === 'system')) {
                          setColorScheme(savedColorScheme as ColorSchemeType);
                     } else {
-                         // Use device preference if no saved preference exists
-                         setColorScheme(deviceColorScheme);
+                         // Use system preference if no saved preference exists
+                         setColorScheme('system');
                     }
                } catch (error) {
                     console.error('Failed to load color scheme preference:', error);
@@ -53,7 +58,8 @@ export const ColorSchemeProvider: React.FC<{ children: React.ReactNode }> = ({ c
      };
 
      const toggleColorScheme = () => {
-          const newScheme = colorScheme === 'light' ? 'dark' : 'light';
+          // Cycle through light -> dark -> system
+          const newScheme = colorScheme === 'light' ? 'dark' : colorScheme === 'dark' ? 'system' : 'light';
           setAndSaveColorScheme(newScheme);
      };
 
@@ -67,6 +73,7 @@ export const ColorSchemeProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     colorScheme,
                     setColorScheme: setAndSaveColorScheme,
                     toggleColorScheme,
+                    effectiveColorScheme,
                }}
           >
                {children}
@@ -83,7 +90,7 @@ export const useColorScheme = (): ColorSchemeContextType => {
 };
 
 // For backward compatibility
-export const useColorSchemeSimple = (): ColorSchemeType => {
-     const { colorScheme } = useColorScheme();
-     return colorScheme;
+export const useColorSchemeSimple = (): 'light' | 'dark' => {
+     const { effectiveColorScheme } = useColorScheme();
+     return effectiveColorScheme;
 }; 

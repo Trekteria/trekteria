@@ -46,8 +46,8 @@ type DateRange = {
 
 export default function Preferences() {
      const router = useRouter();
-     const { colorScheme } = useColorScheme();
-     const isDarkMode = colorScheme === 'dark';
+     const { effectiveColorScheme } = useColorScheme();
+     const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
 
      const [currentQuestion, setCurrentQuestion] = useState(0);

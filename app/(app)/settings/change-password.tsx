@@ -35,8 +35,8 @@ export default function ChangePassword() {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   // Get color scheme
-  const { colorScheme } = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const { effectiveColorScheme } = useColorScheme();
+  const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Function to handle password change
