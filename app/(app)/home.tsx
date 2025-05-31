@@ -10,6 +10,7 @@ import {
   Easing,
   Alert,
   BackHandler,
+  Dimensions,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -177,17 +178,17 @@ const TripBox: React.FC<TripBoxProps> = ({
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.3)", "rgba(0,0,0,1)"]}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "rgba(0,0,0,1)"]}
           style={styles.planOverlay}
           locations={[0, 0.4, 1]}
         />
-        <View style={[styles.dateContainer, { backgroundColor: theme.card }]}>
-          <Text style={[styles.dateText, { color: theme.text }]}>{dateText}</Text>
-        </View>
         <View style={styles.planInfo}>
           <Text style={styles.planName}>{item.name}</Text>
           <View style={styles.planMetaRow}>
             <Text style={styles.planDetails}>{item.location}</Text>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{dateText}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -247,22 +248,50 @@ const PlanBox: React.FC<PlanBoxProps> = ({
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.3)", "rgba(0,0,0,1)"]}
+          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "rgba(0,0,0,1)"]}
           style={styles.planOverlay}
           locations={[0, 0.5, 1]}
         />
-        <View style={[styles.dateContainer, { backgroundColor: theme.card }]}>
-          <Text style={[styles.dateText, { color: theme.text }]}>{dateText}</Text>
-        </View>
         <View style={styles.planInfo}>
           <View style={styles.planMetaRow}>
             <Text style={styles.planLocation}>{location}</Text>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{dateText}</Text>
           </View>
         </View>
       </TouchableOpacity>
     </Animated.View>
   );
 };
+
+interface TabProps {
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+  color?: string;
+  theme: any;
+}
+
+const VerticalTab = ({ label, isActive, onPress, color, theme }: TabProps) => (
+  <TouchableOpacity
+    style={[
+      styles.tabButton,
+      isActive && styles.activeTab
+    ]}
+    onPress={onPress}
+  >
+    <Text
+      style={[
+        styles.tabText,
+        { color: isActive ? Colors.primary : theme.text },
+        isActive && styles.activeTabText
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 
 // --- Home Screen Component ---
 export default function Home() {
@@ -278,6 +307,7 @@ export default function Home() {
   const [tripDates, setTripDates] = useState<{ [tripId: string]: string }>({});
   const [isPlansEditing, setIsPlansEditing] = useState(false);
   const [isTripsEditing, setIsTripsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('favorites');
 
   const handleTripPress = (trip: Trip) => {
     router.push({
@@ -533,322 +563,325 @@ export default function Home() {
   };
 
   const EmptyPlansComponent = () => (
-    <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+    <View style={styles.emptyContainer}>
       <Ionicons
         name="map-outline"
         size={35}
         color={Colors.inactive}
         style={styles.emptyIcon}
       />
-      <Text style={[styles.emptyText, { color: theme.icon }]}>No items found</Text>
-      <Text style={[styles.emptySubtext, { color: theme.icon }]}>
+      <Text style={styles.emptyText}>No items found</Text>
+      <Text style={styles.emptySubtext}>
         Start planning your first adventure!
       </Text>
     </View>
   );
 
+  const toggleEditMode = () => {
+    if (activeTab === 'favorites') {
+      setIsTripsEditing(!isTripsEditing);
+    } else {
+      setIsPlansEditing(!isPlansEditing);
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
   return (
     <DarkModeBackground>
       <View style={[styles.container, { paddingTop: 40, backgroundColor: isDarkMode ? 'transparent' : theme.background }]}>
-        {/* Info Panel */}
-        <View style={styles.infoPanel}>
-          <View>
-            <View style={styles.nameRow}>
-              <Text style={[styles.username, { color: isDarkMode ? theme.text : theme.primary }]}>Hello, </Text>
-              <Text
-                style={[styles.username, { color: isDarkMode ? theme.text : theme.primary }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {userName}
-              </Text>
-            </View>
-            {/* <View style={styles.ecoPointsRow}>
-              <Text style={styles.ecoPoints}>Eco-Points: </Text>
-              <Text style={styles.ecoPointsNum}>{ecoPoints}</Text>
-            </View> */}
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.nameRow}>
+            <Text style={[styles.greeting, { color: isDarkMode ? '#FFFFFF' : theme.primary }]}>Hello, {userName}</Text>
           </View>
           <TouchableOpacity onPress={goToSettings}>
-            <Ionicons name="settings-outline" size={32} color={theme.icon} />
+            <Ionicons name="settings-outline" size={32} color={theme.text} />
           </TouchableOpacity>
         </View>
 
         {/* Plan a Trip Button */}
         <TouchableOpacity
-          style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background, shadowColor: isDarkMode ? 'rgba(0,0,0,0.3)' : '#000' }]}
+          style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background }]}
           onPress={goToTripPlanning}
         >
-          <View style={styles.planButtonContent}>
-            <Ionicons
-              name="map-outline"
-              size={19}
-              color={theme.text}
-              style={styles.planButtonIcon}
+          <Ionicons name="map-outline" size={20} color={theme.text} />
+          <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+        </TouchableOpacity>
+
+        {/* Main Content */}
+        <View style={styles.mainContent}>
+          {/* Tab Buttons */}
+          <View style={styles.tabContainer}>
+            <VerticalTab
+              label="Favorite Trips"
+              isActive={activeTab === 'favorites'}
+              onPress={() => setActiveTab('favorites')}
+              color={Colors.primary}
+              theme={theme}
             />
-            <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+            <VerticalTab
+              label="My Plans"
+              isActive={activeTab === 'plans'}
+              onPress={() => setActiveTab('plans')}
+              color={theme.text}
+              theme={theme}
+            />
           </View>
+
+          {/* Content Area */}
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+          >
+            {activeTab === 'favorites' ? (
+              <FlatList
+                horizontal
+                snapToInterval={Dimensions.get('window').width * 0.8}
+                decelerationRate="fast"
+                pagingEnabled
+                data={trips}
+                keyExtractor={(item) => item.id || String(Math.random())}
+                renderItem={({ item, index }) => (
+                  <TripBox
+                    item={item}
+                    tripDate={tripDates[item.id || ""]}
+                    isEditing={isTripsEditing}
+                    onPress={handleTripPress}
+                    onDelete={handleDeleteTrip}
+                    animationDelay={index * 100}
+                    theme={theme}
+                  />
+                )}
+                showsHorizontalScrollIndicator={false}
+                ListEmptyComponent={EmptyPlansComponent}
+              />
+            ) : (
+              <FlatList
+                horizontal
+                snapToInterval={Dimensions.get('window').width * 0.8}
+                decelerationRate="fast"
+                pagingEnabled
+                data={plans}
+                keyExtractor={(item) => item.id || String(Math.random())}
+                renderItem={({ item, index }) => (
+                  <PlanBox
+                    item={item}
+                    isEditing={isPlansEditing}
+                    onPress={goToTrip}
+                    onDelete={handleDeletePlan}
+                    animationDelay={index * 100}
+                    theme={theme}
+                  />
+                )}
+                showsHorizontalScrollIndicator={false}
+                ListEmptyComponent={EmptyPlansComponent}
+              />
+            )}
+          </ScrollView>
+        </View>
+
+        {/* Floating Action Button */}
+        <TouchableOpacity
+          style={[
+            styles.fab,
+            { backgroundColor: isDarkMode ? '#FFFFFF30' : theme.background }
+          ]}
+          onPress={toggleEditMode}
+        >
+          <Ionicons
+            name={(activeTab === 'favorites' ? isTripsEditing : isPlansEditing) ? "close" : "pencil"}
+            size={24}
+            color={isDarkMode ? '#FFFFFF' : theme.primary}
+          />
+          <Text style={[styles.fabText, { color: isDarkMode ? '#FFFFFF' : theme.primary }]}>{isTripsEditing || isPlansEditing ? "Done" : "Edit"}</Text>
         </TouchableOpacity>
       </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: isDarkMode ? 'transparent' : theme.background }]}
-      >
-
-        {/* Your Trips Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Favorite Trips</Text>
-          <TouchableOpacity
-            onPress={() => {
-              setIsTripsEditing(!isTripsEditing);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }}
-          >
-            <Text style={[styles.editButtonText, { color: theme.icon }]}>
-              {isTripsEditing ? "Done" : "Edit"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          horizontal
-          data={trips}
-          keyExtractor={(item) => item.id || String(Math.random())}
-          renderItem={(
-            { item } // Use the new TripBox component
-          ) => (
-            <TripBox
-              item={item}
-              tripDate={tripDates[item.id || ""]}
-              isEditing={isTripsEditing}
-              onPress={handleTripPress}
-              onDelete={handleDeleteTrip}
-              animationDelay={300} // Max 300ms random delay
-              theme={theme}
-            />
-          )}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tripList}
-          ListEmptyComponent={EmptyPlansComponent}
-        />
-
-        {/* Your Plans Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Plans</Text>
-          <TouchableOpacity
-            onPress={() => {
-              setIsPlansEditing(!isPlansEditing);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }}
-          >
-            <Text style={[styles.editButtonText, { color: theme.icon }]}>
-              {isPlansEditing ? "Done" : "Edit"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          horizontal
-          data={plans}
-          keyExtractor={(item) => item.id || String(Math.random())}
-          renderItem={(
-            { item } // Use the new PlanBox component
-          ) => (
-            <PlanBox
-              item={item}
-              isEditing={isPlansEditing}
-              onPress={goToTrip}
-              onDelete={handleDeletePlan}
-              animationDelay={300} // Max 300ms random delay
-              theme={theme}
-            />
-          )}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tripList}
-          ListEmptyComponent={EmptyPlansComponent}
-        />
-      </ScrollView>
     </DarkModeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
   },
-  infoPanel: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    width: "90%",
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginVertical: 20,
   },
   nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  username: {
+  greeting: {
     ...Typography.text.h1,
-    maxWidth: 200, // Limit width to prevent overflow
-  },
-  ecoPointsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  ecoPoints: {
-    ...Typography.text.caption,
-    color: "green",
-    marginTop: 5,
-    fontSize: 15,
-  },
-  ecoPointsNum: {
-    color: "green",
-    marginTop: 5,
-    fontSize: 15,
-    fontWeight: "800",
   },
   planButton: {
-    paddingVertical: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    padding: 20,
     borderRadius: 100,
-    alignItems: "center",
-    width: "90%",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  planButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  planButtonIcon: {
-    marginRight: 8,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 5.84,
   },
   planButtonText: {
-    ...Typography.text.button,
-    fontWeight: "500",
-    fontSize: 18,
+    ...Typography.text.h4,
+    marginLeft: 8,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "90%",
-    paddingLeft: 3,
-    marginBottom: 5,
-    marginTop: 10, // Add margin top to separate sections
+  mainContent: {
+    flex: 1,
+    flexDirection: 'row',
   },
-  sectionTitle: {
+  tabContainer: {
+    width: 60,
+    paddingTop: Dimensions.get('window').height * 0.1,
+    alignItems: 'center',
+    gap: Dimensions.get('window').height * 0.1,
+  },
+  tabButton: {
+    width: 200,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Dimensions.get('window').height * 0.05,
+  },
+  activeTab: {
+    opacity: 1,
+  },
+  tabText: {
     ...Typography.text.h3,
-    fontSize: 25,
+    letterSpacing: 0.5,
+    transform: [{ rotate: '-90deg' }],
+    width: 150,
+    textAlign: 'center',
   },
-  editButtonText: {
-    ...Typography.text.button,
-    fontSize: 16,
-    fontWeight: "500",
-    paddingLeft: 40,
-    paddingVertical: 10,
+  activeTabText: {
+    textDecorationLine: 'underline',
+    textDecorationColor: Colors.primary,
+    textDecorationStyle: 'solid',
   },
-  tripList: {
-    minWidth: "100%",
-    minHeight: 260,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingHorizontal: 20,
+  scrollView: {
+    flex: 1,
   },
   animatedBox: {
-    marginRight: 30,
-    backgroundColor: "transparent",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
+    flex: 1,
   },
-  planBox: {
-    width: 240,
-    height: 240,
-    borderRadius: 15,
-    overflow: "hidden",
-    backgroundColor: "lightGray",
-  },
-  planImage: {
-    width: "100%",
-    height: "100%",
-    position: "absolute",
-  },
-  planOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  planInfo: {
-    position: "absolute",
-    bottom: 15,
-    left: 15,
-    right: 15,
-  },
-  planMetaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 2,
-  },
-  planLocation: {
-    ...Typography.text.h2,
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  planName: {
-    ...Typography.text.h3,
-    color: "white",
-    marginBottom: 5,
-    fontWeight: "600",
-  },
-  planDetails: {
-    ...Typography.text.caption,
-    color: "rgba(255, 255, 255, 0.9)",
-    fontSize: 13,
+  deleteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    padding: 8,
+    borderRadius: 20,
   },
   dateContainer: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    borderBottomLeftRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    backgroundColor: '#DBDBDB30',
+    width: '100%',
+    paddingVertical: 20,
+    borderRadius: 20,
+    marginTop: 15,
   },
   dateText: {
-    fontSize: 11,
-    fontWeight: "600",
+    ...Typography.text.h3,
+    textAlign: 'center',
+    color: '#FFFFFF',
   },
   emptyContainer: {
-    width: "90%",
-    height: 240,
+    width: Dimensions.get('window').width * 0.85,
+    height: Dimensions.get('window').height * 0.6,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-    marginLeft: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 24,
+    marginRight: 20,
   },
   emptyIcon: {
     marginBottom: 15,
   },
   emptyText: {
-    ...Typography.text.h3,
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 5,
-    textAlign: "center",
   },
   emptySubtext: {
-    ...Typography.text.body,
-    textAlign: "center",
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    textAlign: 'center',
   },
-  deleteButton: {
-    position: "absolute",
-    top: -8,
-    left: -8,
-    zIndex: 10,
-    opacity: 0.8,
-    borderRadius: 15,
-    padding: 2,
+  planBox: {
+    flex: 1,
+    width: Dimensions.get('window').width * 0.8,
+    height: Dimensions.get('window').height * 0.65,
+    borderRadius: 30,
+    overflow: 'hidden',
+    marginRight: 20,
+  },
+  planImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  planOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  planInfo: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+  },
+  planName: {
+    ...Typography.text.h2,
+    color: 'white',
+  },
+  planMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  planDetails: {
+    ...Typography.text.body,
+    color: 'white',
+  },
+  planLocation: {
+    ...Typography.text.h2,
+    color: 'white',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderRadius: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 5.84,
+  },
+  fabText: {
+    ...Typography.text.h4,
+    marginLeft: 8,
   },
 });

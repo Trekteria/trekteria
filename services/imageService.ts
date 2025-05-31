@@ -1,7 +1,6 @@
 import { checkImageRelevance } from "./geminiService";
 import { getCachedImageUrl, cacheImageUrl } from "./cacheService";
-import { logAllImageCache } from '../services/cacheService';
-
+import { logAllImageCache } from "../services/cacheService";
 
 const defaultTripImages = [
   "https://images.unsplash.com/photo-1676782778930-11b311ec5134?auto=format&fit=crop&q=80&w=1000",
@@ -17,7 +16,6 @@ export const fetchUnsplashImage = async (
     console.error("Query is undefined or empty in fetchUnsplashImage");
     return defaultTripImages[0];
   }
-
 
   // Try cache first
   const cacheKey = query;
@@ -58,7 +56,7 @@ export const fetchUnsplashImage = async (
     const description = data.results[0]?.description || "";
     const altDescription = data.results[0]?.alt_description || "";
 
-    let imageUrl = data.results[0]?.urls?.small;
+    let imageUrl = data.results[0]?.urls?.regular;
     // If no URL was found, return a default image
     if (!imageUrl) {
       console.error(
@@ -88,7 +86,7 @@ export const fetchUnsplashImage = async (
 
     // Cache the result
     await cacheImageUrl(cacheKey, imageUrl);
-    
+
     console.log("-------Successfully fetched image from API-------");
     // logAllImageCache(); // This will print all cached Unsplash image entries to the console
 
