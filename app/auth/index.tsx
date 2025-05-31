@@ -109,7 +109,7 @@ export default function AuthIndex() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={[styles.appName, { color: theme.primary }]}>Welcome to TrailMate</Text>
+        <Text style={[styles.appName, { color: theme.primary }]}>Welcome to Trekteria</Text>
       </View>
 
       {/* Login form */}

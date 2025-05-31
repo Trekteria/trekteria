@@ -25,12 +25,14 @@ import {
   query,
   where,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { Plan as PlanType, Trip as TripType } from "../../types/Types";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
+import DarkModeBackground from "../../components/DarkModeBackground";
 
 // Define types for the data
 interface Trip extends TripType {
@@ -433,26 +435,34 @@ export default function Home() {
   // --- Deletion Handlers ---
   const handleDeleteTrip = async (tripId: string) => {
     Alert.alert(
-      "Delete Trip",
-      "Are you sure you want to delete this trip? This action cannot be undone.",
+      "Remove Trip",
+      "Are you sure you want to remove this trip from your favorites?",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: "Remove",
           style: "destructive",
           onPress: async () => {
             try {
-              // Delete only the trip document
-              const tripDocRef = doc(db, "trips", tripId);
-              await deleteDoc(tripDocRef);
+              const user = auth.currentUser;
+              if (!user) {
+                console.error("User must be logged in to remove trip from favorites");
+                return;
+              }
+
+              // Update the trip's bookmarked status in Firestore
+              const tripRef = doc(db, "trips", tripId);
+              await updateDoc(tripRef, {
+                bookmarked: false
+              });
 
               // Update local trips state
               setTrips((prevTrips) =>
                 prevTrips.filter((trip) => trip.id !== tripId)
               );
             } catch (error) {
-              console.error("Error deleting trip:", error);
-              Alert.alert("Error", "Could not delete trip.");
+              console.error("Error removing trip from favorites:", error);
+              Alert.alert("Error", "Could not remove trip from favorites.");
             }
           },
         },
@@ -538,129 +548,132 @@ export default function Home() {
   );
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
-    >
-      {/* Info Panel */}
-      <View style={styles.infoPanel}>
-        <View>
-          <View style={styles.nameRow}>
-            <Text style={[styles.username, { color: theme.primary }]}>Hello, </Text>
-            <Text
-              style={[styles.username, { color: theme.primary }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {userName}
-            </Text>
+    <DarkModeBackground>
+      <View style={[styles.container, { paddingTop: 40, backgroundColor: isDarkMode ? 'transparent' : theme.background }]}>
+        {/* Info Panel */}
+        <View style={styles.infoPanel}>
+          <View>
+            <View style={styles.nameRow}>
+              <Text style={[styles.username, { color: isDarkMode ? theme.text : theme.primary }]}>Hello, </Text>
+              <Text
+                style={[styles.username, { color: isDarkMode ? theme.text : theme.primary }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {userName}
+              </Text>
+            </View>
+            {/* <View style={styles.ecoPointsRow}>
+              <Text style={styles.ecoPoints}>Eco-Points: </Text>
+              <Text style={styles.ecoPointsNum}>{ecoPoints}</Text>
+            </View> */}
           </View>
-          <View style={styles.ecoPointsRow}>
-            <Text style={styles.ecoPoints}>Eco-Points: </Text>
-            <Text style={styles.ecoPointsNum}>{ecoPoints}</Text>
-          </View>
+          <TouchableOpacity onPress={goToSettings}>
+            <Ionicons name="settings-outline" size={32} color={theme.icon} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={goToSettings}>
-          <Ionicons name="settings-outline" size={32} color={theme.icon} />
+
+        {/* Plan a Trip Button */}
+        <TouchableOpacity
+          style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background, shadowColor: isDarkMode ? 'rgba(0,0,0,0.3)' : '#000' }]}
+          onPress={goToTripPlanning}
+        >
+          <View style={styles.planButtonContent}>
+            <Ionicons
+              name="map-outline"
+              size={19}
+              color={theme.text}
+              style={styles.planButtonIcon}
+            />
+            <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
-      {/* Plan a Trip Button */}
-      <TouchableOpacity
-        style={[styles.planButton, { backgroundColor: theme.card, shadowColor: isDarkMode ? 'rgba(0,0,0,0.3)' : '#000' }]}
-        onPress={goToTripPlanning}
+      <ScrollView
+        contentContainerStyle={[styles.container, { backgroundColor: isDarkMode ? 'transparent' : theme.background }]}
       >
-        <View style={styles.planButtonContent}>
-          <Ionicons
-            name="map-outline"
-            size={19}
-            color={theme.text}
-            style={styles.planButtonIcon}
-          />
-          <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+
+        {/* Your Trips Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Favorite Trips</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setIsTripsEditing(!isTripsEditing);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+          >
+            <Text style={[styles.editButtonText, { color: theme.icon }]}>
+              {isTripsEditing ? "Done" : "Edit"}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+        <FlatList
+          horizontal
+          data={trips}
+          keyExtractor={(item) => item.id || String(Math.random())}
+          renderItem={(
+            { item } // Use the new TripBox component
+          ) => (
+            <TripBox
+              item={item}
+              tripDate={tripDates[item.id || ""]}
+              isEditing={isTripsEditing}
+              onPress={handleTripPress}
+              onDelete={handleDeleteTrip}
+              animationDelay={300} // Max 300ms random delay
+              theme={theme}
+            />
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tripList}
+          ListEmptyComponent={EmptyPlansComponent}
+        />
 
-      {/* Your Trips Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Favorite Trips</Text>
-        <TouchableOpacity
-          onPress={() => {
-            setIsTripsEditing(!isTripsEditing);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
-        >
-          <Text style={[styles.editButtonText, { color: theme.icon }]}>
-            {isTripsEditing ? "Done" : "Edit"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        horizontal
-        data={trips}
-        keyExtractor={(item) => item.id || String(Math.random())}
-        renderItem={(
-          { item } // Use the new TripBox component
-        ) => (
-          <TripBox
-            item={item}
-            tripDate={tripDates[item.id || ""]}
-            isEditing={isTripsEditing}
-            onPress={handleTripPress}
-            onDelete={handleDeleteTrip}
-            animationDelay={300} // Max 300ms random delay
-            theme={theme}
-          />
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tripList}
-        ListEmptyComponent={EmptyPlansComponent}
-      />
-
-      {/* Your Plans Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Plans</Text>
-        <TouchableOpacity
-          onPress={() => {
-            setIsPlansEditing(!isPlansEditing);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
-        >
-          <Text style={[styles.editButtonText, { color: theme.icon }]}>
-            {isPlansEditing ? "Done" : "Edit"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        horizontal
-        data={plans}
-        keyExtractor={(item) => item.id || String(Math.random())}
-        renderItem={(
-          { item } // Use the new PlanBox component
-        ) => (
-          <PlanBox
-            item={item}
-            isEditing={isPlansEditing}
-            onPress={goToTrip}
-            onDelete={handleDeletePlan}
-            animationDelay={300} // Max 300ms random delay
-            theme={theme}
-          />
-        )}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tripList}
-        ListEmptyComponent={EmptyPlansComponent}
-      />
-    </ScrollView>
+        {/* Your Plans Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Your Plans</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setIsPlansEditing(!isPlansEditing);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+          >
+            <Text style={[styles.editButtonText, { color: theme.icon }]}>
+              {isPlansEditing ? "Done" : "Edit"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          horizontal
+          data={plans}
+          keyExtractor={(item) => item.id || String(Math.random())}
+          renderItem={(
+            { item } // Use the new PlanBox component
+          ) => (
+            <PlanBox
+              item={item}
+              isEditing={isPlansEditing}
+              onPress={goToTrip}
+              onDelete={handleDeletePlan}
+              animationDelay={300} // Max 300ms random delay
+              theme={theme}
+            />
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tripList}
+          ListEmptyComponent={EmptyPlansComponent}
+        />
+      </ScrollView>
+    </DarkModeBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingTop: 80,
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 20, // Add padding at the bottom
   },
   infoPanel: {
     flexDirection: "row",
@@ -697,7 +710,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 100,
     alignItems: "center",
-    marginBottom: 25,
     width: "90%",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

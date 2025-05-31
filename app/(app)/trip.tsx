@@ -39,7 +39,7 @@ const routes = [
   { key: "info", title: "Info" },
   { key: "schedule", title: "Schedule" },
   { key: "packing", title: "Packing" },
-  { key: "mission", title: "Mission" },
+  // { key: "mission", title: "Mission" },
   { key: "chat", title: "Chat" },
 ];
 
@@ -77,8 +77,8 @@ function Trip() {
         return <ScheduleTab tripId={tripData.id} tripData={tripData} />;
       case "packing":
         return <PackingTab tripId={tripData.id} tripData={tripData} />;
-      case "mission":
-        return <MissionTab tripId={tripData.id} tripData={tripData} />;
+      // case "mission":
+      //   return <MissionTab tripId={tripData.id} tripData={tripData} />;
       case "chat":
         return <ChatTab tripId={tripData.id} />;
       default:
@@ -92,7 +92,7 @@ function Trip() {
       "info",
       "navigation",
       "packing",
-      "mission",
+      // "mission",
       "chat",
     ].indexOf(activeTab);
     Animated.spring(animatedValue, {
@@ -187,9 +187,9 @@ function Trip() {
 
           <TouchableOpacity
             style={[styles.tripNameContainer, { backgroundColor: theme.background }]}
-            onPress={() => router.back()}
+          // onPress={() => router.back()}
           >
-            <Text style={[styles.tripName, { color: theme.primary }]}>{tripData.name}</Text>
+            <Text style={[styles.tripName, { color: isDarkMode ? theme.text : theme.primary }]}>{tripData.name}</Text>
           </TouchableOpacity>
         </View>
 
