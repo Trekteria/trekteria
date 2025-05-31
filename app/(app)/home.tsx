@@ -347,7 +347,7 @@ export default function Home() {
           image: doc.data().imageUrl || placeholderImage,
         })) as Plan[];
 
-        // Sort plans by date (newest first)
+        // Sort plans by date (oldest first)
         const sortedPlans = plansList.sort((a, b) => {
           const dateA = a.preferences?.dateRange?.startDate
             ? new Date(a.preferences.dateRange.startDate).getTime()
@@ -355,7 +355,7 @@ export default function Home() {
           const dateB = b.preferences?.dateRange?.startDate
             ? new Date(b.preferences.dateRange.startDate).getTime()
             : 0;
-          return dateB - dateA; // Descending order (newest first)
+          return dateA - dateB; // Descending order (oldest first)
         });
 
         setPlans(sortedPlans);
@@ -410,7 +410,7 @@ export default function Home() {
 
         setTripDates(dates);
 
-        // Sort trips by date (newest first)
+        // Sort trips by date (oldest first)
         const sortedTrips = tripsList.sort((a, b) => {
           const dateA = dates[a.id || ""]?.startDate
             ? new Date(dates[a.id || ""]?.startDate).getTime()
@@ -418,7 +418,7 @@ export default function Home() {
           const dateB = dates[b.id || ""]?.startDate
             ? new Date(dates[b.id || ""]?.startDate).getTime()
             : 0;
-          return dateB - dateA; // Descending order (newest first)
+          return dateA - dateB; // Descending order (oldest first)
         });
 
         setTrips(sortedTrips);
