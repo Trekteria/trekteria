@@ -3,7 +3,8 @@ import { Alert, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import { format } from 'date-fns';
-import RNPrint from 'react-native-print';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
 import { Trip as TripType } from '../../types/Types';
@@ -37,7 +38,7 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
                          // Generate HTML content from trip data
                          const htmlContent = generateTripHtml(fetchedTripData);
 
-                         // Create a PDF and save it using react-native-print
+                         // Create a PDF and save it using expo-print
                          await printToPdf(htmlContent, fetchedTripData.name);
 
                          return fetchedTripData;
@@ -300,21 +301,8 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
               </div>
             </div>` : ''}
           
-          ${trip.missions && trip.missions.length > 0 ? `
-            <div class="section">
-              <h2>Missions</h2>
-              <div class="checklist-container">
-                ${trip.missions.map(mission => `
-                  <div class="checklist-item">
-                    <input type="checkbox" ${mission.completed ? 'checked' : ''}>
-                    ${mission.completed ? `<span>${mission.task}</span>` : mission.task}
-                  </div>
-                `).join('')}
-              </div>
-            </div>` : ''}
-          
           <div class="footer">
-            <p>Generated on ${format(new Date(), "MMMM d, yyyy 'at' h:mm a")} by TrailMate</p>
+            <p>Generated on ${format(new Date(), "MMMM d, yyyy 'at' h:mm a")} by Trekteria</p>
           </div>
         </div>
       </body>
@@ -322,30 +310,39 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
     `;
      };
 
-     // Function to print to PDF using react-native-print
+     // Function to print to PDF using expo-print
      const printToPdf = async (htmlContent: string, tripName: string) => {
           try {
                // Generate the PDF filename
                const fileName = `Trip_${tripName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}`;
 
-               // Prepare options for printing
-               const options = {
+               // Generate PDF with expo-print
+               const { uri } = await Print.printToFileAsync({
                     html: htmlContent,
-                    fileName: fileName,
                     base64: false,
-                    // On iOS we can select the print printer or save as PDF
-                    // On Android it will save the file directly
-               };
+               });
 
-               // Print the document using react-native-print
-               const results = await RNPrint.print(options);
+               console.log('PDF file created at:', uri);
 
-               console.log('Printing results:', results);
-
-               if (results) {
+               // Check if sharing is available
+               const isSharingAvailable = await Sharing.isAvailableAsync();
+               
+               if (isSharingAvailable) {
+                    // Share the PDF file
+                    await Sharing.shareAsync(uri, {
+                         UTI: '.pdf',
+                         mimeType: 'application/pdf',
+                         dialogTitle: `${tripName} Trip Details`,
+                    });
+                    
                     Alert.alert(
                          "Success",
-                         "Your trip details were successfully prepared for printing or saved as PDF."
+                         "Your trip details PDF has been created successfully."
+                    );
+               } else {
+                    Alert.alert(
+                         "Error",
+                         "Sharing is not available on this device"
                     );
                }
 
