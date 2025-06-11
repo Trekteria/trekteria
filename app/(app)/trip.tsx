@@ -25,7 +25,6 @@ import { db } from "../../services/firebaseConfig";
 import { Trip as TripType } from "../../types/Types";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
-import RNPrint from 'react-native-print';
 
 import InfoTab from "../components/trip-tabs/info-tab";
 import ScheduleTab from "../components/trip-tabs/schedule-tab";
