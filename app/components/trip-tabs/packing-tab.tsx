@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   Alert,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
@@ -325,6 +326,25 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     setIsEditing(!isEditing);
   };
 
+  // Add function to handle Amazon search
+  const handleAmazonSearch = async (itemTitle: string) => {
+    // Remove emojis and clean the search term
+    const searchTerm = itemTitle.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`;
+    
+    try {
+      const canOpen = await Linking.canOpenURL(amazonUrl);
+      if (canOpen) {
+        await Linking.openURL(amazonUrl);
+      } else {
+        Alert.alert('Error', 'Unable to open Amazon');
+      }
+    } catch (error) {
+      console.error('Error opening Amazon:', error);
+      Alert.alert('Error', 'Failed to open Amazon');
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
@@ -377,23 +397,35 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity
-                style={styles.packingItem}
-                onPress={() => togglePackingItem(item.id)}
-              >
-                <View style={[styles.checkboxCircle, { borderColor: theme.text }]}>
-                  {item.checked && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-                <Text
-                  style={[
-                    styles.packingText,
-                    { color: theme.text },
-                    item.checked && [styles.packingCompleted, { color: theme.inactive }],
-                  ]}
+              <View style={styles.packingItemContainer}>
+                <TouchableOpacity
+                  style={styles.packingItem}
+                  onPress={() => togglePackingItem(item.id)}
                 >
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
+                  <View style={[styles.checkboxCircle, { borderColor: theme.text }]}>
+                    {item.checked && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text
+                    style={[
+                      styles.packingText,
+                      { color: theme.text },
+                      item.checked && [styles.packingCompleted, { color: theme.inactive }],
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.amazonLink}
+                  onPress={() => handleAmazonSearch(item.title)}
+                >
+                  <Ionicons 
+                    name="cart-outline" 
+                    size={20} 
+                    color={theme.primary}
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         )}
@@ -516,9 +548,16 @@ const styles = StyleSheet.create({
   packingItemRow: {
     marginBottom: 20,
   },
+  packingItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
   packingItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   editModeItem: {
     flexDirection: "row",
@@ -653,5 +692,9 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: "#cccccc",
+  },
+  amazonLink: {
+    padding: 8,
+    marginLeft: 10,
   },
 });
