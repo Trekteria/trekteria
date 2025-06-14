@@ -7,7 +7,8 @@
     "description": "Trail Mate helps you plan, pack, and chat for your next adventure.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "trekteria",
+    "platforms": ["ios", "android", "web"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
