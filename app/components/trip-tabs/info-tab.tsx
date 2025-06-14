@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image, ScrollView, Platform } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Linking, TouchableOpacity, Image, ScrollView, Platform, Alert, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { db } from "../../../services/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { supabase } from "../../../services/supabaseConfig";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../../hooks/useTemperatureUnit";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
 import { getCachedWeatherData, cacheWeatherData, getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
+import { Trip } from "../../../types/Types";
 
 interface InfoTabProps {
   tripId?: string;
-  tripData?: any;
+  tripData?: Trip;
 }
 
 const apiKey = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
@@ -52,6 +52,8 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weather, setWeather] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedDescription, setEditedDescription] = useState(tripData?.description || "");
 
   useEffect(() => {
     const fetchTripInfo = async () => {
@@ -85,11 +87,15 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
             console.log('Trail data loaded from CACHE for InfoTab:', currentTripId);
             setTripInfo(cached);
           } else {
-            const tripDoc = await getDoc(doc(db, "trips", currentTripId));
-            if (tripDoc.exists()) {
-              console.log('Trail data loaded from FIREBASE for InfoTab:', currentTripId);
-              setTripInfo(tripDoc.data());
-              await cacheTrailData(currentTripId, tripDoc.data());
+            const { data, error } = await supabase
+              .from('trips')
+              .select()
+              .eq('trip_id', currentTripId);
+
+            if (data && data.length > 0) {
+              console.log('Trail data loaded from Supabase for InfoTab:', currentTripId);
+              setTripInfo(data[0]);
+              await cacheTrailData(currentTripId, data[0]);
             } else {
               setError("Trip not found.");
             }
@@ -177,6 +183,37 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
     fetchWeather();
   }, [tripInfo, temperatureUnit]);
+
+  const handleOpenMap = () => {
+    if (tripData?.coordinates) {
+      const { latitude, longitude } = tripData.coordinates;
+      const url = Platform.select({
+        ios: `maps://app?daddr=${latitude},${longitude}`,
+        android: `google.navigation:q=${latitude},${longitude}`,
+      });
+      if (url) {
+        Linking.openURL(url).catch((err) =>
+          Alert.alert("Error", "Could not open maps application")
+        );
+      }
+    }
+  };
+
+  const handleOpenWebsite = () => {
+    if (tripData?.parkWebsite) {
+      Linking.openURL(tripData.parkWebsite).catch((err) =>
+        Alert.alert("Error", "Could not open website")
+      );
+    }
+  };
+
+  const handleCall = () => {
+    if (tripData?.parkContact) {
+      Linking.openURL(`tel:${tripData.parkContact}`).catch((err) =>
+        Alert.alert("Error", "Could not open phone app")
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -288,8 +325,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      style={[styles.container, { backgroundColor: theme.background }]}
       showsVerticalScrollIndicator={false}
     >
       {/* Simple Header */}
@@ -305,9 +341,12 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
         </Text>
       </View>
 
-      {/* Summary with Icon */}
+      {/* Description Section */}
       <View style={[styles.section, { backgroundColor: theme.card }]}>
-        <Ionicons name="information-circle" size={34} color={theme.tint} style={styles.sectionIcon} />
+        <View style={styles.sectionHeader}>
+          <Ionicons name="information-circle" size={24} color={theme.primary} />
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Description</Text>
+        </View>
         <Text style={[styles.bodyText, { color: theme.text }]}>{tripInfo.description}</Text>
       </View>
 
@@ -315,7 +354,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
       <View style={styles.quickInfoRow}>
         <TouchableOpacity
           style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
-          onPress={() => Linking.openURL(`tel:${tripInfo.parkContact}`)}
+          onPress={handleCall}
         >
           <Ionicons name="call" size={32} color={theme.tint} />
           <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Call Park</Text>
@@ -323,7 +362,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
         <TouchableOpacity
           style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
-          onPress={() => Linking.openURL(tripInfo.parkWebsite)}
+          onPress={handleOpenWebsite}
         >
           <Ionicons name="globe" size={32} color={theme.tint} />
           <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Website</Text>
@@ -331,20 +370,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
         <TouchableOpacity
           style={[styles.quickInfoItem, { backgroundColor: theme.card }]}
-          onPress={() => {
-            const { latitude, longitude } = tripInfo.coordinates;
-            const label = encodeURIComponent(tripInfo.name);
-
-            const scheme = Platform.select({
-              ios: "maps:",
-              android: "geo:",
-            });
-            const url = Platform.select({
-              ios: `${scheme}${latitude},${longitude}?q=${label}`,
-              android: `${scheme}${latitude},${longitude}?q=${label}`,
-            });
-            Linking.openURL(url!);
-          }}
+          onPress={handleOpenMap}
         >
           <Ionicons name="car" size={32} color={theme.tint} />
           <Text style={[styles.quickInfoLabel, { color: theme.text }]}>Directions</Text>
@@ -502,11 +528,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 30,
-    paddingTop: 16,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -572,9 +593,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  sectionIcon: {
-    alignSelf: "center",
-    marginBottom: 12,
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 10,
+  },
+  sectionTitle: {
+    ...Typography.text.h3,
   },
   bodyText: {
     ...Typography.text.body,
@@ -768,13 +795,27 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginTop: 2,
   },
-  warningTitle: {
-    ...Typography.text.body,
-    fontWeight: "600",
-  },
   warningText: {
     ...Typography.text.body,
     fontSize: 14,
     flex: 1,
+  },
+  button: {
+    backgroundColor: Colors.primary,
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "white",
+    ...Typography.text.button,
+  },
+  input: {
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    minHeight: 100,
+    textAlignVertical: "top",
   },
 });

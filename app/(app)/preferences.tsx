@@ -19,7 +19,7 @@ import Animated, {
 import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { processRecommendations } from '@/services/recommendationService';
-import { auth } from '@/services/firebaseConfig';
+import { supabase } from '@/services/supabaseConfig';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
 type TravelerGroup = {
@@ -53,6 +53,7 @@ export default function Preferences() {
      const [currentQuestion, setCurrentQuestion] = useState<number>(0);
      const [loading, setLoading] = useState<boolean>(false);
      const [success, setSuccess] = useState<boolean>(false);
+     const [error, setError] = useState(false);
      const [dateRange, setDateRange] = useState<DateRange>({
           startDate: null,
           endDate: null,
@@ -354,14 +355,16 @@ export default function Preferences() {
                               // Generate trip recommendations here
                               const recommendations = await generateTripRecommendations(formattedSummary);
 
-                              // Get current user ID
-                              const userId = auth.currentUser?.uid;
-                              if (!userId) {
+                              // Get current user ID from Supabase
+                              const { data: { user }, error: userError } = await supabase.auth.getUser();
+                              if (userError) throw userError;
+
+                              if (!user) {
                                    throw new Error("User not authenticated");
                               }
 
-                              // Process recommendations and save to Firestore and AsyncStorage
-                              await processRecommendations(userId, formattedData, formattedSummary, recommendations);
+                              // Process recommendations and save to Supabase and AsyncStorage
+                              await processRecommendations(user.id, formattedData, formattedSummary, recommendations);
 
                               setSuccess(true);
 
@@ -370,7 +373,7 @@ export default function Preferences() {
                                    pathname: '/(app)/result'
                               });
                          } catch (error: any) {
-                              console.error("Error generating recommendations:", error);
+                              console.error('Error generating recommendations:', error);
                               // Store the error and summary in AsyncStorage
                               await AsyncStorage.setItem('tripSummary', formattedSummary);
                               const errorMessage = error.toString().includes("429") || error.toString().includes("quota")
@@ -380,6 +383,8 @@ export default function Preferences() {
                               // Clear any previous plan ID as this request failed
                               await AsyncStorage.removeItem('lastPlanId');
 
+                              setError(true);
+
                               // Navigate to results page
                               router.push({
                                    pathname: '/(app)/result'
@@ -387,12 +392,6 @@ export default function Preferences() {
                          } finally {
                               setLoading(false);
                          }
-                    }).catch(async (error: any) => {
-                         console.error("Error formatting form data:", error);
-                         // Store the error in AsyncStorage
-                         await AsyncStorage.setItem('tripError', "Failed to format your preferences. Please try again.");
-                         setLoading(false);
-                         router.push('/(app)/result');
                     });
                } catch (error) {
                     console.error("Error processing form:", error);

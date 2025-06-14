@@ -1,7 +1,7 @@
+import "react-native-get-random-values";
 import { Trip } from "../types/Types";
-import { createPlan, createTrip, updatePlan } from "./firestoreService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Timestamp } from "firebase/firestore";
+import { supabase } from "./supabaseConfig";
 import {
   generateInfo,
   generateSchedule,
@@ -9,6 +9,7 @@ import {
   generatePackingList,
 } from "./geminiService";
 import { fetchUnsplashImage } from "./imageService";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Fetch coordinates from OpenStreetMap API
@@ -243,7 +244,7 @@ export const parseRecommendations = async (
 
       // Create a structured trip object
       return {
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString(),
         planId: "",
         bookmarked: false,
         userId,
@@ -264,12 +265,12 @@ export const parseRecommendations = async (
         parkWebsite: parkWebsite,
         cellService: cellService,
         parkContact: parkContact,
-
         schedule: scheduleArr,
         packingChecklist: packingChecklistArr,
         missions: missionsArr,
         warnings: warningsArr,
         thingsToKnow: [],
+        chatHistory: [],
       } as Trip;
     })
   );
@@ -279,7 +280,7 @@ export const parseRecommendations = async (
 };
 
 /**
- * Save a plan and its trips to Firestore and AsyncStorage
+ * Save a plan and its trips to Supabase and AsyncStorage
  * @param userId The ID of the current user
  * @param formData Form data from preferences
  * @param formattedSummary Text summary of preferences
@@ -334,10 +335,14 @@ export const savePlan = async (
     const imageUrl =
       (await fetchUnsplashImage(preferences.location.toLocation, false)) || "";
 
-    // Create a new plan in Firestore with optimized structure
+    // Generate a unique plan ID
+    const planId = uuidv4();
+
+    // Create a new plan in Supabase with optimized structure
     const planData = {
-      createdAt: Timestamp.now(),
-      lastUpdated: Timestamp.now(),
+      plan_id: planId,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
       imageUrl,
       preferences,
       summary: formattedSummary,
@@ -346,30 +351,71 @@ export const savePlan = async (
       totalGroupSize,
     };
 
-    // Save the plan to Firestore
-    const planId = await createPlan(planData);
+    // Save the plan to Supabase
+    const { error: planError } = await supabase.from("plans").insert(planData);
+
+    if (planError) throw planError;
 
     // Process trips in parallel with optimized data
     const tripPromises = trips.map(async (trip) => {
-      const tripWithPlanId = {
-        ...trip,
+      const tripId = uuidv4();
+      const welcomeMessage = {
+        id: uuidv4(),
+        text: `👋 Welcome to your trip to ${trip.name}! I'm your Trekteria AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?`,
+        sender: "bot",
+        timestamp: new Date().toISOString(),
+      };
+
+      const tripData = {
+        trip_id: tripId,
+        createdAt: new Date().toISOString(),
         planId,
         userId,
-        createdAt: Timestamp.now(),
+        bookmarked: false,
+        name: trip.name,
+        location: trip.location,
+        coordinates: trip.coordinates,
+        address: trip.address,
+        description: trip.description,
+        imageUrl: trip.imageUrl,
+        dateRange: trip.dateRange,
         groupSize: totalGroupSize,
+        difficultyLevel: trip.difficultyLevel,
+        amenities: trip.amenities,
+        highlights: trip.highlights,
+        parkWebsite: trip.parkWebsite,
+        cellService: trip.cellService,
+        parkContact: trip.parkContact,
+        schedule: trip.schedule,
+        packingChecklist: trip.packingChecklist,
+        missions: trip.missions,
+        warnings: trip.warnings,
+        thingsToKnow: trip.thingsToKnow,
         hasAccessibilityNeeds,
+        chatHistory: [welcomeMessage],
       };
-      return await createTrip(tripWithPlanId);
+
+      const { error: tripError } = await supabase
+        .from("trips")
+        .insert(tripData);
+
+      if (tripError) throw tripError;
+      return tripId;
     });
 
     // Wait for all trips to be created
     const tripIds = await Promise.all(tripPromises);
 
     // Update the plan with the trip IDs
-    await updatePlan(planId, {
-      tripIds,
-      lastUpdated: Timestamp.now(),
-    });
+    const { error: updateError } = await supabase
+      .from("plans")
+      .update({
+        tripIds,
+        lastUpdated: new Date().toISOString(),
+      })
+      .eq("plan_id", planId);
+
+    if (updateError) throw updateError;
 
     // Store only essential data in AsyncStorage
     await AsyncStorage.multiSet([
@@ -413,7 +459,7 @@ export const processRecommendations = async (
       throw new Error("No valid trip recommendations found");
     }
 
-    // Save the plan and trips to Firestore and AsyncStorage
+    // Save the plan and trips to Supabase and AsyncStorage
     const planId = await savePlan(userId, formData, formattedSummary, trips);
 
     return planId;

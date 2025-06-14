@@ -5,8 +5,7 @@ import { Typography } from "../../../constants/Typography";
 import * as Haptics from "expo-haptics";
 import { Colors } from "../../../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { db } from "../../../services/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { supabase } from "../../../services/supabaseConfig";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
 
@@ -33,7 +32,7 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
-  // Fetch schedule from Firestore or tripData
+  // Fetch schedule from Supabase or tripData
   useEffect(() => {
     const fetchSchedule = async () => {
       setLoading(true);
@@ -68,15 +67,20 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
             setLoading(false);
             return;
           }
-          // Fallback to Firestore
-          const tripDoc = await getDoc(doc(db, "trips", currentTripId));
-          if (tripDoc.exists()) {
-            const tripData = tripDoc.data();
-            if (tripData.schedule && Array.isArray(tripData.schedule)) {
-              console.log('Schedule loaded from FIREBASE for ScheduleTab:', currentTripId);
-              setSchedule(tripData.schedule);
-              await cacheTrailData(currentTripId, tripData);
-            }
+
+          // Fallback to Supabase
+          const { data, error } = await supabase
+            .from('trips')
+            .select('schedule')
+            .eq('trip_id', currentTripId)
+            .single();
+
+          if (error) throw error;
+
+          if (data && Array.isArray(data.schedule)) {
+            console.log('Schedule loaded from SUPABASE for ScheduleTab:', currentTripId);
+            setSchedule(data.schedule);
+            await cacheTrailData(currentTripId, data);
           }
         }
       } catch (err) {
@@ -281,5 +285,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-
 export default ScheduleTab;
+

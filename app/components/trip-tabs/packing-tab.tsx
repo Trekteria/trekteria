@@ -10,19 +10,25 @@ import {
   Modal,
   Alert,
   Linking,
+  ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
-import { db } from "../../../services/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { supabase } from "../../../services/supabaseConfig";
+import { Trip } from "../../../types/Types";
 
 // Add interface for component props
 interface PackingTabProps {
-  tripId?: string;
-  tripData?: any;
+  tripId: string;
+  tripData: Trip;
+}
+
+interface PackingItem {
+  item: string;
+  checked: boolean;
 }
 
 export default function PackingTab({ tripId, tripData }: PackingTabProps) {
@@ -331,7 +337,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     // Remove emojis and clean the search term
     const searchTerm = itemTitle.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
     const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`;
-    
+
     try {
       const canOpen = await Linking.canOpenURL(amazonUrl);
       if (canOpen) {
@@ -419,9 +425,9 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                   style={styles.amazonLink}
                   onPress={() => handleAmazonSearch(item.title)}
                 >
-                  <Ionicons 
-                    name="cart-outline" 
-                    size={20} 
+                  <Ionicons
+                    name="cart-outline"
+                    size={20}
                     color={theme.primary}
                   />
                 </TouchableOpacity>

@@ -20,11 +20,10 @@ import * as Linking from "expo-linking";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import { TabView, SceneMap } from "react-native-tab-view";
 import { useColorScheme } from "../../hooks/useColorScheme";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../services/firebaseConfig";
 import { Trip as TripType } from "../../types/Types";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
+import { supabase } from "../../services/supabaseConfig";
 
 import InfoTab from "../components/trip-tabs/info-tab";
 import ScheduleTab from "../components/trip-tabs/schedule-tab";
@@ -61,25 +60,54 @@ function Trip() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
+  const [fullTripData, setFullTripData] = useState<TripType | null>(null);
 
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  // Fetch full trip data from Supabase
+  useEffect(() => {
+    const fetchTripData = async () => {
+      try {
+        if (!tripData.trip_id) {
+          console.error("No trip ID provided");
+          return;
+        }
+
+        const { data: trip, error } = await supabase
+          .from('trips')
+          .select('*')
+          .eq('trip_id', tripData.trip_id)
+          .single();
+
+        if (error) throw error;
+        if (trip) {
+          setFullTripData(trip);
+        }
+      } catch (error) {
+        console.error("Error fetching trip data:", error);
+        Alert.alert("Error", "Failed to load trip details");
+      }
+    };
+
+    fetchTripData();
+  }, [tripData.trip_id]);
 
   // Replace the simple SceneMap with a function that passes props
   const renderScene = ({ route }: { route: { key: string } }) => {
     // Pass the tripData and tripId to each tab component
     switch (route.key) {
       case "info":
-        return <InfoTab tripId={tripData.id} tripData={tripData} />;
+        return <InfoTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       case "schedule":
-        return <ScheduleTab tripId={tripData.id} tripData={tripData} />;
+        return <ScheduleTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       case "packing":
-        return <PackingTab tripId={tripData.id} tripData={tripData} />;
+        return <PackingTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       // case "mission":
-      //   return <MissionTab tripId={tripData.id} tripData={tripData} />;
+      //   return <MissionTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       case "chat":
-        return <ChatTab tripId={tripData.id} />;
+        return <ChatTab tripId={tripData.trip_id} />;
       default:
         return null;
     }
@@ -186,14 +214,13 @@ function Trip() {
 
           <TouchableOpacity
             style={[styles.tripNameContainer, { backgroundColor: theme.background }]}
-          // onPress={() => router.back()}
           >
             <Text style={[styles.tripName, { color: isDarkMode ? theme.text : theme.primary }]}>{tripData.name}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Use the TripPdfGenerator component */}
-        <TripPdfGenerator tripId={tripData.id} tripData={tripData} />
+        <TripPdfGenerator tripId={tripData.trip_id} tripData={fullTripData || tripData} />
 
         <ActionSheet
           ref={actionSheetRef}
