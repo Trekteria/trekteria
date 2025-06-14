@@ -34,6 +34,7 @@ import * as Haptics from "expo-haptics";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
 import DarkModeBackground from "../../components/DarkModeBackground";
+import { supabase } from '../../services/supabaseConfig';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -312,21 +313,19 @@ export default function Home() {
     });
   };
 
-  // Replace fetchUserName with fetchUserData
+  // Replace fetchUserData with Supabase implementation
   const fetchUserData = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setUserName(userData.firstname);
-
-        // Get eco points from Firestore
-        const pointsValue =
-          userData.ecoPoints !== undefined ? userData.ecoPoints : 0; // Fallback to 0 if ecoPoints is undefined
-
-        setEcoPoints(pointsValue);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      
+      if (user) {
+        // Get user's first name from user metadata
+        const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'User';
+        setUserName(firstName);
       }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
   };
 
