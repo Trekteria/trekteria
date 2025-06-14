@@ -358,7 +358,7 @@ export const generateChatResponse = async (
 
     // Create a system prompt to guide the model's behavior
     const systemPrompt = `
-You are TrailMate AI, an expert hiking and outdoor adventure assistant, who always follow eco-friendly and sustainable practices.
+You are Trekteria AI, an expert hiking and outdoor adventure assistant, who always follow eco-friendly and sustainable practices.
 Follow these guidelines in your responses:
 - Provide helpful, accurate information about hiking, trails, and outdoor activities
 - Be concise but informative, aim for responses under 250 words, and 100 words is ideal

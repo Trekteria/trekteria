@@ -5,64 +5,57 @@ import * as FileSystem from 'expo-file-system';
 import { format } from 'date-fns';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../services/firebaseConfig';
 import { Trip as TripType } from '../../types/Types';
 import { Colors } from '../../constants/Colors';
 
 interface TripPdfGeneratorProps {
-     tripId: string;
-     tripData: TripType;
+  tripId: string;
+  tripData: TripType;
 }
 
 const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData }) => {
-     const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
-     const handleDownloadTripInfo = () => {
-          const fetchTripData = async () => {
-               try {
-                    // Show loading indicator or feedback
-                    setPdfGenerating(true);
+  const handleDownloadTripInfo = () => {
+    const generatePdfFromTripData = async () => {
+      try {
+        // Show loading indicator or feedback
+        setPdfGenerating(true);
 
-                    // Get the trip document from Firestore using the tripId
-                    const tripDocRef = doc(db, "trips", tripId);
-                    const tripDocSnap = await getDoc(tripDocRef);
+        // Use the tripData prop directly since it's already available
+        if (tripData) {
+          // Log the full trip data with JSON stringify to show nested arrays properly
+          console.log("Trip data for PDF generation:");
+          console.log(JSON.stringify(tripData, null, 2));
 
-                    if (tripDocSnap.exists()) {
-                         const fetchedTripData = { id: tripDocSnap.id, ...tripDocSnap.data() } as TripType;
+          // Generate HTML content from trip data
+          const htmlContent = generateTripHtml(tripData);
 
-                         // Log the full trip data with JSON stringify to show nested arrays properly
-                         console.log("Trip data fetched successfully:");
-                         console.log(JSON.stringify(fetchedTripData, null, 2));
+          // Create a PDF and save it using expo-print
+          await printToPdf(htmlContent, tripData.name);
 
-                         // Generate HTML content from trip data
-                         const htmlContent = generateTripHtml(fetchedTripData);
+          return tripData;
+        } else {
+          console.log("No trip data available");
+          Alert.alert("Error", "Could not find trip data");
+          setPdfGenerating(false);
+          return null;
+        }
+      } catch (error) {
+        console.error("Error generating PDF from trip data:", error);
+        Alert.alert("Error", "Failed to download trip information");
+        setPdfGenerating(false);
+        return null;
+      }
+    };
 
-                         // Create a PDF and save it using expo-print
-                         await printToPdf(htmlContent, fetchedTripData.name);
+    generatePdfFromTripData();
+  };
 
-                         return fetchedTripData;
-                    } else {
-                         console.log("No trip document found with ID:", tripId);
-                         Alert.alert("Error", "Could not find trip data");
-                         setPdfGenerating(false);
-                         return null;
-                    }
-               } catch (error) {
-                    console.error("Error fetching trip data:", error);
-                    Alert.alert("Error", "Failed to download trip information");
-                    setPdfGenerating(false);
-                    return null;
-               }
-          };
-
-          fetchTripData();
-     };
-
-     // Function to generate HTML content from trip data
-     const generateTripHtml = (trip: TripType): string => {
-          // Create HTML content with styling
-          return `
+  // Function to generate HTML content from trip data
+  const generateTripHtml = (trip: TripType): string => {
+    // Create HTML content with styling
+    return `
       <!DOCTYPE html>
       <html>
       <head>
@@ -181,7 +174,7 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
             <h1>${trip.name}</h1>
             <p><strong>Location:</strong> ${trip.location}</p>
             ${trip.dateRange ?
-                    `<p><strong>Dates:</strong> ${trip.dateRange.startDate} to ${trip.dateRange.endDate}</p>` : ''}
+        `<p><strong>Dates:</strong> ${trip.dateRange.startDate} to ${trip.dateRange.endDate}</p>` : ''}
           </div>
           
           ${trip.description ? `
@@ -308,92 +301,92 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
       </body>
       </html>
     `;
-     };
+  };
 
-     // Function to print to PDF using expo-print
-     const printToPdf = async (htmlContent: string, tripName: string) => {
-          try {
-               // Generate the PDF filename
-               const fileName = `Trip_${tripName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}`;
+  // Function to print to PDF using expo-print
+  const printToPdf = async (htmlContent: string, tripName: string) => {
+    try {
+      // Generate the PDF filename
+      const fileName = `Trip_${tripName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}`;
 
-               // Generate PDF with expo-print
-               const { uri } = await Print.printToFileAsync({
-                    html: htmlContent,
-                    base64: false,
-               });
+      // Generate PDF with expo-print
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false,
+      });
 
-               console.log('PDF file created at:', uri);
+      console.log('PDF file created at:', uri);
 
-               // Check if sharing is available
-               const isSharingAvailable = await Sharing.isAvailableAsync();
-               
-               if (isSharingAvailable) {
-                    // Share the PDF file
-                    await Sharing.shareAsync(uri, {
-                         UTI: '.pdf',
-                         mimeType: 'application/pdf',
-                         dialogTitle: `${tripName} Trip Details`,
-                    });
-                    
-                    Alert.alert(
-                         "Success",
-                         "Your trip details PDF has been created successfully."
-                    );
-               } else {
-                    Alert.alert(
-                         "Error",
-                         "Sharing is not available on this device"
-                    );
-               }
+      // Check if sharing is available
+      const isSharingAvailable = await Sharing.isAvailableAsync();
 
-               setPdfGenerating(false);
-          } catch (error) {
-               console.error("Error printing to PDF:", error);
-               Alert.alert("Error", "Failed to create PDF");
-               setPdfGenerating(false);
-          }
-     };
+      if (isSharingAvailable) {
+        // Share the PDF file
+        await Sharing.shareAsync(uri, {
+          UTI: '.pdf',
+          mimeType: 'application/pdf',
+          dialogTitle: `${tripName} Trip Details`,
+        });
 
-     return (
-          <>
-               {pdfGenerating && (
-                    <View style={styles.loadingOverlay}>
-                         <Text style={styles.loadingText}>Preparing your trip document...</Text>
-                    </View>
-               )}
-               <TouchableOpacity style={styles.downloadButton} onPress={handleDownloadTripInfo}>
-                    <Ionicons name="download-outline" size={20} color={Colors.white} />
-               </TouchableOpacity>
-          </>
-     );
+        Alert.alert(
+          "Success",
+          "Your trip details PDF has been created successfully."
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Sharing is not available on this device"
+        );
+      }
+
+      setPdfGenerating(false);
+    } catch (error) {
+      console.error("Error printing to PDF:", error);
+      Alert.alert("Error", "Failed to create PDF");
+      setPdfGenerating(false);
+    }
+  };
+
+  return (
+    <>
+      {pdfGenerating && (
+        <View style={styles.loadingOverlay}>
+          <Text style={styles.loadingText}>Preparing your trip document...</Text>
+        </View>
+      )}
+      <TouchableOpacity style={styles.downloadButton} onPress={handleDownloadTripInfo}>
+        <Ionicons name="download-outline" size={20} color={Colors.white} />
+      </TouchableOpacity>
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
-     downloadButton: {
-          position: 'absolute',
-          top: '15%',
-          right: 20,
-          backgroundColor: Colors.primary,
-          padding: 10,
-          borderRadius: 30,
-          boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.3)',
-     },
-     loadingOverlay: {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 1000,
-     },
-     loadingText: {
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: 'bold',
-     },
+  downloadButton: {
+    position: 'absolute',
+    top: '15%',
+    right: 20,
+    backgroundColor: Colors.primary,
+    padding: 10,
+    borderRadius: 30,
+    boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.3)',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1000,
+  },
+  loadingText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
 
 export default TripPdfGenerator; 

@@ -17,23 +17,13 @@ import { Colors } from "../../constants/Colors";
 import { Typography } from "../../constants/Typography";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState, useEffect, useRef } from "react";
-import { auth, db } from "../../services/firebaseConfig";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
 import { Plan as PlanType, Trip as TripType } from "../../types/Types";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
 import DarkModeBackground from "../../components/DarkModeBackground";
+import { supabase } from '../../services/supabaseConfig';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -299,7 +289,7 @@ export default function Home() {
       pathname: "/(app)/trip",
       params: {
         trip: JSON.stringify({
-          id: trip.id,
+          trip_id: trip.id,
           name: trip.name,
           location: trip.location,
           keyFeatures: trip.highlights?.join(", ") || "",
@@ -312,53 +302,64 @@ export default function Home() {
     });
   };
 
-  // Replace fetchUserName with fetchUserData
+  // Replace fetchUserData with Supabase implementation
   const fetchUserData = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setUserName(userData.firstname);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
 
-        // Get eco points from Firestore
-        const pointsValue =
-          userData.ecoPoints !== undefined ? userData.ecoPoints : 0; // Fallback to 0 if ecoPoints is undefined
+      if (user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('firstname')
+          .eq('user_id', user.id)
+          .single();
 
-        setEcoPoints(pointsValue);
+        if (error) throw error;
+        if (data) {
+          setUserName(data.firstname || 'User');
+        }
       }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
   };
 
+  // Replace fetchPlans with Supabase implementation
   const fetchPlans = async () => {
     try {
-      const user = auth.currentUser;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       if (user) {
-        const plansCollection = collection(db, "plans");
-        // Only fetch plans associated with the current user
-        const userPlansQuery = query(
-          plansCollection,
-          where("userId", "==", user.uid)
-        );
-        const plansSnapshot = await getDocs(userPlansQuery);
-        const plansList = plansSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          image: doc.data().imageUrl || placeholderImage,
-        })) as Plan[];
+        const { data: plansList, error: plansError } = await supabase
+          .from('plans')
+          .select('*')
+          .eq('userId', user.id);
 
-        // Sort plans by date (oldest first)
-        const sortedPlans = plansList.sort((a, b) => {
-          const dateA = a.preferences?.dateRange?.startDate
-            ? new Date(a.preferences.dateRange.startDate).getTime()
-            : 0;
-          const dateB = b.preferences?.dateRange?.startDate
-            ? new Date(b.preferences.dateRange.startDate).getTime()
-            : 0;
-          return dateA - dateB; // Descending order (oldest first)
-        });
+        if (plansError) throw plansError;
 
-        setPlans(sortedPlans);
+        if (plansList) {
+          // Transform the data to match the Plan interface
+          const transformedPlans = plansList.map(plan => ({
+            id: plan.plan_id,
+            ...plan,
+            image: plan.imageUrl || placeholderImage,
+          })) as Plan[];
+
+          // Sort plans by date (oldest first)
+          const sortedPlans = transformedPlans.sort((a, b) => {
+            const dateA = a.preferences?.dateRange?.startDate
+              ? new Date(a.preferences.dateRange.startDate).getTime()
+              : 0;
+            const dateB = b.preferences?.dateRange?.startDate
+              ? new Date(b.preferences.dateRange.startDate).getTime()
+              : 0;
+            return dateA - dateB;
+          });
+
+          setPlans(sortedPlans);
+        }
       }
     } catch (error) {
       console.error("Error fetching plans:", error);
@@ -367,66 +368,67 @@ export default function Home() {
 
   const fetchTrips = async () => {
     try {
-      const user = auth.currentUser;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       if (user) {
-        // Fetch trips that are bookmarked AND belong to the current user
-        const tripsCollection = collection(db, "trips");
-        const bookmarkedTripsQuery = query(
-          tripsCollection,
-          where("bookmarked", "==", true),
-          where("userId", "==", user.uid)
-        );
-        const tripsSnapshot = await getDocs(bookmarkedTripsQuery);
+        // Fetch bookmarked trips for the current user
+        const { data: tripsList, error: tripsError } = await supabase
+          .from('trips')
+          .select('*')
+          .eq('userId', user.id)
+          .eq('bookmarked', true);
 
-        const tripsList = tripsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          image: doc.data().imageUrl || placeholderImage,
-        })) as Trip[];
+        if (tripsError) throw tripsError;
 
-        // console.log("Bookmarked Trips:", tripsList);
+        if (tripsList) {
+          const transformedTrips = tripsList.map(trip => ({
+            id: trip.trip_id,
+            ...trip,
+            image: trip.imageUrl || placeholderImage,
+          })) as Trip[];
 
-        // Fetch dates for trips from plans collection
-        const dates: { [tripId: string]: { startDate: string; endDate?: string } } = {};
-        const plansCollection = collection(db, "plans");
-        const userPlansQuery = query(
-          plansCollection,
-          where("userId", "==", user.uid)
-        );
-        const plansSnapshot = await getDocs(userPlansQuery);
+          // Fetch dates from plans
+          const { data: plansList, error: plansError } = await supabase
+            .from('plans')
+            .select('plan_id, preferences, tripIds')
+            .eq('userId', user.id);
 
-        plansSnapshot.docs.forEach((planDoc) => {
-          const planData = planDoc.data();
-          if (planData.tripIds && planData.preferences?.dateRange?.startDate) {
-            // For each trip ID in this plan, store both start and end dates
-            planData.tripIds.forEach((tripId: string) => {
-              dates[tripId] = {
-                startDate: planData.preferences.dateRange.startDate,
-                endDate: planData.preferences.dateRange.endDate
-              };
+          if (plansError) throw plansError;
+
+          // Create dates mapping
+          const dates: { [tripId: string]: { startDate: string; endDate?: string } } = {};
+          if (plansList) {
+            plansList.forEach(plan => {
+              if (plan.tripIds && plan.preferences?.dateRange?.startDate) {
+                plan.tripIds.forEach((tripId: string) => {
+                  dates[tripId] = {
+                    startDate: plan.preferences.dateRange.startDate,
+                    endDate: plan.preferences.dateRange.endDate
+                  };
+                });
+              }
             });
           }
-        });
 
-        setTripDates(dates);
+          setTripDates(dates);
 
-        // Sort trips by date (oldest first)
-        const sortedTrips = tripsList.sort((a, b) => {
-          const dateA = dates[a.id || ""]?.startDate
-            ? new Date(dates[a.id || ""]?.startDate).getTime()
-            : 0;
-          const dateB = dates[b.id || ""]?.startDate
-            ? new Date(dates[b.id || ""]?.startDate).getTime()
-            : 0;
-          return dateA - dateB; // Descending order (oldest first)
-        });
+          // Sort trips by date
+          const sortedTrips = transformedTrips.sort((a, b) => {
+            const dateA = dates[a.id || ""]?.startDate
+              ? new Date(dates[a.id || ""]?.startDate).getTime()
+              : 0;
+            const dateB = dates[b.id || ""]?.startDate
+              ? new Date(dates[b.id || ""]?.startDate).getTime()
+              : 0;
+            return dateA - dateB;
+          });
 
-        setTrips(sortedTrips);
-        // console.log("Sorted Trips:", sortedTrips);
+          setTrips(sortedTrips);
+        }
       }
     } catch (error) {
       console.error("Error fetching trips:", error);
-      console.error("Error fetching plans:", error);
     }
   };
 
@@ -450,7 +452,7 @@ export default function Home() {
       params: { planId: id },
     });
 
-  // --- Deletion Handlers ---
+  // Replace handleDeleteTrip with Supabase implementation
   const handleDeleteTrip = async (tripId: string) => {
     Alert.alert(
       "Remove Trip",
@@ -462,17 +464,21 @@ export default function Home() {
           style: "destructive",
           onPress: async () => {
             try {
-              const user = auth.currentUser;
+              const { data: { user }, error: userError } = await supabase.auth.getUser();
+              if (userError) throw userError;
+
               if (!user) {
                 console.error("User must be logged in to remove trip from favorites");
                 return;
               }
 
-              // Update the trip's bookmarked status in Firestore
-              const tripRef = doc(db, "trips", tripId);
-              await updateDoc(tripRef, {
-                bookmarked: false
-              });
+              // Update the trip's bookmarked status in Supabase
+              const { error: updateError } = await supabase
+                .from('trips')
+                .update({ bookmarked: false })
+                .eq('trip_id', tripId);
+
+              if (updateError) throw updateError;
 
               // Update local trips state
               setTrips((prevTrips) =>
@@ -488,7 +494,7 @@ export default function Home() {
     );
   };
 
-  // --- Plan Deletion Handler ---
+  // Replace handleDeletePlan with Supabase implementation
   const handleDeletePlan = async (planId: string) => {
     Alert.alert(
       "Delete Plan",
@@ -500,43 +506,45 @@ export default function Home() {
           style: "destructive",
           onPress: async () => {
             try {
-              // 1. Fetch the plan document to get tripIds
-              const planDocRef = doc(db, "plans", planId);
-              const planDocSnap = await getDoc(planDocRef);
+              // 1. Fetch the plan to get tripIds
+              const { data: plan, error: planError } = await supabase
+                .from('plans')
+                .select('tripIds')
+                .eq('plan_id', planId)
+                .single();
 
-              if (planDocSnap.exists()) {
-                const planData = planDocSnap.data();
-                const tripIdsToDelete = planData.tripIds as
-                  | string[]
-                  | undefined;
+              if (planError) throw planError;
 
-                // 2. Delete associated trips if they exist
-                if (tripIdsToDelete && Array.isArray(tripIdsToDelete)) {
-                  const deletePromises = tripIdsToDelete.map((tripId) =>
-                    deleteDoc(doc(db, "trips", tripId))
-                  );
-                  await Promise.all(deletePromises);
+              if (plan && plan.tripIds) {
+                // 2. Delete associated trips
+                const { error: tripsError } = await supabase
+                  .from('trips')
+                  .delete()
+                  .in('trip_id', plan.tripIds);
 
-                  // --- Delete cache for each trip ---
-                  for (const tripId of tripIdsToDelete) {
-                    await deleteCachedTrailData(tripId);
-                    await deleteCachedChatMessages(tripId);
-                  }
-                  // --- End cache deletion ---
+                if (tripsError) throw tripsError;
 
-                  // 3. Update local trips state
-                  setTrips((prevTrips) =>
-                    prevTrips.filter(
-                      (trip) => !tripIdsToDelete.includes(trip.id || "")
-                    )
-                  );
+                // Delete cache for each trip
+                for (const tripId of plan.tripIds) {
+                  await deleteCachedTrailData(tripId);
+                  await deleteCachedChatMessages(tripId);
                 }
+
+                // Update local trips state
+                setTrips((prevTrips) =>
+                  prevTrips.filter((trip) => !plan.tripIds.includes(trip.id || ""))
+                );
               }
 
-              // 4. Delete the plan document itself
-              await deleteDoc(planDocRef);
+              // 3. Delete the plan
+              const { error: deletePlanError } = await supabase
+                .from('plans')
+                .delete()
+                .eq('plan_id', planId);
 
-              // 5. Update local plans state
+              if (deletePlanError) throw deletePlanError;
+
+              // 4. Update local plans state
               setPlans((prevPlans) =>
                 prevPlans.filter((plan) => plan.id !== planId)
               );

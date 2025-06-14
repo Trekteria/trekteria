@@ -14,12 +14,6 @@ import { Colors } from "../../constants/Colors";
 import { Typography } from "../../constants/Typography";
 import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../services/firebaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
 
 export default function Signup() {
@@ -53,44 +47,7 @@ export default function Signup() {
       return;
     }
 
-    try {
-      // Create a new user with Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      // Store additional user data in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        firstname,
-        lastname,
-        email,
-        emailVerified: false,
-        ecoPoints: 0,
-      });
-
-      console.log("User created and data saved:", user.uid);
-
-      // Send email verification to the user
-      await sendEmailVerification(user);
-      alert(
-        "Registration successful! A verification email has been sent to your email address."
-      );
-
-      // Navigate back to the login screen
-      router.back();
-    } catch (error) {
-      // Handle errors during signup
-      if (error instanceof Error) {
-        console.error("Error signing up:", error.message);
-        alert(error.message); // Show an error message to the user
-      } else {
-        console.error("Error signing up:", error);
-        alert("An unknown error occurred."); // Fallback for unknown error types
-      }
-    }
+    console.log("Attempting to sign up with email:", email);
   };
 
   // Function to navigate back to the login screen

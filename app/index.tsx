@@ -3,8 +3,7 @@ import { StyleSheet, View, Image, Animated } from "react-native";
 import { Redirect } from "expo-router";
 import { Colors } from "../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { auth } from "../services/firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
+import { supabase } from "../services/supabaseConfig";
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
@@ -14,9 +13,8 @@ export default function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    let authUnsubscribe: (() => void) | null = null;
 
-    // Check if user is logged in via Firebase
+    // Check if user is logged in via Supabase
     const checkLoginStatus = async () => {
       try {
         // Check onboarding status
@@ -27,24 +25,36 @@ export default function Index() {
           setHasCompletedOnboarding(true);
         }
 
-        // Set up Firebase auth listener
-        authUnsubscribe = onAuthStateChanged(auth, (user) => {
-          if (isMounted) {
-            setIsLoggedIn(!!user);
-            console.log("User is logged in:", !!user);
+        // Check Supabase auth state
+        const { data: { session } } = await supabase.auth.getSession();
+        if (isMounted) {
+          setIsLoggedIn(!!session);
+          console.log("User is logged in:", !!session);
+        }
+
+        // Set up Supabase auth listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            if (isMounted) {
+              setIsLoggedIn(!!session);
+              console.log("Auth state changed:", event, !!session);
+            }
           }
-        });
+        );
+
+        return subscription;
       } catch (error) {
         console.error("Failed to get login status:", error);
         if (isMounted) {
           setIsLoggedIn(false);
         }
+        return null;
       }
     };
 
     // Run login check and splash screen animation
     const setupApp = async () => {
-      await checkLoginStatus();
+      const authSubscription = await checkLoginStatus();
 
       // Start with a delay before beginning the fade out
       const delayTimer = setTimeout(() => {
@@ -65,7 +75,7 @@ export default function Index() {
 
       return () => {
         clearTimeout(delayTimer);
-        if (authUnsubscribe) authUnsubscribe();
+        if (authSubscription) authSubscription.unsubscribe();
       };
     };
 
@@ -74,7 +84,6 @@ export default function Index() {
     // Cleanup function
     return () => {
       isMounted = false;
-      if (authUnsubscribe) authUnsubscribe();
     };
   }, [fadeAnim]);
 

@@ -11,12 +11,7 @@ import {
 import { useRouter, Stack } from "expo-router";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
-import { auth } from "../../../services/firebaseConfig";
-import {
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  updatePassword,
-} from "firebase/auth";
+import { supabase } from "../../../services/supabaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 
@@ -65,39 +60,37 @@ export default function ChangePassword() {
 
     setLoading(true); // Show loading state
     try {
-      const user = auth.currentUser;
-      if (!user || !user.email) {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
         Alert.alert("Error ✗", "No user is currently logged in.");
         setLoading(false);
         return;
       }
 
-      // Re-authenticate the user with their current password
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
+      // Update the user's password using Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
 
-      // Update the user's password
-      await updatePassword(user, newPassword);
+      if (error) {
+        console.error("Error changing password:", error.message);
+        let errorMessage = "An unknown error occurred. Please try again.";
 
-      Alert.alert("Success ✓", "Your password has been updated successfully.");
-      router.back(); // Navigate back to the previous screen
+        if (error.message.includes("weak")) {
+          errorMessage = "The new password is too weak.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        Alert.alert("Error ✗", errorMessage);
+      } else {
+        Alert.alert("Success ✓", "Your password has been updated successfully.");
+        router.back(); // Navigate back to the previous screen
+      }
     } catch (error: any) {
       console.error("Error changing password:", error.message);
-
-      // Handle specific error cases
-      let errorMessage = "An unknown error occurred. Please try again.";
-      if (error.code === "auth/wrong-password") {
-        errorMessage = "The current password is incorrect.";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "The new password is too weak.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert("Error ✗", errorMessage);
+      Alert.alert("Error ✗", "An unknown error occurred. Please try again.");
     } finally {
       setLoading(false); // Reset loading state
     }

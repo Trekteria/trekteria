@@ -14,16 +14,8 @@ import { Typography } from "../../constants/Typography";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Trip as FirestoreTrip } from "@/types/Types";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-import { db, auth } from "../../services/firebaseConfig";
+import { Trip as TripType } from "@/types/Types";
+import { supabase } from "../../services/supabaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
 
 // Define the Trip interface for type safety
@@ -34,7 +26,7 @@ interface Trip {
   facilities: string;
   latitude?: number;
   longitude?: number;
-  id?: string;
+  trip_id?: string;
   bookmarked?: boolean;
   imageUrl?: string;
 }
@@ -50,8 +42,6 @@ export default function Result() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
-
-  const UNSPLASH_ACCESS_KEY = process.env.EXPO_PUBLIC_UNSPLASH_ACCESS_KEY;
 
   useEffect(() => {
     const loadData = async () => {
@@ -76,41 +66,42 @@ export default function Result() {
         const targetPlanId = routePlanId ? String(routePlanId) : lastPlanId;
 
         if (targetPlanId) {
-          const user = auth.currentUser;
+          // Get current user from Supabase
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError) throw userError;
+
           if (!user) {
             setError("You must be logged in to view recommendations");
             setLoading(false);
             return;
           }
 
-          const tripsCollection = collection(db, "trips");
-          const tripsQuery = query(
-            tripsCollection,
-            where("planId", "==", targetPlanId)
-          );
-          const tripsSnapshot = await getDocs(tripsQuery);
+          // Fetch trips from Supabase
+          const { data: trips, error: tripsError } = await supabase
+            .from('trips')
+            .select('*')
+            .eq('planId', targetPlanId);
 
-          const firestoreTrips: FirestoreTrip[] = [];
-          tripsSnapshot.forEach((doc) => {
-            firestoreTrips.push({ id: doc.id, ...doc.data() } as FirestoreTrip);
-          });
+          if (tripsError) throw tripsError;
 
-          const tripsForDisplay = firestoreTrips.map((trip) => ({
-            id: trip.id,
-            name: trip.name,
-            location: trip.location,
-            keyFeatures: trip.highlights?.join(", ") || "",
-            facilities: trip.amenities?.join(", ") || "",
-            latitude: trip.coordinates?.latitude,
-            longitude: trip.coordinates?.longitude,
-            bookmarked: trip.bookmarked || false,
-            imageUrl: trip.imageUrl || ""
-          }));
+          if (trips) {
+            const tripsForDisplay = trips.map((trip) => ({
+              trip_id: trip.trip_id,
+              name: trip.name,
+              location: trip.location,
+              keyFeatures: trip.highlights?.join(", ") || "",
+              facilities: trip.amenities?.join(", ") || "",
+              latitude: trip.coordinates?.latitude,
+              longitude: trip.coordinates?.longitude,
+              bookmarked: trip.bookmarked || false,
+              imageUrl: trip.imageUrl || ""
+            }));
 
-          if (tripsForDisplay.length === 0) {
-            setError("No valid trip recommendations found. Please try again.");
-          } else {
-            setParsedTrips(tripsForDisplay);
+            if (tripsForDisplay.length === 0) {
+              setError("No valid trip recommendations found. Please try again.");
+            } else {
+              setParsedTrips(tripsForDisplay);
+            }
           }
         } else {
           setError("No trip recommendations found. Please try again.");
@@ -147,23 +138,29 @@ export default function Result() {
 
   const handleBookmarkPress = async (trip: Trip, index: number) => {
     try {
-      const user = auth.currentUser;
+      // Get current user from Supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       if (!user) {
         console.error("User must be logged in to bookmark trips");
         return;
       }
 
-      if (!trip.id) {
+      if (!trip.trip_id) {
         console.error("Trip ID is missing");
         return;
       }
 
       const isCurrentlyBookmarked = trip.bookmarked || false;
 
-      const tripRef = doc(db, "trips", trip.id);
-      await updateDoc(tripRef, {
-        bookmarked: !isCurrentlyBookmarked
-      });
+      // Update bookmark status in Supabase
+      const { error: updateError } = await supabase
+        .from('trips')
+        .update({ bookmarked: !isCurrentlyBookmarked })
+        .eq('trip_id', trip.trip_id);
+
+      if (updateError) throw updateError;
 
       const updatedTrips = [...parsedTrips];
       updatedTrips[index] = {

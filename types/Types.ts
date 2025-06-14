@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export interface User {
   id: string;
   email: string;
@@ -8,8 +6,8 @@ export interface User {
 
 export interface Plan {
   id?: string;
-  createdAt: Timestamp; // Using Firestore Timestamp instead of number
-  lastUpdated?: Timestamp;
+  createdAt: string; // ISO string date
+  lastUpdated?: string; // ISO string date
   imageUrl?: string;
   totalGroupSize?: number;
   preferences: {
@@ -44,7 +42,7 @@ export interface Plan {
 
 export interface Trip {
   id?: string;
-  createdAt: Timestamp; // Using Firestore Timestamp
+  createdAt: string; // ISO string date
   imageUrl?: string;
   planId: string; // reference to the plan this trip belongs to
   bookmarked?: boolean;
@@ -86,6 +84,7 @@ export interface Trip {
   missions: {
     task: string;
     completed: boolean;
+    points: number;
   }[];
   warnings?: string[];
   thingsToKnow?: string[];
@@ -95,7 +94,7 @@ export interface Trip {
     id: string;
     text: string;
     sender: "user" | "bot";
-    timestamp: Timestamp;
+    timestamp: string; // ISO string date
   }[];
 }
 
@@ -105,6 +104,6 @@ export interface Feedback {
   email?: string;
   subject: string;
   message: string;
-  createdAt: Timestamp;
+  createdAt: string; // ISO string date
   category?: "bug" | "feature" | "improvement" | "other";
 }

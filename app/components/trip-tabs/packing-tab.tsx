@@ -10,19 +10,25 @@ import {
   Modal,
   Alert,
   Linking,
+  ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
-import { db } from "../../../services/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { supabase } from "../../../services/supabaseConfig";
+import { Trip } from "../../../types/Types";
 
 // Add interface for component props
 interface PackingTabProps {
-  tripId?: string;
-  tripData?: any;
+  tripId: string;
+  tripData: Trip;
+}
+
+interface PackingItem {
+  item: string;
+  checked: boolean;
 }
 
 export default function PackingTab({ tripId, tripData }: PackingTabProps) {
@@ -49,7 +55,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   // Ref to hold the current trip ID
   const currentTripIdRef = useRef<string>("");
 
-  // Fetch packing items from Firestore or tripData
+  // Fetch packing items from Supabase or tripData
   useEffect(() => {
     const fetchPackingItems = async () => {
       setLoading(true);
@@ -87,23 +93,29 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
         }
 
         if (currentTripId) {
-          const tripDoc = await getDoc(doc(db, "trips", currentTripId));
-          if (tripDoc.exists()) {
-            const tripData = tripDoc.data();
-            if (
-              tripData.packingChecklist &&
-              Array.isArray(tripData.packingChecklist)
-            ) {
-              setPackingItems(
-                tripData.packingChecklist.map((item: any, index: number) => ({
-                  id: item.id || String(index + 1),
-                  title: item.title || item.item || "Item " + (index + 1),
-                  checked: item.checked || false,
-                }))
-              );
+          const { data: tripData, error: tripError } = await supabase
+            .from('trips')
+            .select('packingChecklist')
+            .eq('trip_id', currentTripId)
+            .single();
+
+          if (tripError) {
+            console.error("Error fetching trip data:", tripError);
+            // If it's a "no rows" error, that's expected for new trips
+            if (tripError.code === 'PGRST116') {
+              setDefaultPackingItems();
             } else {
+              setError("Failed to load packing items");
               setDefaultPackingItems();
             }
+          } else if (tripData?.packingChecklist && Array.isArray(tripData.packingChecklist)) {
+            setPackingItems(
+              tripData.packingChecklist.map((item: any, index: number) => ({
+                id: item.id || String(index + 1),
+                title: item.title || item.item || "Item " + (index + 1),
+                checked: item.checked || false,
+              }))
+            );
           } else {
             setDefaultPackingItems();
           }
@@ -146,7 +158,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       let currentTripId = currentTripIdRef.current;
 
       if (!currentTripId) {
-        currentTripId = tripId || tripData?.id;
+        currentTripId = tripId || tripData?.id || "";
 
         if (!currentTripId) {
           currentTripId = (await AsyncStorage.getItem("selectedTripId")) || "";
@@ -166,8 +178,8 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
         item.id === id ? { ...item, checked: !item.checked } : item
       );
 
-      // Update Firestore with the new packing checklist
-      await updatePackingListInFirestore(updatedItems);
+      // Update Supabase with the new packing checklist
+      await updatePackingListInSupabase(updatedItems);
     } catch (error) {
       console.error("Error toggling packing item:", error);
     }
@@ -203,8 +215,8 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       const updatedItems = [...packingItems, newItem];
       setPackingItems(updatedItems);
 
-      // Update Firestore
-      await updatePackingListInFirestore(updatedItems);
+      // Update Supabase
+      await updatePackingListInSupabase(updatedItems);
 
       // Reset input
       setNewItemText("");
@@ -226,7 +238,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       );
 
       setPackingItems(updatedItems);
-      await updatePackingListInFirestore(updatedItems);
+      await updatePackingListInSupabase(updatedItems);
 
       // Close modal and reset
       setIsModalVisible(false);
@@ -253,7 +265,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                 (item) => item.id !== id
               );
               setPackingItems(updatedItems);
-              await updatePackingListInFirestore(updatedItems);
+              await updatePackingListInSupabase(updatedItems);
             } catch (error) {
               console.error("Error deleting item:", error);
               Alert.alert("Error", "Failed to delete item");
@@ -264,15 +276,15 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     );
   };
 
-  // Helper function to update Firestore
-  const updatePackingListInFirestore = async (
+  // Helper function to update Supabase
+  const updatePackingListInSupabase = async (
     items: Array<{ id: string; title: string; checked: boolean }>
   ) => {
     // Try to get trip ID from multiple sources to ensure we have one
     let currentTripId = currentTripIdRef.current;
 
     if (!currentTripId) {
-      currentTripId = tripId || tripData?.id;
+      currentTripId = tripId || tripData?.id || "";
 
       if (!currentTripId) {
         try {
@@ -294,25 +306,30 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       return;
     }
 
-    const tripRef = doc(db, "trips", currentTripId);
-    const tripDoc = await getDoc(tripRef);
+    // Format items to match Supabase schema
+    const supabaseItems = items.map((item) => ({
+      id: item.id,
+      item: item.title, // Using 'item' field for compatibility
+      checked: item.checked,
+    }));
 
-    if (tripDoc.exists()) {
-      // Format items to match Firestore schema
-      const firestoreItems = items.map((item) => ({
-        id: item.id,
-        item: item.title, // Using 'item' field for compatibility
-        checked: item.checked,
-      }));
+    const { error } = await supabase
+      .from('trips')
+      .update({ packingChecklist: supabaseItems })
+      .eq('trip_id', currentTripId);
 
-      await updateDoc(tripRef, {
-        packingChecklist: firestoreItems,
-      });
-
-      console.log("Updated packing list in Firestore");
-    } else {
-      throw new Error("Trip document not found");
+    if (error) {
+      console.error("Error updating packing list in Supabase:", error);
+      if (error.code === 'PGRST116') {
+        // No rows were updated, which might mean the trip doesn't exist
+        Alert.alert("Error", "Trip not found. Please refresh and try again.");
+      } else {
+        Alert.alert("Error", "Failed to save changes. Please try again.");
+      }
+      throw error;
     }
+
+    console.log("Updated packing list in Supabase");
   };
 
   // Function to open edit modal
@@ -331,7 +348,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     // Remove emojis and clean the search term
     const searchTerm = itemTitle.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
     const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`;
-    
+
     try {
       const canOpen = await Linking.canOpenURL(amazonUrl);
       if (canOpen) {
@@ -419,9 +436,9 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
                   style={styles.amazonLink}
                   onPress={() => handleAmazonSearch(item.title)}
                 >
-                  <Ionicons 
-                    name="cart-outline" 
-                    size={20} 
+                  <Ionicons
+                    name="cart-outline"
+                    size={20}
                     color={theme.primary}
                   />
                 </TouchableOpacity>
