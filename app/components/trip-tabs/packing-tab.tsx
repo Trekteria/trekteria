@@ -96,12 +96,18 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           const { data: tripData, error: tripError } = await supabase
             .from('trips')
             .select('packingChecklist')
-            .eq('id', currentTripId)
+            .eq('trip_id', currentTripId)
             .single();
 
           if (tripError) {
             console.error("Error fetching trip data:", tripError);
-            setDefaultPackingItems();
+            // If it's a "no rows" error, that's expected for new trips
+            if (tripError.code === 'PGRST116') {
+              setDefaultPackingItems();
+            } else {
+              setError("Failed to load packing items");
+              setDefaultPackingItems();
+            }
           } else if (tripData?.packingChecklist && Array.isArray(tripData.packingChecklist)) {
             setPackingItems(
               tripData.packingChecklist.map((item: any, index: number) => ({
@@ -310,10 +316,16 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     const { error } = await supabase
       .from('trips')
       .update({ packingChecklist: supabaseItems })
-      .eq('id', currentTripId);
+      .eq('trip_id', currentTripId);
 
     if (error) {
       console.error("Error updating packing list in Supabase:", error);
+      if (error.code === 'PGRST116') {
+        // No rows were updated, which might mean the trip doesn't exist
+        Alert.alert("Error", "Trip not found. Please refresh and try again.");
+      } else {
+        Alert.alert("Error", "Failed to save changes. Please try again.");
+      }
       throw error;
     }
 

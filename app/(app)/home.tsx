@@ -289,7 +289,7 @@ export default function Home() {
       pathname: "/(app)/trip",
       params: {
         trip: JSON.stringify({
-          id: trip.id,
+          trip_id: trip.id,
           name: trip.name,
           location: trip.location,
           keyFeatures: trip.highlights?.join(", ") || "",
