@@ -57,6 +57,13 @@ export async function signInWithGoogle() {
         if (userError) throw userError;
 
         if (user) {
+          // Check if user already exists in our database
+          const { data: existingUser, error: fetchError } = await supabase
+            .from('users')
+            .select('firstname, lastname, ecoPoints')
+            .eq('user_id', user.id)
+            .single();
+
           // Store user data in the users table
           const { error: upsertError } = await supabase
             .from('users')
@@ -64,9 +71,9 @@ export async function signInWithGoogle() {
               user_id: user.id,
               email: user.email,
               emailVerified: true,
-              firstname: user.user_metadata?.full_name?.split(' ')[0] || 'User',
-              lastname: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              ecoPoints: 0,
+              firstname: existingUser?.firstname || user.user_metadata?.full_name?.split(' ')[0] || 'User',
+              lastname: existingUser?.lastname || user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              ecoPoints: existingUser?.ecoPoints || 0,
             //   avatar_url: user.user_metadata?.avatar_url,
             //   created_at: new Date().toISOString(),
             //   updated_at: new Date().toISOString(),
