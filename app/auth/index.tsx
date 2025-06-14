@@ -13,12 +13,6 @@ import { Typography } from "../../constants/Typography";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import { auth, db } from "../../services/firebaseConfig";
-import { doc, updateDoc } from "firebase/firestore";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { signInWithGoogle } from '../../services/googleAuth';
 
@@ -40,30 +34,8 @@ export default function AuthIndex() {
       return;
     }
 
-    try {
-      console.log("Attempting to log in with email:", email);
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        trimmedEmail,
-        password
-      );
-      const user = userCredential.user;
-
-      // Check if the user's email is verified
-      if (user.emailVerified) {
-        // Update Firestore with email verification status
-        await updateDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          emailVerified: true,
-        });
-        console.log("User logged in:", user);
-        router.replace("/(app)/home"); // Navigate to home screen
-      } else {
-        alert("Please verify your email before logging in."); // Alert if email is not verified
-      }
-    } catch (error) {
-      handleFirebaseError(error); // Handle Firebase errors
-    }
+    console.log("Attempting to log in with email:", email);
+    console.log("Password:", password);
   };
 
   // Handles forgot password
@@ -74,21 +46,7 @@ export default function AuthIndex() {
       return;
     }
 
-    try {
-      await sendPasswordResetEmail(auth, trimmedEmail);
-      alert(
-        "A password reset email has been sent to your email address. Please check your inbox."
-      );
-    } catch (error: any) {
-      console.error("Error sending password reset email:", error.message);
-      if (error.code === "auth/user-not-found") {
-        alert("No user found with this email address.");
-      } else if (error.code === "auth/invalid-email") {
-        alert("Invalid email format.");
-      } else {
-        alert("An error occurred. Please try again.");
-      }
-    }
+    console.log("Attempting to reset password for email:", email);
   };
 
   // Navigate to the signup screen
@@ -116,7 +74,7 @@ export default function AuthIndex() {
       {/* Login form */}
       <View style={styles.form}>
         {/* Email input */}
-        <View style={styles.inputContainer}>
+        {/* <View style={styles.inputContainer}>
           <TextInput
             style={[
               styles.input,
@@ -133,10 +91,10 @@ export default function AuthIndex() {
             value={email}
             onChangeText={setEmail}
           />
-        </View>
+        </View> */}
 
         {/* Password input with visibility toggle */}
-        <View style={styles.inputContainer}>
+        {/* <View style={styles.inputContainer}>
           <View style={[
             styles.passwordContainer,
             {
@@ -163,33 +121,33 @@ export default function AuthIndex() {
               />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Login button */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.loginButton, { backgroundColor: theme.buttonBackground }]}
           onPress={handleLogin}
         >
           <Text style={[styles.loginButtonText, { color: theme.buttonText }]}>Log In</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Forgot password link */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.forgotPassword}
           onPress={handleForgotPassword}
         >
           <Text style={[styles.forgotPasswordText, { color: theme.text }]}>Forgot your Password?</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Divider for social login */}
-        <View style={styles.dividerContainer}>
+        {/* <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
           <Text style={[styles.dividerText, { color: theme.inactive }]}>or</Text>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
-        </View>
+        </View> */}
 
         {/* Social login buttons */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.socialButton, { borderColor: theme.borderColor }]}
           onPress={signInWithGoogle}
         >
@@ -211,12 +169,12 @@ export default function AuthIndex() {
         </TouchableOpacity>
 
         {/* Registration link */}
-        <View style={styles.registerContainer}>
+        {/* <View style={styles.registerContainer}>
           <Text style={[styles.registerText, { color: theme.inactive }]}>Not a member? </Text>
           <TouchableOpacity onPress={handleSignup}>
             <Text style={[styles.registerLink, { color: theme.primary }]}>Register now</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
     </View>
   );

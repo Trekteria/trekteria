@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export interface User {
   id: string;
   email: string;
@@ -106,6 +104,6 @@ export interface Feedback {
   email?: string;
   subject: string;
   message: string;
-  createdAt: Timestamp;
+  createdAt: string; // ISO string date
   category?: "bug" | "feature" | "improvement" | "other";
 }

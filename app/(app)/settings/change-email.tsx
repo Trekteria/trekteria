@@ -12,12 +12,7 @@ import {
 import { useRouter, Stack } from "expo-router";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
-import { auth } from "../../../services/firebaseConfig";
-import {
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  verifyBeforeUpdateEmail,
-} from "firebase/auth";
+import { supabase } from "../../../services/supabaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 
@@ -37,7 +32,7 @@ export default function ChangeEmail() {
   useEffect(() => {
     const fetchCurrentEmail = async () => {
       try {
-        const user = auth.currentUser;
+        const { data: { user }, error } = await supabase.auth.getUser();
         if (user && user.email) {
           setCurrentEmail(user.email);
         }
@@ -73,46 +68,44 @@ export default function ChangeEmail() {
 
     setLoading(true); // Set loading state to true
     try {
-      const user = auth.currentUser; // Get the currently logged-in user
-      if (!user || !user.email) {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
         Alert.alert("Error ✗", "No user is currently logged in.");
         setLoading(false);
         return;
       }
 
-      // Re-authenticate the user with their current email and password
-      const credential = EmailAuthProvider.credential(user.email, password);
-      await reauthenticateWithCredential(user, credential);
+      // Update the user's email using Supabase
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail.trim()
+      });
 
-      // Send a verification email to the new email address
-      await verifyBeforeUpdateEmail(user, newEmail.trim());
+      if (error) {
+        console.error("Error in email update process:", error);
+        let errorMessage = "An unknown error occurred. Please try again.";
 
-      Alert.alert(
-        "Verification Email Sent ↗",
-        "A verification email has been sent to your new email address. Please verify it by clicking the link in the email. After verification, sign back in to complete the process."
-      );
+        if (error.message.includes("invalid")) {
+          errorMessage = "The email address is not valid.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
 
-      // Sign out the user after sending the verification email
-      await auth.signOut();
-      // Redirect the user to the login screen
-      router.replace("/auth");
+        Alert.alert("Error ✗", errorMessage);
+      } else {
+        Alert.alert(
+          "Verification Email Sent ↗",
+          "A verification email has been sent to your new email address. Please verify it by clicking the link in the email. After verification, sign back in to complete the process."
+        );
+
+        // Sign out the user after sending the verification email
+        await supabase.auth.signOut();
+        // Redirect the user to the login screen
+        router.replace("/auth");
+      }
     } catch (error: any) {
       console.error("Error in email update process:", error);
-
-      // Handle different error cases and display appropriate messages
-      let errorMessage = "An unknown error occurred. Please try again.";
-      if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password. Please try again.";
-      } else if (error.code === "auth/requires-recent-login") {
-        errorMessage =
-          "For security reasons, please sign out and sign in again before changing your email.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "The email address is not valid.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert("Error ✗", errorMessage);
+      Alert.alert("Error ✗", "An unknown error occurred. Please try again.");
     } finally {
       setLoading(false); // Reset loading state
     }

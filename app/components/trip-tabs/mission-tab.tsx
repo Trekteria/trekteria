@@ -10,8 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
-import { db, auth } from "../../../services/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { supabase } from "../../../services/supabaseConfig";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 
 // Add this interface to define the component props
@@ -28,7 +27,7 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
-  // Fetch missions from Firestore or tripData
+  // Fetch missions from Supabase or tripData
   useEffect(() => {
     const fetchMissions = async () => {
       setLoading(true);
@@ -55,21 +54,25 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
         }
 
         if (currentTripId) {
-          const tripDoc = await getDoc(doc(db, "trips", currentTripId));
-          if (tripDoc.exists()) {
-            const tripData = tripDoc.data();
-            if (tripData.missions && Array.isArray(tripData.missions)) {
-              setMissions(
-                tripData.missions.map((mission: any, index: number) => ({
-                  id: mission.id || String(index + 1),
-                  title:
-                    mission.title || mission.task || "Mission " + (index + 1),
-                  completed: mission.completed || false,
-                }))
-              );
-            } else {
-              setDefaultMissions();
-            }
+          // Fetch trip data from Supabase
+          const { data: tripData, error: tripError } = await supabase
+            .from('trips')
+            .select('*')
+            .eq('id', currentTripId)
+            .single();
+
+          if (tripError) {
+            console.error("Error fetching trip:", tripError);
+            setDefaultMissions();
+          } else if (tripData && tripData.missions && Array.isArray(tripData.missions)) {
+            setMissions(
+              tripData.missions.map((mission: any, index: number) => ({
+                id: mission.id || String(index + 1),
+                title:
+                  mission.title || mission.task || "Mission " + (index + 1),
+                completed: mission.completed || false,
+              }))
+            );
           } else {
             setDefaultMissions();
           }
@@ -137,80 +140,110 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
         return;
       }
 
-      const tripRef = doc(db, "trips", currentTripId);
-      const tripDoc = await getDoc(tripRef);
+      // Fetch current trip data from Supabase
+      const { data: currentTripData, error: tripError } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', currentTripId)
+        .single();
 
-      if (tripDoc.exists()) {
-        const tripData = tripDoc.data();
+      if (tripError) {
+        console.error("Error fetching trip:", tripError);
+        return;
+      }
 
-        if (tripData.missions && Array.isArray(tripData.missions)) {
-          // Find the mission to toggle and track its points
-          let missionPoints = 0;
-          let missionToUpdate = null;
+      if (currentTripData && currentTripData.missions && Array.isArray(currentTripData.missions)) {
+        // Find the mission to toggle and track its points
+        let missionPoints = 0;
+        let missionToUpdate = null;
 
-          const updatedMissions = tripData.missions.map(
-            (mission: any, index: number) => {
-              // Match by ID or index+1 (as string) for backward compatibility
-              if (mission.id === id || (index + 1).toString() === id) {
-                missionToUpdate = mission;
-                missionPoints = mission.points || (index + 1) * 5; // Use points from mission or fallback to index-based calculation
+        const updatedMissions = currentTripData.missions.map(
+          (mission: any, index: number) => {
+            // Match by ID or index+1 (as string) for backward compatibility
+            if (mission.id === id || (index + 1).toString() === id) {
+              missionToUpdate = mission;
+              missionPoints = mission.points || (index + 1) * 5; // Use points from mission or fallback to index-based calculation
 
-                // Toggle the completion status
-                return {
-                  ...mission,
-                  completed: newCompletionStatus,
-                };
-              }
-              return mission;
+              // Toggle the completion status
+              return {
+                ...mission,
+                completed: newCompletionStatus,
+              };
             }
-          );
+            return mission;
+          }
+        );
 
-          // Update Firestore with the new missions array
-          await updateDoc(tripRef, {
-            missions: updatedMissions,
-          });
+        // Update Supabase with the new missions array
+        const { error: updateError } = await supabase
+          .from('trips')
+          .update({ missions: updatedMissions })
+          .eq('id', currentTripId);
 
-          // Get current user to update their eco points
-          const user = auth.currentUser;
-          if (user && missionToUpdate) {
-            const userRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userRef);
+        if (updateError) {
+          console.error("Error updating missions:", updateError);
+          return;
+        }
 
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              const currentPoints = userData.ecoPoints || 0;
+        // Get current user to update their eco points
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (user && missionToUpdate) {
+          // Fetch current user data
+          const { data: userData, error: fetchUserError } = await supabase
+            .from('users')
+            .select('eco_points')
+            .eq('id', user.id)
+            .single();
 
-              if (newCompletionStatus) {
-                // If mission is now completed, add points
-                await updateDoc(userRef, {
-                  ecoPoints: currentPoints + missionPoints,
-                });
-                console.log(
-                  `Added ${missionPoints} eco points. New total: ${currentPoints + missionPoints
-                  }`
-                );
-              } else {
-                // If mission is now uncompleted, subtract points (don't go below 0)
-                const newTotal = Math.max(0, currentPoints - missionPoints);
-                await updateDoc(userRef, {
-                  ecoPoints: newTotal,
-                });
-                console.log(
-                  `Removed ${missionPoints} eco points. New total: ${newTotal}`
-                );
-              }
-            }
+          if (fetchUserError) {
+            console.error("Error fetching user data:", fetchUserError);
+            return;
           }
 
-          console.log("Updated mission completion status in Firestore");
-        } else {
-          console.error("Missions array not found in Firestore data");
+          const currentPoints = userData?.eco_points || 0;
+
+          if (newCompletionStatus) {
+            // If mission is now completed, add points
+            const { error: pointsError } = await supabase
+              .from('users')
+              .update({ eco_points: currentPoints + missionPoints })
+              .eq('id', user.id);
+
+            if (pointsError) {
+              console.error("Error updating eco points:", pointsError);
+            } else {
+              console.log(
+                `Added ${missionPoints} eco points. New total: ${currentPoints + missionPoints}`
+              );
+            }
+          } else {
+            // If mission is now uncompleted, subtract points (don't go below 0)
+            const newTotal = Math.max(0, currentPoints - missionPoints);
+            const { error: pointsError } = await supabase
+              .from('users')
+              .update({ eco_points: newTotal })
+              .eq('id', user.id);
+
+            if (pointsError) {
+              console.error("Error updating eco points:", pointsError);
+            } else {
+              console.log(
+                `Removed ${missionPoints} eco points. New total: ${newTotal}`
+              );
+            }
+          }
         }
-      } else {
-        console.error("Trip document not found in Firestore");
       }
     } catch (error) {
       console.error("Error toggling mission completion:", error);
+      // Revert local state on error
+      setMissions((prevMissions) =>
+        prevMissions.map((mission) =>
+          mission.id === id
+            ? { ...mission, completed: !mission.completed }
+            : mission
+        )
+      );
     }
   };
 
