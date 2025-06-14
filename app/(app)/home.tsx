@@ -316,13 +316,20 @@ export default function Home() {
   // Replace fetchUserData with Supabase implementation
   const fetchUserData = async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       
       if (user) {
-        // Get user's first name from user metadata
-        const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'User';
-        setUserName(firstName);
+        const { data, error } = await supabase
+          .from('users')
+          .select('firstname')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setUserName(data.firstname || 'User');
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
