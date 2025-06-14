@@ -51,6 +51,31 @@ export async function signInWithGoogle() {
           const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
           if (sessionError) throw sessionError;
         }
+
+        // Get user data after successful authentication
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        if (user) {
+          // Store user data in the users table
+          const { error: upsertError } = await supabase
+            .from('users')
+            .upsert({
+              user_id: user.id,
+              email: user.email,
+              emailVerified: true,
+              firstname: user.user_metadata?.full_name?.split(' ')[0] || 'User',
+              lastname: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              ecoPoints: 0,
+            //   avatar_url: user.user_metadata?.avatar_url,
+            //   created_at: new Date().toISOString(),
+            //   updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (upsertError) throw upsertError;
+        }
         
         console.log('Google OAuth successful! User is signed in.');
         router.replace('/(app)/home');

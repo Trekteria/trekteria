@@ -11,10 +11,9 @@ import { useRouter, Stack } from "expo-router";
 import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
 import { useState, useEffect } from "react";
-import { auth, db } from "../../../services/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { supabase } from '../../../services/supabaseConfig';
 
 export default function ChangeName() {
   const router = useRouter();
@@ -27,14 +26,26 @@ export default function ChangeName() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setFirstName(userData.firstname || "");
-          setLastName(userData.lastname || "");
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        if (user) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('firstname, lastname')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setFirstName(data.firstname || "");
+            setLastName(data.lastname || "");
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        Alert.alert("Error", "Failed to fetch user data");
       }
     };
     fetchUserData();
@@ -48,16 +59,24 @@ export default function ChangeName() {
 
     setLoading(true);
     try {
-      const user = auth.currentUser;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
       if (user) {
-        await updateDoc(doc(db, "users", user.uid), {
-          firstname: firstName.trim(),
-          lastname: lastName.trim(),
-        });
+        const { error } = await supabase
+          .from('users')
+          .update({
+            firstname: firstName.trim(),
+            lastname: lastName.trim(),
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
         Alert.alert("Success ✓", "Name updated successfully");
         router.back();
       }
     } catch (error) {
+      console.error('Error updating name:', error);
       Alert.alert("Error ✗", "Failed to update name. Please try again.");
     } finally {
       setLoading(false);
