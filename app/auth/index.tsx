@@ -20,6 +20,7 @@ import {
 import { auth, db } from "../../services/firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { signInWithGoogle } from '../../services/googleAuth';
 
 // Main authentication screen component
 export default function AuthIndex() {
@@ -181,19 +182,21 @@ export default function AuthIndex() {
         </TouchableOpacity>
 
         {/* Divider for social login */}
-        {/* <View style={styles.dividerContainer}>
+        <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
           <Text style={[styles.dividerText, { color: theme.inactive }]}>or</Text>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
-        </View> */}
+        </View>
 
         {/* Social login buttons */}
-        {/* <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
+        <TouchableOpacity 
+          style={[styles.socialButton, { borderColor: theme.borderColor }]}
+          onPress={signInWithGoogle}
+        >
           <FontAwesome
             name="google"
             size={24}
             color={theme.text}
-            style={styles.socialIcon}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Google</Text>
         </TouchableOpacity>
@@ -203,10 +206,9 @@ export default function AuthIndex() {
             name="apple"
             size={24}
             color={theme.text}
-            style={styles.socialIcon}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Registration link */}
         <View style={styles.registerContainer}>
