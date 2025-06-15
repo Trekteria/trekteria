@@ -46,10 +46,10 @@ export const generateTripRecommendations = async (
 
     // Construct the prompt with the form summary
     const prompt = `
-    I want a list of the best trips that match my preferences. Each trip should provide a cool and unique experience.  
-    For each trip, return in this format: #name1!location1@keyFeatures1%facilities1#name2!location2@keyFeatures2%facilities2#name3!location3@keyFeatures3%facilities3. Do not return anything else.   
+    I want a list of the best camping trips that match my preferences. Each trip should provide a cool and unique experience.  
+    For each trip, return in this format: #campsiteName1!location1@keyFeatures1%facilities1#campsiteName2!location2@keyFeatures2%facilities2#campsiteName3!location3@keyFeatures3%facilities3. Do not return anything else.   
     Return the top 3.   
-    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The location should be city, state (e.g. "San Francisco, CA"). Name should be the name of the park. Do not specify the trip name.
+    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The location should be city, state (e.g. "San Francisco, CA"). Name should be the name of the campsite. Do not specify the trip name.
     ---
     For context, here are some of my preferences: ${formSummary}
     `;
@@ -143,7 +143,7 @@ export const generateSchedule = async (
 
     // Construct the prompt with the form summary
     const prompt = `
-    I want a detail plan for the trip that match my preferences. Each day should have balanced activities, fun, and relaxation. If the trip is only one day, plan only for that day.
+    I want a detail plan for the camping trip that match my preferences. Each day should have balanced activities, fun, and relaxation. If the trip is only one day, plan only for that day.
     Return in this format: $Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2. Do not return anything else.   
     For example: $02/25/2025(Tue)#Drive from San Jose to Park@11:00AM-12:00PM#Check-in at the park office@12:00PM-1:00PM#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day2#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day3#Drive from Park to San Jose@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$
     Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.
@@ -358,9 +358,9 @@ export const generateChatResponse = async (
 
     // Create a system prompt to guide the model's behavior
     const systemPrompt = `
-You are Trekteria AI, an expert hiking and outdoor adventure assistant, who always follow eco-friendly and sustainable practices.
+You are Trekteria AI, an expert camping and outdoor adventure assistant, who always follow eco-friendly and sustainable practices.
 Follow these guidelines in your responses:
-- Provide helpful, accurate information about hiking, trails, and outdoor activities
+- Provide helpful, accurate information about camping, trails, and outdoor activities
 - Be concise but informative, aim for responses under 250 words, and 100 words is ideal
 - Emphasize safety and environmental responsibility in outdoor activities
 - When appropriate, mention sustainable practices and Leave No Trace principles
@@ -400,7 +400,7 @@ Please tailor your responses to provide specific information relevant to this tr
     : ""
 }
 
-The user is planning a hiking trip. Help them with their questions. If the user asks about the things that are not related to hiking, please say "I'm sorry, I can't help with that."
+The user is planning a camping trip. Help them with their questions. If the user asks about the things that are not related to camping, please say "I'm sorry, I can't help with that."
 `;
 
     // Inject the system prompt into the user's message
@@ -450,7 +450,7 @@ export const checkImageRelevance = async (
 
     // Construct the prompt with the image description
     const prompt = `
-    You are a helpful assistant that evaluates image descriptions. Given a text description, determine whether it is relevant to outdoor trail-related topics such as hiking, nature trips, mountains, lakes, ocean, sky, or wildlife. Return your result "True" or "False". Do not return anything else.
+    You are a helpful assistant that evaluates image descriptions. Given a text description, determine whether it is relevant to outdoor trail-related topics such as camping, nature trips, mountains, lakes, ocean, sky, or wildlife. Return your result "True" or "False". Do not return anything else.
     For your context, here is the text description: ${description} ${altDescription}
     `;
 

@@ -574,7 +574,7 @@ export default function Home() {
   };
 
   const EmptyPlansComponent = () => (
-    <View style={styles.emptyContainer}>
+    <View style={[styles.emptyContainer, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }]}>
       <Ionicons
         name="map-outline"
         size={35}
@@ -629,9 +629,9 @@ export default function Home() {
               {activeTab === 'favorites' ? (
                 <FlatList
                   horizontal
-                  snapToInterval={Dimensions.get('window').width * 0.8}
+                  snapToInterval={Dimensions.get('window').width * 0.9 + 40}
                   decelerationRate="fast"
-                  pagingEnabled
+                  snapToAlignment="center"
                   data={trips}
                   keyExtractor={(item) => item.id || String(Math.random())}
                   renderItem={({ item, index }) => (
@@ -649,9 +649,9 @@ export default function Home() {
               ) : (
                 <FlatList
                   horizontal
-                  snapToInterval={Dimensions.get('window').width * 0.8}
+                  snapToInterval={Dimensions.get('window').width * 0.9 + 40}
                   decelerationRate="fast"
-                  pagingEnabled
+                  snapToAlignment="center"
                   data={plans}
                   keyExtractor={(item) => item.id || String(Math.random())}
                   renderItem={({ item, index }) => (
@@ -765,33 +765,38 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   emptyContainer: {
-    width: Dimensions.get('window').width * 0.85,
+    width: Dimensions.get('window').width * 0.9,
     height: Dimensions.get('window').height * 0.6,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 24,
+    marginLeft: (Dimensions.get('window').width - Dimensions.get('window').width * 0.9) / 2,
     marginRight: 20,
   },
   emptyIcon: {
     marginBottom: 15,
   },
   emptyText: {
+    ...Typography.text.h4,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 5,
+    opacity: 0.5,
   },
   emptySubtext: {
+    ...Typography.text.body,
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
     textAlign: 'center',
+    opacity: 0.5,
   },
   planBox: {
     flex: 1,
-    width: Dimensions.get('window').width * 0.8,
-    height: Dimensions.get('window').height * 0.65,
+    width: Dimensions.get('window').width * 0.9,
+    height: Dimensions.get('window').height * 0.62,
     borderRadius: 30,
     overflow: 'hidden',
+    marginLeft: (Dimensions.get('window').width - Dimensions.get('window').width * 0.9) / 2,
     marginRight: 20,
   },
   planImage: {
