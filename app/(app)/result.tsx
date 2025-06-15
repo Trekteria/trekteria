@@ -208,19 +208,19 @@ export default function Result() {
 
             <View style={styles.detailsContainer}>
               <View style={styles.detailRow}>
-                <Ionicons name="location-outline" size={18} color="white" />
+                <Ionicons name="location-outline" size={16} color="white" />
                 <Text style={styles.detailText}>{trip.location}</Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Ionicons name="leaf-outline" size={18} color="white" />
+                <Ionicons name="leaf-outline" size={16} color="white" />
                 <Text style={styles.detailText}>{trip.keyFeatures}</Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Ionicons
                   name="shield-checkmark-outline"
-                  size={18}
+                  size={16}
                   color="white"
                 />
                 <Text style={styles.detailText}>{trip.facilities}</Text>
@@ -391,22 +391,23 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   tripName: {
-    ...Typography.text.h2,
+    ...Typography.text.h3,
     color: "white",
   },
   detailsContainer: {
     marginTop: 5,
+    paddingRight: 5,
+    gap: 5,
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 3,
-    gap: 5,
+    gap: 3,
   },
   detailText: {
     ...Typography.text.body,
     color: "white",
-    fontSize: 14,
+    fontSize: 12,
     marginLeft: 10,
   },
   dateContainer: {

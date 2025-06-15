@@ -392,7 +392,7 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
       {/* Weather Display with Large Icon */}
       <View style={[styles.weatherSection, { backgroundColor: theme.card }]}>
-        <Text style={[styles.weatherSectionTitle, { color: theme.text }]}>Weather on Trip Date</Text>
+        <Text style={[styles.weatherSectionTitle, { color: theme.text }]}>Current Weather</Text>
 
         {/* Top weather overview */}
         <View style={styles.weatherOverview}>
