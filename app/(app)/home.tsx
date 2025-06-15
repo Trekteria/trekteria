@@ -9,6 +9,7 @@ import {
   Alert,
   BackHandler,
   Dimensions,
+  Animated,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -144,33 +145,107 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   );
 };
 
-interface TabProps {
+// --- BottomTab Component ---
+interface BottomTabProps {
   label: string;
+  icon: React.ReactNode;
   isActive: boolean;
   onPress: () => void;
-  color?: string;
   theme: any;
+  isDarkMode: boolean;
 }
 
-const VerticalTab = ({ label, isActive, onPress, color, theme }: TabProps) => (
-  <TouchableOpacity
-    style={[
-      styles.tabButton,
-      isActive && styles.activeTab
-    ]}
-    onPress={onPress}
-  >
-    <Text
+const BottomTab = ({ label, icon, isActive, onPress, theme, isDarkMode }: BottomTabProps) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(isActive ? 1 : 0.6)).current;
+  const labelOpacityAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+  const labelScaleAnim = useRef(new Animated.Value(isActive ? 1 : 0.8)).current;
+
+  // Animate when active state changes
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacityAnim, {
+        toValue: isActive ? 1 : 0.6,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(labelOpacityAnim, {
+        toValue: isActive ? 1 : 0,
+        duration: isActive ? 400 : 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(labelScaleAnim, {
+        toValue: isActive ? 1 : 0.8,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isActive]);
+
+  const handlePress = () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Scale animation on press
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.92,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    onPress();
+  };
+
+  // Dynamic background color for active tab
+  const activeBgColor = isDarkMode ? '#3A3A3A' : '#ECECEC';
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={1}
       style={[
-        styles.tabText,
-        { color: isActive ? Colors.primary : theme.text },
-        isActive && styles.activeTabText
+        styles.bottomTabButton,
+        isActive && { backgroundColor: activeBgColor },
       ]}
     >
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
+      <Animated.View
+        style={[
+          styles.tabContent,
+          {
+            transform: [{ scale: scaleAnim }],
+            opacity: opacityAnim,
+          },
+        ]}
+      >
+        <Animated.View style={styles.iconContainer}>
+          {icon}
+        </Animated.View>
+        {isActive && (
+          <Animated.View
+            style={[
+              styles.labelContainer,
+              {
+                opacity: labelOpacityAnim,
+                transform: [{ scale: labelScaleAnim }],
+              },
+            ]}
+          >
+            <Text style={[styles.bottomTabText, { color: theme.text }]}>
+              {label}
+            </Text>
+          </Animated.View>
+        )}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 // --- Home Screen Component ---
 export default function Home() {
@@ -185,6 +260,10 @@ export default function Home() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
   const [activeTab, setActiveTab] = useState('favorites');
+
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   const handleTripPress = (trip: Trip) => {
     router.push({
@@ -351,6 +430,43 @@ export default function Home() {
       params: { planId: id },
     });
 
+  // Animated tab change function
+  const handleTabChange = (newTab: string) => {
+    if (newTab === activeTab) return;
+
+    // Start fade out and slide animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: newTab === 'favorites' ? -20 : 20,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Change tab after fade out
+      setActiveTab(newTab);
+
+      // Reset slide position and fade in
+      slideAnim.setValue(newTab === 'favorites' ? 20 : -20);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
+
   // Replace handleDeleteTrip with Supabase implementation
   const handleDeleteTrip = async (tripId: string) => {
     Alert.alert(
@@ -496,70 +612,82 @@ export default function Home() {
 
         {/* Main Content */}
         <View style={styles.mainContent}>
-          {/* Tab Buttons */}
-          <View style={styles.tabContainer}>
-            <VerticalTab
-              label="Favorite Trips"
-              isActive={activeTab === 'favorites'}
-              onPress={() => setActiveTab('favorites')}
-              color={Colors.primary}
-              theme={theme}
-            />
-            <VerticalTab
-              label="My Plans"
-              isActive={activeTab === 'plans'}
-              onPress={() => setActiveTab('plans')}
-              color={theme.text}
-              theme={theme}
-            />
-          </View>
-
           {/* Content Area */}
-          <ScrollView
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
+          <Animated.View
+            style={[
+              styles.animatedContent,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateX: slideAnim }],
+              },
+            ]}
           >
-            {activeTab === 'favorites' ? (
-              <FlatList
-                horizontal
-                snapToInterval={Dimensions.get('window').width * 0.8}
-                decelerationRate="fast"
-                pagingEnabled
-                data={trips}
-                keyExtractor={(item) => item.id || String(Math.random())}
-                renderItem={({ item, index }) => (
-                  <TripBox
-                    item={item}
-                    tripDate={tripDates[item.id || ""] || { startDate: "" }}
-                    onPress={handleTripPress}
-                    onDelete={handleDeleteTrip}
-                    theme={theme}
-                  />
-                )}
-                showsHorizontalScrollIndicator={false}
-                ListEmptyComponent={EmptyPlansComponent}
-              />
-            ) : (
-              <FlatList
-                horizontal
-                snapToInterval={Dimensions.get('window').width * 0.8}
-                decelerationRate="fast"
-                pagingEnabled
-                data={plans}
-                keyExtractor={(item) => item.id || String(Math.random())}
-                renderItem={({ item, index }) => (
-                  <PlanBox
-                    item={item}
-                    onPress={goToTrip}
-                    onDelete={handleDeletePlan}
-                    theme={theme}
-                  />
-                )}
-                showsHorizontalScrollIndicator={false}
-                ListEmptyComponent={EmptyPlansComponent}
-              />
-            )}
-          </ScrollView>
+            <ScrollView
+              style={styles.scrollView}
+              showsVerticalScrollIndicator={false}
+            >
+              {activeTab === 'favorites' ? (
+                <FlatList
+                  horizontal
+                  snapToInterval={Dimensions.get('window').width * 0.8}
+                  decelerationRate="fast"
+                  pagingEnabled
+                  data={trips}
+                  keyExtractor={(item) => item.id || String(Math.random())}
+                  renderItem={({ item, index }) => (
+                    <TripBox
+                      item={item}
+                      tripDate={tripDates[item.id || ""] || { startDate: "" }}
+                      onPress={handleTripPress}
+                      onDelete={handleDeleteTrip}
+                      theme={theme}
+                    />
+                  )}
+                  showsHorizontalScrollIndicator={false}
+                  ListEmptyComponent={EmptyPlansComponent}
+                />
+              ) : (
+                <FlatList
+                  horizontal
+                  snapToInterval={Dimensions.get('window').width * 0.8}
+                  decelerationRate="fast"
+                  pagingEnabled
+                  data={plans}
+                  keyExtractor={(item) => item.id || String(Math.random())}
+                  renderItem={({ item, index }) => (
+                    <PlanBox
+                      item={item}
+                      onPress={goToTrip}
+                      onDelete={handleDeletePlan}
+                      theme={theme}
+                    />
+                  )}
+                  showsHorizontalScrollIndicator={false}
+                  ListEmptyComponent={EmptyPlansComponent}
+                />
+              )}
+            </ScrollView>
+          </Animated.View>
+        </View>
+
+        {/* Bottom Tab Bar */}
+        <View style={[styles.bottomTabBar, { backgroundColor: isDarkMode ? '#232323' : theme.background }]}>
+          <BottomTab
+            label="Favorites"
+            icon={<Ionicons name="heart-outline" size={28} color={theme.text} />}
+            isActive={activeTab === 'favorites'}
+            onPress={() => handleTabChange('favorites')}
+            theme={theme}
+            isDarkMode={isDarkMode}
+          />
+          <BottomTab
+            label="My Plans"
+            icon={<Ionicons name="map-outline" size={28} color={theme.text} />}
+            isActive={activeTab === 'plans'}
+            onPress={() => handleTabChange('plans')}
+            theme={theme}
+            isDarkMode={isDarkMode}
+          />
         </View>
       </View>
     </DarkModeBackground>
@@ -606,35 +734,9 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    flexDirection: 'row',
   },
-  tabContainer: {
-    width: 60,
-    paddingTop: Dimensions.get('window').height * 0.1,
-    alignItems: 'center',
-    gap: Dimensions.get('window').height * 0.1,
-  },
-  tabButton: {
-    width: 200,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Dimensions.get('window').height * 0.05,
-  },
-  activeTab: {
-    opacity: 1,
-  },
-  tabText: {
-    ...Typography.text.h3,
-    letterSpacing: 0.5,
-    transform: [{ rotate: '-90deg' }],
-    width: 150,
-    textAlign: 'center',
-  },
-  activeTabText: {
-    textDecorationLine: 'underline',
-    textDecorationColor: Colors.primary,
-    textDecorationStyle: 'solid',
+  animatedContent: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -726,6 +828,53 @@ const styles = StyleSheet.create({
   planLocation: {
     ...Typography.text.h2,
     color: 'white',
+  },
+  tabContainer: {
+    display: 'none',
+  },
+  bottomTabBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 100,
+    marginHorizontal: '22%',
+    marginBottom: 30,
+    padding: 5,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  bottomTabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 100,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomTabText: {
+    ...Typography.text.h4,
+    color: '#fff',
   },
 });
 
