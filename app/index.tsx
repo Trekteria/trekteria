@@ -4,6 +4,7 @@ import { Redirect } from "expo-router";
 import { Colors } from "../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../services/supabaseConfig";
+import { checkSession, handleSessionChange } from "../services/sessionManager";
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
@@ -13,15 +14,16 @@ export default function Index() {
 
   useEffect(() => {
     let isMounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-    // Check if user is logged in via Supabase
-    const checkLoginStatus = async () => {
+    const setupApp = async () => {
       try {
+        console.log('🚀 Starting app initialization...');
+        
         // Check onboarding status
-        const onboardingStatus = await AsyncStorage.getItem(
-          "hasCompletedOnboarding"
-        );
+        const onboardingStatus = await AsyncStorage.getItem("hasCompletedOnboarding");
         if (onboardingStatus === "true" && isMounted) {
+          console.log('📝 Onboarding completed');
           setHasCompletedOnboarding(true);
         }
 
@@ -42,48 +44,47 @@ export default function Index() {
           }
         );
 
-        return subscription;
+        authSubscription = subscription;
+
+        // Start with a delay before beginning the fade out
+        const delayTimer = setTimeout(() => {
+          if (!isMounted) return;
+
+          // Fade out animation
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }).start(() => {
+            if (isMounted) {
+              console.log('✨ Splash screen animation completed');
+              setIsReady(true);
+            }
+          });
+        }, 1500);
+
+        return () => {
+          clearTimeout(delayTimer);
+          if (authSubscription) {
+            authSubscription.unsubscribe();
+          }
+        };
       } catch (error) {
-        console.error("Failed to get login status:", error);
+        console.error("❌ Error in setupApp:", error);
         if (isMounted) {
           setIsLoggedIn(false);
+          setIsReady(true);
         }
-        return null;
       }
-    };
-
-    // Run login check and splash screen animation
-    const setupApp = async () => {
-      const authSubscription = await checkLoginStatus();
-
-      // Start with a delay before beginning the fade out
-      const delayTimer = setTimeout(() => {
-        if (!isMounted) return;
-
-        // Fade out animation
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500, // Shorter duration of fade out in milliseconds
-          useNativeDriver: true,
-        }).start(() => {
-          // Set ready state after animation completes
-          if (isMounted) {
-            setIsReady(true);
-          }
-        });
-      }, 1500); // Show splash for 1.5 seconds before starting fade
-
-      return () => {
-        clearTimeout(delayTimer);
-        if (authSubscription) authSubscription.unsubscribe();
-      };
     };
 
     setupApp();
 
-    // Cleanup function
     return () => {
       isMounted = false;
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [fadeAnim]);
 
@@ -115,14 +116,13 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    display: "flex",
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.light.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 200,
+    height: 200,
   },
 });
