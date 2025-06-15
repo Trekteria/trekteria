@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>TrailMate</string>
+    <string>Trekteria</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
+          <string>trekteria</string>
           <string>com.trailmate.app</string>
         </array>
       </dict>
@@ -52,17 +52,17 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Allow Trail Mate to access your camera for trip photos.</string>
+    <string>Allow Trekteria to access your camera for trip photos.</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2024 Trail Mate</string>
+    <string>Copyright © 2024 Trekteria</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Allow Trail Mate to access your location for trail features.</string>
+    <string>Allow Trekteria to access your location for trail features.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allow Trail Mate to access your photos for sharing and saving trip memories.</string>
+    <string>Allow Trekteria to access your photos for sharing and saving trip memories.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "TrailMate.app"
-               BlueprintName = "trailmate"
-               ReferencedContainer = "container:trailmate.xcodeproj">
+               BuildableName = "Trekteria.app"
+               BlueprintName = "Trekteria"
+               ReferencedContainer = "container:Trekteria.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "trailmateTests.xctest"
-               BlueprintName = "trailmateTests"
-               ReferencedContainer = "container:trailmate.xcodeproj">
+               BuildableName = "TrekteriaTests.xctest"
+               BlueprintName = "TrekteriaTests"
+               ReferencedContainer = "container:Trekteria.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "TrailMate.app"
-            BlueprintName = "trailmate"
-            ReferencedContainer = "container:trailmate.xcodeproj">
+            BuildableName = "Trekteria.app"
+            BlueprintName = "Trekteria"
+            ReferencedContainer = "container:Trekteria.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "TrailMate.app"
-            BlueprintName = "trailmate"
-            ReferencedContainer = "container:trailmate.xcodeproj">
+            BuildableName = "Trekteria.app"
+            BlueprintName = "Trekteria"
+            ReferencedContainer = "container:Trekteria.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

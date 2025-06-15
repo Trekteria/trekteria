@@ -6,8 +6,6 @@ import {
   Image,
   ScrollView,
   FlatList,
-  Animated,
-  Easing,
   Alert,
   BackHandler,
   Dimensions,
@@ -39,129 +37,44 @@ interface Plan extends PlanType {
 const placeholderImage =
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070&auto=format&fit=crop";
 
-// --- Reusable Jiggle Animation Hook ---
-const useJiggleAnimation = (isEditing: boolean, maxDelayMs: number = 0) => {
-  const rotation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    let animationSequence: Animated.CompositeAnimation | null = null;
-    let isMounted = true; // Helper to prevent state updates on unmounted component
-
-    if (isEditing) {
-      const calculatedDelay = maxDelayMs > 0 ? Math.random() * maxDelayMs : 0;
-
-      // Sequence: Delay -> Loop
-      animationSequence = Animated.sequence([
-        Animated.delay(calculatedDelay), // Apply the random delay first
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(rotation, {
-              toValue: 1.5,
-              duration: 150,
-              useNativeDriver: true,
-              easing: Easing.out(Easing.ease),
-            }),
-            Animated.timing(rotation, {
-              toValue: -1.5,
-              duration: 150,
-              useNativeDriver: true,
-              easing: Easing.out(Easing.ease),
-            }),
-            // Add rotation back to 0 for smoother elastic loop
-            Animated.timing(rotation, {
-              toValue: 0,
-              duration: 150,
-              useNativeDriver: true,
-              easing: Easing.inOut(Easing.ease),
-            }),
-          ])
-        ),
-      ]);
-      animationSequence.start();
-    } else {
-      // Stop any existing animation and reset smoothly
-      rotation.stopAnimation(() => {
-        // Check if component is still mounted and not editing before resetting
-        if (isMounted && !isEditing) {
-          Animated.timing(rotation, {
-            toValue: 0,
-            duration: 150,
-            useNativeDriver: true,
-            easing: Easing.ease,
-          }).start();
-        }
-      });
-    }
-
-    // Cleanup function to stop animation on unmount or when isEditing becomes false
-    return () => {
-      isMounted = false;
-      animationSequence?.stop(); // Stop the sequence (delay or loop)
-      rotation.stopAnimation(); // Ensure rotation itself stops
-    };
-  }, [isEditing, rotation]);
-
-  const animatedStyle = {
-    transform: [
-      {
-        rotate: rotation.interpolate({
-          inputRange: [-1, 1],
-          outputRange: ["-1deg", "1deg"],
-        }),
-      },
-    ],
-  };
-
-  return animatedStyle;
-};
-
 // --- TripBox Component ---
 interface TripBoxProps {
   item: Trip;
   tripDate: { startDate: string; endDate?: string };
-  isEditing: boolean;
   onPress: (item: Trip) => void;
   onDelete: (id: string) => void;
-  animationDelay?: number;
   theme: any;
 }
 
 const TripBox: React.FC<TripBoxProps> = ({
   item,
   tripDate,
-  isEditing,
   onPress,
   onDelete,
-  animationDelay = 0,
   theme,
 }) => {
-  const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
-
   let dateText = "No date";
   if (tripDate?.startDate) {
     dateText = formatDateRange(tripDate.startDate, tripDate.endDate);
   }
 
   return (
-    <Animated.View style={[styles.animatedBox, animatedStyle]}>
-      {isEditing && (
-        <TouchableOpacity
-          style={[styles.deleteButton, { backgroundColor: theme.background }]}
-          onPress={() => item.id && onDelete(item.id)}
-        >
-          <Ionicons name="remove-outline" size={28} color={theme.text} />
-        </TouchableOpacity>
-      )}
+    <View style={styles.animatedBox}>
+      <TouchableOpacity
+        style={[styles.deleteButton]}
+        onPress={() => item.id && onDelete(item.id)}
+      >
+        <Ionicons name="heart" size={30} color={Colors.white} />
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.planBox}
         onPress={() => onPress(item)}
-        disabled={isEditing}
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "rgba(0,0,0,1)"]}
+          colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0)", "rgba(0,0,0,0.7)", "rgba(0,0,0,1)"]}
           style={styles.planOverlay}
-          locations={[0, 0.4, 1]}
+          locations={[0, 0.3, 0.5, 0.8, 1]}
         />
         <View style={styles.planInfo}>
           <Text style={styles.planName}>{item.name}</Text>
@@ -173,30 +86,24 @@ const TripBox: React.FC<TripBoxProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 };
 
 // --- PlanBox Component ---
 interface PlanBoxProps {
   item: Plan;
-  isEditing: boolean;
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
-  animationDelay?: number;
   theme: any;
 }
 
 const PlanBox: React.FC<PlanBoxProps> = ({
   item,
-  isEditing,
   onPress,
   onDelete,
-  animationDelay = 0,
   theme,
 }) => {
-  const animatedStyle = useJiggleAnimation(isEditing, animationDelay);
-
   const location = item.preferences?.location || "No location";
   let dateText = "No date";
   if (item.preferences?.dateRange?.startDate) {
@@ -207,25 +114,22 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   }
 
   return (
-    <Animated.View style={[styles.animatedBox, animatedStyle]}>
-      {isEditing && (
-        <TouchableOpacity
-          style={[styles.deleteButton, { backgroundColor: theme.background }]}
-          onPress={() => item.id && onDelete(item.id)}
-        >
-          <Ionicons name="remove-outline" size={28} color={theme.text} />
-        </TouchableOpacity>
-      )}
+    <View style={styles.animatedBox}>
+      <TouchableOpacity
+        style={[styles.deleteButton, { backgroundColor: theme.background }]}
+        onPress={() => item.id && onDelete(item.id)}
+      >
+        <Ionicons name="trash" size={28} color={theme.text} />
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.planBox}
         onPress={() => onPress(item.id || "")}
-        disabled={isEditing}
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)", "rgba(0,0,0,1)"]}
+          colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.2)", "rgba(0,0,0,0)", "rgba(0,0,0,0.7)", "rgba(0,0,0,1)"]}
           style={styles.planOverlay}
-          locations={[0, 0.5, 1]}
+          locations={[0, 0.3, 0.5, 0.8, 1]}
         />
         <View style={styles.planInfo}>
           <View style={styles.planMetaRow}>
@@ -236,7 +140,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -280,8 +184,6 @@ export default function Home() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
-  const [isPlansEditing, setIsPlansEditing] = useState(false);
-  const [isTripsEditing, setIsTripsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('favorites');
 
   const handleTripPress = (trip: Trip) => {
@@ -438,9 +340,6 @@ export default function Home() {
       fetchUserData(); // Replace fetchUserName with fetchUserData
       fetchTrips();
       fetchPlans();
-      // Reset edit modes when screen focuses
-      setIsPlansEditing(false);
-      setIsTripsEditing(false);
     }, [])
   );
 
@@ -566,21 +465,12 @@ export default function Home() {
         color={Colors.inactive}
         style={styles.emptyIcon}
       />
-      <Text style={styles.emptyText}>No items found</Text>
-      <Text style={styles.emptySubtext}>
+      <Text style={[styles.emptyText, { color: isDarkMode ? '#FFFFFF' : theme.text }]}>No items found</Text>
+      <Text style={[styles.emptySubtext, { color: isDarkMode ? '#FFFFFF' : theme.text }]}>
         Start planning your first adventure!
       </Text>
     </View>
   );
-
-  const toggleEditMode = () => {
-    if (activeTab === 'favorites') {
-      setIsTripsEditing(!isTripsEditing);
-    } else {
-      setIsPlansEditing(!isPlansEditing);
-    }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
 
   return (
     <DarkModeBackground>
@@ -641,10 +531,8 @@ export default function Home() {
                   <TripBox
                     item={item}
                     tripDate={tripDates[item.id || ""] || { startDate: "" }}
-                    isEditing={isTripsEditing}
                     onPress={handleTripPress}
                     onDelete={handleDeleteTrip}
-                    animationDelay={index * 100}
                     theme={theme}
                   />
                 )}
@@ -662,10 +550,8 @@ export default function Home() {
                 renderItem={({ item, index }) => (
                   <PlanBox
                     item={item}
-                    isEditing={isPlansEditing}
                     onPress={goToTrip}
                     onDelete={handleDeletePlan}
-                    animationDelay={index * 100}
                     theme={theme}
                   />
                 )}
@@ -675,22 +561,6 @@ export default function Home() {
             )}
           </ScrollView>
         </View>
-
-        {/* Floating Action Button */}
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            { backgroundColor: isDarkMode ? '#FFFFFF30' : theme.background }
-          ]}
-          onPress={toggleEditMode}
-        >
-          <Ionicons
-            name={(activeTab === 'favorites' ? isTripsEditing : isPlansEditing) ? "checkmark-outline" : "pencil"}
-            size={24}
-            color={isDarkMode ? '#FFFFFF' : theme.primary}
-          />
-          <Text style={[styles.fabText, { color: isDarkMode ? '#FFFFFF' : theme.primary }]}>{isTripsEditing || isPlansEditing ? "Done" : "Edit"}</Text>
-        </TouchableOpacity>
       </View>
     </DarkModeBackground>
   );
@@ -775,10 +645,10 @@ const styles = StyleSheet.create({
   deleteButton: {
     position: 'absolute',
     top: 10,
-    right: 10,
+    right: 30,
     zIndex: 1,
     padding: 8,
-    borderRadius: 20,
+    borderRadius: 100,
   },
   dateContainer: {
     backgroundColor: '#DBDBDB30',
@@ -805,7 +675,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   emptyText: {
-    color: 'white',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 5,
@@ -833,7 +702,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '50%',
+    height: '100%',
   },
   planInfo: {
     position: 'absolute',
@@ -857,28 +726,6 @@ const styles = StyleSheet.create({
   planLocation: {
     ...Typography.text.h2,
     color: 'white',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderRadius: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 5.84,
-  },
-  fabText: {
-    ...Typography.text.h4,
-    marginLeft: 8,
   },
 });
 
