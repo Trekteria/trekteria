@@ -44,17 +44,7 @@ export default function Index() {
           }
         );
 
-        return subscription;
-      } catch (error) {
-        console.error("Failed to get login status:", error);
-        if (isMounted) {
-          setIsLoggedIn(hasSession);
-        }
-
-        // Set up auth state change listener
-        console.log('👂 Setting up auth state change listener...');
-        authSubscription = await handleSessionChange();
-        console.log('✅ Auth state change listener set up successfully');
+        authSubscription = subscription;
 
         // Start with a delay before beginning the fade out
         const delayTimer = setTimeout(() => {
@@ -82,6 +72,7 @@ export default function Index() {
       } catch (error) {
         console.error("❌ Error in setupApp:", error);
         if (isMounted) {
+          setIsLoggedIn(false);
           setIsReady(true);
         }
       }
