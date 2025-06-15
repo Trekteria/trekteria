@@ -10,6 +10,7 @@ import {
   BackHandler,
   Dimensions,
   Animated,
+  Easing,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -45,6 +46,7 @@ interface TripBoxProps {
   onPress: (item: Trip) => void;
   onDelete: (id: string) => void;
   theme: any;
+  isDeleting?: boolean;
 }
 
 const TripBox: React.FC<TripBoxProps> = ({
@@ -53,14 +55,78 @@ const TripBox: React.FC<TripBoxProps> = ({
   onPress,
   onDelete,
   theme,
+  isDeleting = false,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isDeleting) {
+      Animated.sequence([
+        // Initial bounce effect
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 200,
+          friction: 15,
+          useNativeDriver: true,
+        }),
+        // Main delete animation with bounce and rotation
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 0,
+            tension: 50,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.back(1.5)),
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateYAnim, {
+            toValue: -50,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [isDeleting]);
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '10deg'],
+  });
+
   let dateText = "No date";
   if (tripDate?.startDate) {
     dateText = formatDateRange(tripDate.startDate, tripDate.endDate);
   }
 
   return (
-    <View style={styles.animatedBox}>
+    <Animated.View
+      style={[
+        styles.animatedBox,
+        {
+          transform: [
+            { scale: scaleAnim },
+            { rotate: rotateInterpolate },
+            { translateY: translateYAnim },
+          ],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
       <TouchableOpacity
         style={[styles.deleteButton]}
         onPress={() => item.id && onDelete(item.id)}
@@ -87,7 +153,7 @@ const TripBox: React.FC<TripBoxProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -97,6 +163,7 @@ interface PlanBoxProps {
   onPress: (id: string) => void;
   onDelete: (id: string) => void;
   theme: any;
+  isDeleting?: boolean;
 }
 
 const PlanBox: React.FC<PlanBoxProps> = ({
@@ -104,7 +171,59 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   onPress,
   onDelete,
   theme,
+  isDeleting = false,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isDeleting) {
+      Animated.sequence([
+        // Initial bounce effect
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          tension: 200,
+          friction: 15,
+          useNativeDriver: true,
+        }),
+        // Main delete animation with bounce and rotation
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 0,
+            tension: 50,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.back(1.5)),
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateYAnim, {
+            toValue: -50,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [isDeleting]);
+
+  const rotateInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-10deg'],
+  });
+
   const location = item.preferences?.location || "No location";
   let dateText = "No date";
   if (item.preferences?.dateRange?.startDate) {
@@ -115,7 +234,19 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   }
 
   return (
-    <View style={styles.animatedBox}>
+    <Animated.View
+      style={[
+        styles.animatedBox,
+        {
+          transform: [
+            { scale: scaleAnim },
+            { rotate: rotateInterpolate },
+            { translateY: translateYAnim },
+          ],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
       <TouchableOpacity
         style={[styles.deleteButton, { backgroundColor: theme.background }]}
         onPress={() => item.id && onDelete(item.id)}
@@ -141,7 +272,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -260,6 +391,7 @@ export default function Home() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
   const [activeTab, setActiveTab] = useState('favorites');
+  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -478,31 +610,53 @@ export default function Home() {
           text: "Remove",
           style: "destructive",
           onPress: async () => {
-            try {
-              const { data: { user }, error: userError } = await supabase.auth.getUser();
-              if (userError) throw userError;
+            // Add haptic feedback
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-              if (!user) {
-                console.error("User must be logged in to remove trip from favorites");
-                return;
+            // Start delete animation
+            setDeletingItems(prev => new Set(prev).add(tripId));
+
+            // Wait for animation to complete
+            setTimeout(async () => {
+              try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError) throw userError;
+
+                if (!user) {
+                  console.error("User must be logged in to remove trip from favorites");
+                  return;
+                }
+
+                // Update the trip's bookmarked status in Supabase
+                const { error: updateError } = await supabase
+                  .from('trips')
+                  .update({ bookmarked: false })
+                  .eq('trip_id', tripId);
+
+                if (updateError) throw updateError;
+
+                // Update local trips state
+                setTrips((prevTrips) =>
+                  prevTrips.filter((trip) => trip.id !== tripId)
+                );
+
+                // Remove from deleting items
+                setDeletingItems(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(tripId);
+                  return newSet;
+                });
+              } catch (error) {
+                console.error("Error removing trip from favorites:", error);
+                Alert.alert("Error", "Could not remove trip from favorites.");
+                // Remove from deleting items on error
+                setDeletingItems(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(tripId);
+                  return newSet;
+                });
               }
-
-              // Update the trip's bookmarked status in Supabase
-              const { error: updateError } = await supabase
-                .from('trips')
-                .update({ bookmarked: false })
-                .eq('trip_id', tripId);
-
-              if (updateError) throw updateError;
-
-              // Update local trips state
-              setTrips((prevTrips) =>
-                prevTrips.filter((trip) => trip.id !== tripId)
-              );
-            } catch (error) {
-              console.error("Error removing trip from favorites:", error);
-              Alert.alert("Error", "Could not remove trip from favorites.");
-            }
+            }, 1000);
           },
         },
       ]
@@ -520,53 +674,75 @@ export default function Home() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            try {
-              // 1. Fetch the plan to get tripIds
-              const { data: plan, error: planError } = await supabase
-                .from('plans')
-                .select('tripIds')
-                .eq('plan_id', planId)
-                .single();
+            // Add haptic feedback
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-              if (planError) throw planError;
+            // Start delete animation
+            setDeletingItems(prev => new Set(prev).add(planId));
 
-              if (plan && plan.tripIds) {
-                // 2. Delete associated trips
-                const { error: tripsError } = await supabase
-                  .from('trips')
-                  .delete()
-                  .in('trip_id', plan.tripIds);
+            // Wait for animation to complete
+            setTimeout(async () => {
+              try {
+                // 1. Fetch the plan to get tripIds
+                const { data: plan, error: planError } = await supabase
+                  .from('plans')
+                  .select('tripIds')
+                  .eq('plan_id', planId)
+                  .single();
 
-                if (tripsError) throw tripsError;
+                if (planError) throw planError;
 
-                // Delete cache for each trip
-                for (const tripId of plan.tripIds) {
-                  await deleteCachedTrailData(tripId);
-                  await deleteCachedChatMessages(tripId);
+                if (plan && plan.tripIds) {
+                  // 2. Delete associated trips
+                  const { error: tripsError } = await supabase
+                    .from('trips')
+                    .delete()
+                    .in('trip_id', plan.tripIds);
+
+                  if (tripsError) throw tripsError;
+
+                  // Delete cache for each trip
+                  for (const tripId of plan.tripIds) {
+                    await deleteCachedTrailData(tripId);
+                    await deleteCachedChatMessages(tripId);
+                  }
+
+                  // Update local trips state
+                  setTrips((prevTrips) =>
+                    prevTrips.filter((trip) => !plan.tripIds.includes(trip.id || ""))
+                  );
                 }
 
-                // Update local trips state
-                setTrips((prevTrips) =>
-                  prevTrips.filter((trip) => !plan.tripIds.includes(trip.id || ""))
+                // 3. Delete the plan
+                const { error: deletePlanError } = await supabase
+                  .from('plans')
+                  .delete()
+                  .eq('plan_id', planId);
+
+                if (deletePlanError) throw deletePlanError;
+
+                // 4. Update local plans state
+                setPlans((prevPlans) =>
+                  prevPlans.filter((plan) => plan.id !== planId)
                 );
+
+                // Remove from deleting items
+                setDeletingItems(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(planId);
+                  return newSet;
+                });
+              } catch (error) {
+                console.error("Error deleting plan and associated trips:", error);
+                Alert.alert("Error", "Could not delete plan or its trips.");
+                // Remove from deleting items on error
+                setDeletingItems(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(planId);
+                  return newSet;
+                });
               }
-
-              // 3. Delete the plan
-              const { error: deletePlanError } = await supabase
-                .from('plans')
-                .delete()
-                .eq('plan_id', planId);
-
-              if (deletePlanError) throw deletePlanError;
-
-              // 4. Update local plans state
-              setPlans((prevPlans) =>
-                prevPlans.filter((plan) => plan.id !== planId)
-              );
-            } catch (error) {
-              console.error("Error deleting plan and associated trips:", error);
-              Alert.alert("Error", "Could not delete plan or its trips.");
-            }
+            }, 1000);
           },
         },
       ]
@@ -602,13 +778,15 @@ export default function Home() {
         </View>
 
         {/* Plan a Trip Button */}
-        <TouchableOpacity
-          style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background }]}
-          onPress={goToTripPlanning}
-        >
-          <Ionicons name="map-outline" size={20} color={theme.text} />
-          <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
-        </TouchableOpacity>
+        <View style={{ width: '100%', paddingHorizontal: 20 }}>
+          <TouchableOpacity
+            style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background }]}
+            onPress={goToTripPlanning}
+          >
+            <Ionicons name="map-outline" size={20} color={theme.text} />
+            <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Main Content */}
         <View style={styles.mainContent}>
@@ -641,6 +819,7 @@ export default function Home() {
                       onPress={handleTripPress}
                       onDelete={handleDeleteTrip}
                       theme={theme}
+                      isDeleting={deletingItems.has(item.id || "")}
                     />
                   )}
                   showsHorizontalScrollIndicator={false}
@@ -660,6 +839,7 @@ export default function Home() {
                       onPress={goToTrip}
                       onDelete={handleDeletePlan}
                       theme={theme}
+                      isDeleting={deletingItems.has(item.id || "")}
                     />
                   )}
                   showsHorizontalScrollIndicator={false}
@@ -697,11 +877,13 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
     marginVertical: 20,
   },
@@ -716,8 +898,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 20,
     padding: 20,
+    width: '100%',
     borderRadius: 100,
     marginBottom: 20,
     shadowColor: '#000',
@@ -842,13 +1024,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
-    marginHorizontal: '22%',
     marginBottom: 30,
     padding: 5,
-    position: 'absolute',
+    position: 'relative',
     left: 0,
     right: 0,
-    bottom: 20,
+    bottom: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
