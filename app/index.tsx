@@ -19,7 +19,7 @@ export default function Index() {
     const setupApp = async () => {
       try {
         console.log('🚀 Starting app initialization...');
-        
+
         // Check onboarding status
         const onboardingStatus = await AsyncStorage.getItem("hasCompletedOnboarding");
         if (onboardingStatus === "true" && isMounted) {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 80,
+    height: 80,
   },
 });

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "TrailMate",
+    "name": "Trekteria",
     "slug": "trail-mate",
     "owner": "trail-mate",
     "version": "1.0.0",
-    "description": "Trail Mate helps you plan, pack, and chat for your next adventure.",
+    "description": "Trekteria helps you plan, pack, and chat for your next adventure.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "trekteria",
@@ -17,10 +17,10 @@
       "appleTeamId": "5H4VD3F5J6",
       "buildNumber": "3",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow Trail Mate to access your camera for trip photos.",
-        "NSLocationWhenInUseUsageDescription": "Allow Trail Mate to access your location for trail features.",
-        "NSPhotoLibraryUsageDescription": "Allow Trail Mate to access your photos for sharing and saving trip memories.",
-        "NSHumanReadableCopyright": "Copyright © 2024 Trail Mate"
+        "NSCameraUsageDescription": "Allow Trekteria to access your camera for trip photos.",
+        "NSLocationWhenInUseUsageDescription": "Allow Trekteria to access your location for trail features.",
+        "NSPhotoLibraryUsageDescription": "Allow Trekteria to access your photos for sharing and saving trip memories.",
+        "NSHumanReadableCopyright": "Copyright © 2024 Trekteria"
       }
     },
     "android": {
@@ -50,7 +50,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 80,
           "resizeMode": "contain",
-          "backgroundColor": "#1D6A54"
+          "backgroundColor": "#2F5D50"
         }
       ],
       "expo-sqlite"
