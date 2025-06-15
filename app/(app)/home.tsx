@@ -183,7 +183,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
       Animated.sequence([
         // Initial bounce effect
         Animated.spring(scaleAnim, {
-          toValue: 1.1,
+          toValue: 1,
           tension: 200,
           friction: 15,
           useNativeDriver: true,
