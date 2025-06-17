@@ -14,19 +14,39 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// Specify the model
+// Specify the model - using the correct Gemma model identifier
 const model = genAI.getGenerativeModel({
   model: "gemma-3-27b-it",
 });
 
-// Configuration for the generative model
+// Configuration for the generative model - reduced temperature for more accurate responses
 const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 64,
+  temperature: 0.3, // Reduced from 1.0 for more consistent, accurate responses
+  topP: 0.8, // Reduced from 0.95 for more focused responses
+  topK: 40, // Reduced from 64 for more predictable outputs
   maxOutputTokens: 8192,
   responseMimeType: "text/plain",
 };
+
+// Safety settings to prevent harmful content
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+];
 
 /**
  * Generate hiking trip recommendations based on user preferences
@@ -41,24 +61,49 @@ export const generateTripRecommendations = async (
     // Initialize chat session
     const chatSession = model.startChat({
       generationConfig,
+      safetySettings,
       history: [],
     });
 
-    // Construct the prompt with the form summary
+    // Construct the prompt with the form summary - improved prompt engineering
     const prompt = `
-    I want a list of the best camping trips that match my preferences. Each trip should provide a cool and unique experience.  
-    For each trip, return in this format: #campsiteName1!location1@keyFeatures1%facilities1#campsiteName2!location2@keyFeatures2%facilities2#campsiteName3!location3@keyFeatures3%facilities3. Do not return anything else.   
-    Return the top 3.   
-    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The location should be city, state (e.g. "San Francisco, CA"). Name should be the name of the campsite. Do not specify the trip name.
-    ---
-    For context, here are some of my preferences: ${formSummary}
-    `;
+You are an expert camping and outdoor recreation assistant. Your task is to recommend 3 real, existing camping locations that match the user's preferences.
+
+IMPORTANT REQUIREMENTS:
+1. Only recommend REAL, VERIFIED camping locations that actually exist
+2. Use exact, correct location names and addresses
+3. Provide accurate information about facilities and features
+4. If you're unsure about any details, use "N/A" instead of guessing
+
+FORMAT REQUIREMENTS:
+Return exactly in this format (no additional text):
+#campsiteName1!location1@keyFeatures1%facilities1#campsiteName2!location2@keyFeatures2%facilities2#campsiteName3!location3@keyFeatures3%facilities3
+
+Where:
+- campsiteName: Official name of the campsite/park
+- location: City, State format (e.g., "Yosemite Valley, CA")
+- keyFeatures: 3 main attractions or features (short description)
+- facilities: Top 3 available amenities (restrooms, water, etc.) (short description)
+
+EXAMPLE:
+#Yosemite Valley Campground!Yosemite Valley, CA@Stunning granite cliffs, waterfalls, wildlife viewing%Restrooms, potable water, picnic tables, fire rings#Joshua Tree National Park!Twentynine Palms, CA@Unique desert landscape, rock climbing, stargazing%Vault toilets, picnic tables, fire rings#Big Sur Campground!Big Sur, CA@Coastal views, redwood forests, hiking trails%Flush toilets, showers, store, restaurant
+
+User preferences: ${formSummary}
+
+Remember: Only provide real, verified locations with accurate information.
+`;
 
     // Send the prompt to Gemini
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
 
     console.log("Response from Gemini:", response);
+
+    // Validate response format
+    if (!response || !response.includes("#") || !response.includes("!")) {
+      console.error("Invalid response format from Gemini:", response);
+      return "#N/A!N/A@N/A%N/A#N/A!N/A@N/A%N/A#N/A!N/A@N/A%N/A";
+    }
 
     return response;
   } catch (error) {
@@ -80,21 +125,40 @@ export const generateInfo = async (
     // Initialize chat session
     const chatSession = model.startChat({
       generationConfig,
+      safetySettings,
       history: [],
     });
 
-    // Construct the prompt with the form summary
+    // Construct the prompt with improved accuracy requirements
     const prompt = `
-    Please provide me with some information about the trip ${tripName}.
-    For context, here are my preferences: ${preferences}. 
-    Return the information in this format:
-    #address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel#warnings. Do not return anything else.
+You are an expert camping and outdoor recreation assistant. Provide accurate information about the camping location: ${tripName}
 
-    Example format:
-    #123 Main St, San Francisco, CA#This is a great park with a lot of activities for the whole family.#Generally good, but can be spotty in deeper canyon areas.#https://www.google.com#(123) 456-7890#Easy#Trail closure in north section; bring extra water during summer months; watch for wildlife.
+IMPORTANT REQUIREMENTS:
+1. Only provide VERIFIED, ACCURATE information
+2. If you're unsure about any details, use "N/A" instead of guessing
+3. Use real addresses, phone numbers, and websites when available
+4. Provide realistic, practical information
 
-    Be careful to make sure that the name of the location is correct, that is actually exists, and the format is EXACTLY as shown in the example. The address should be the address of the park and phone number, and website should be correct. If you are not sure about the info, return "N/A" for that field.
-    `;
+FORMAT REQUIREMENTS:
+Return exactly in this format (no additional text):
+#address#description#mobileCellServiceConditions#parkWebsite#parkContact#difficultyLevel#warnings
+
+Where:
+- address: Actual address of the park/campsite
+- description: Brief, accurate description of the location
+- mobileCellServiceConditions: Realistic cell service conditions
+- parkWebsite: Official website URL (or "N/A" if unknown)
+- parkContact: Official phone number (or "N/A" if unknown)
+- difficultyLevel: Easy/Moderate/Difficult based on terrain
+- warnings: Real safety warnings or "N/A" if none
+
+EXAMPLE FORMAT:
+#123 Main St, Yosemite Valley, CA#Beautiful campground in Yosemite National Park with stunning views of Half Dome and waterfalls.#Generally good service, but can be spotty in canyon areas.#https://www.nps.gov/yose#(209) 372-0200#Easy#Watch for wildlife; bring bear-proof containers; check weather conditions.
+
+User preferences: ${preferences}
+
+Remember: Only provide verified, accurate information. Use "N/A" for unknown details.
+`;
 
     const result = await chatSession.sendMessage(prompt);
     const response = result.response.text();
@@ -138,19 +202,37 @@ export const generateSchedule = async (
     // Initialize chat session
     const chatSession = model.startChat({
       generationConfig,
+      safetySettings,
       history: [],
     });
 
-    // Construct the prompt with the form summary
+    // Construct the prompt with improved accuracy and realism
     const prompt = `
-    I want a detail plan for the camping trip that match my preferences. Each day should have balanced activities, fun, and relaxation. If the trip is only one day, plan only for that day.
-    Return in this format: $Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2. Do not return anything else.   
-    For example: $02/25/2025(Tue)#Drive from San Jose to Park@11:00AM-12:00PM#Check-in at the park office@12:00PM-1:00PM#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day2#Hike the main trail@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$Day3#Drive from Park to San Jose@1:00PM-3:00PM#Lunch at the park restaurant@3:00PM-4:00PM#Afternoon hike@4:00PM-6:00PM#Dinner at the park restaurant@6:00PM-7:00PM#Relax at the campsite@7:00PM-9:00PM#Sleep$
-    Be careful to make sure that the name of the locations and activities are correct, that is actually exists, and the format is EXACTLY as shown in the example. Plan should carefully consider the weather, and the activities should be appropriate for the weather and user preferences.
-    ---
-    For context, here is my trip name: ${tripName}
-    For context, here are my preferences: ${preferences}. 
-    `;
+You are an expert camping and outdoor recreation planner. Create a realistic, practical schedule for the camping trip: ${tripName}
+
+IMPORTANT REQUIREMENTS:
+1. Create REALISTIC, ACHIEVABLE activities and timeframes
+2. Consider typical camping logistics (setup, meals, rest)
+3. Include appropriate breaks and transition times
+4. Plan for 1-3 days maximum unless specified otherwise
+5. Use realistic activity durations
+
+FORMAT REQUIREMENTS:
+Return exactly in this format (no additional text):
+$Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2
+
+Where:
+- Day1, Day2, etc.: Day number or date
+- activity: Realistic camping activity
+- startTime-endTime: 24-hour format (e.g., 09:00AM-11:00AM)
+
+EXAMPLE FORMAT:
+$Day 1#Arrive and set up camp@10:00AM-11:30AM#Hike main trail@12:00PM-2:00PM#Lunch and rest@2:00PM-3:00PM#Explore nearby area@3:00PM-5:00PM#Prepare dinner@5:00PM-6:00PM#Campfire and relaxation@6:00PM-9:00PM#Sleep@9:00PM-7:00AM$Day 2#Morning hike@8:00AM-10:00AM#Breakfast@10:00AM-11:00AM#Pack up camp@11:00AM-12:00PM#Depart@12:00PM-1:00PM
+
+User preferences: ${preferences}
+
+Remember: Create practical, realistic schedules that campers can actually follow.
+`;
 
     // Send the prompt to Gemini
     const result = await chatSession.sendMessage(prompt);
@@ -196,26 +278,39 @@ export const generateTripMissions = async (
     // Initialize chat session
     const chatSession = model.startChat({
       generationConfig,
+      safetySettings,
       history: [],
     });
 
-    // Construct the prompt with the form summary
+    // Construct the prompt with improved clarity and specificity
     const prompt = `
-    I want a list of the best 5 missions that match my preferences. Each mission should:
-    - Be related to the environmental science
-    - Help the traveler learn about or contribute to the local environment
-    - Be easy, achievable and engaging
-    - Start with easiest one, and gradually increase in difficulty
-    - Include a short, engaging emoji at the start
-    - Be unique and not repetitive based on the trip
-    - Be formatted as a simple, short sentence, direct instruction, and no participial phrase
-    Example mission: "🌿 Observe and photograph 5 different plant species along the trail"
-    Return ONLY a string with 5 missions, seperated by #. Do not return anything else.
-    Example format: mission1#mission2#mission3#mission4#mission5;
-    ---
-    For context, here is my trip name: ${tripName}
-    For context, here are my preferences: ${preferences}. 
-    `;
+You are an expert outdoor education and environmental science specialist. Create 5 engaging, educational missions for the camping trip: ${tripName}
+
+MISSION REQUIREMENTS:
+1. Each mission should be educational and environmentally focused
+2. Missions should be achievable for typical campers
+3. Start with easiest missions and gradually increase difficulty
+4. Include a relevant emoji at the start of each mission
+5. Make missions specific to the trip location when possible
+6. Focus on environmental learning and conservation
+
+FORMAT REQUIREMENTS:
+Return exactly in this format (no additional text):
+mission1#mission2#mission3#mission4#mission5
+
+Where each mission:
+- Starts with a relevant emoji
+- Is a clear, actionable instruction
+- Is educational and environmentally focused
+- Is achievable for the average camper
+
+EXAMPLE FORMAT:
+🌿 Identify and photograph 5 different plant species along the trail#📊 Count and record wildlife sightings during your hike#♻️ Collect and properly dispose of any litter you find#🌱 Learn about local invasive species and how to identify them#📝 Document the weather conditions and their impact on the environment
+
+User preferences: ${preferences}
+
+Remember: Create educational, achievable missions that enhance the camping experience and environmental awareness.
+`;
 
     // Send the prompt to Gemini
     const result = await chatSession.sendMessage(prompt);
@@ -253,32 +348,47 @@ export const generatePackingList = async (
 ): Promise<string> => {
   if (!tripName) {
     console.error("Trip name is undefined or empty in generatePackingList");
-    return "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
+    return "💧 Water bottle#🥾 Hiking boots#🧴 Sunscreen#🎒 Backpack#🕶️ Sunglasses#📷 Camera";
   }
 
   try {
     // Initialize chat session
     const chatSession = model.startChat({
       generationConfig,
+      safetySettings,
       history: [],
     });
 
-    // Construct the prompt with the form summary
+    // Construct the prompt with improved specificity and realism focus
     const prompt = `
-    I want a list of essential 10-15 packing items that match my preferences and trip. Each item should:
-    - Be necessary and enhance the experience for this specific trip
-    - Be practical, easy to carry, and realistically useful
-    - Be simple, compact, and most importantly, eco-friendly
-    - Include a short, relevant emoji at the start and space between the emoji and item name
-    - Be unique and not repetitive based on the trip
-    - Include only item name
-    - First item to include: 💧 Refillable Water bottle
-    Return ONLY a string with packing items, seperated by #. Do not return anything else.
-    Example format: item1#item2#item3#item4#item5#item6#item7
-    ---
-    For context, here is my trip name: ${tripName}
-    For context, here are my preferences: ${preferences}. 
-    `;
+You are an expert outdoor gear specialist. Create a practical packing list for the camping trip: ${tripName}
+
+PACKING LIST REQUIREMENTS:
+1. Include 10-15 essential items for this specific trip
+2. Focus on practical, realistic items that campers actually need and use
+3. Consider the trip location, weather, and user preferences
+4. Include items that are commonly used and readily available
+5. Start with the most essential items first
+6. Include a relevant emoji for each item
+7. Prioritize functionality and practicality over specialty items
+
+FORMAT REQUIREMENTS:
+Return exactly in this format (no additional text):
+item1#item2#item3#item4#item5#item6#item7#item8#item9#item10
+
+Where each item:
+- Starts with a relevant emoji
+- Is a practical, essential camping item
+- Is commonly used and readily available
+- Is specific to the trip needs and conditions
+
+EXAMPLE FORMAT:
+💧 Water bottle#🥾 Hiking boots#🧴 Sunscreen#🎒 Backpack#🕶️ Sunglasses#📷 Camera#🔦 Flashlight#🧥 Jacket#🍽️ Food and snacks#🛏️ Sleeping bag
+
+User preferences: ${preferences}
+
+Remember: Create a practical, realistic packing list with items that campers will actually use and need for this specific trip.
+`;
 
     // Send the prompt to Gemini
     const result = await chatSession.sendMessage(prompt);
@@ -312,7 +422,7 @@ export const generatePackingList = async (
     };
 
     const defaultPackingList =
-      "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
+      "💧 Water bottle#🥾 Hiking boots#🧴 Sunscreen#🎒 Backpack#🕶️ Sunglasses#📷 Camera";
 
     return validateResponse(
       response,
@@ -322,7 +432,7 @@ export const generatePackingList = async (
     );
   } catch (error) {
     console.error("Error generating packing items:", error);
-    return "💧 Refillable Water bottle#🥾 Hiking boots#🧴 Mineral Sunscreen#🎒 Reusable Backpack#🕶️ Sunglasses (bamboo frame)#📷 Camera (capture memories)";
+    return "💧 Water bottle#🥾 Hiking boots#🧴 Sunscreen#🎒 Backpack#🕶️ Sunglasses#📷 Camera";
   }
 };
 
