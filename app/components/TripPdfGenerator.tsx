@@ -7,6 +7,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Trip as TripType } from '../../types/Types';
 import { Colors } from '../../constants/Colors';
+import { trackEvent } from '../../services/analyticsService';
 
 interface TripPdfGeneratorProps {
   tripId: string;
@@ -354,7 +355,13 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
           <Text style={styles.loadingText}>Preparing your trip document...</Text>
         </View>
       )}
-      <TouchableOpacity style={styles.downloadButton} onPress={handleDownloadTripInfo}>
+      <TouchableOpacity style={styles.downloadButton} onPress={() => {
+        trackEvent('trip_pdf_downloaded', {
+          trip_id: tripId,
+          category: 'trip_interaction'
+        });
+        handleDownloadTripInfo();
+      }}>
         <Ionicons name="download-outline" size={20} color={Colors.white} />
       </TouchableOpacity>
     </>

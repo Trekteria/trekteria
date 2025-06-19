@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trackScreen, trackPreferencesEvent, trackEvent } from '../../services/analyticsService';
 import { processRecommendations } from '@/services/recommendationService';
 import { supabase } from '@/services/supabaseConfig';
 import { useColorScheme } from '../../hooks/useColorScheme';
@@ -63,6 +64,10 @@ export default function Preferences() {
      useEffect(() => {
           AsyncStorage.multiRemove(['tripSummary', 'tripError', 'lastPlanId'])
                .catch((err: Error) => console.error("Error clearing previous data:", err));
+
+          // Track screen view
+          trackScreen('preferences');
+          trackPreferencesEvent('preferences_viewed');
      }, []);
 
      const initialFormData: Question[] = [
@@ -199,6 +204,15 @@ export default function Preferences() {
 
      const handleNext = async () => {
           if (currentQuestion < formData.length - 1) {
+               // Track progression through questions
+               trackEvent('preferences_question_answered', {
+                    question_number: currentQuestion + 1,
+                    question_type: formData[currentQuestion].type,
+                    question_text: formData[currentQuestion].question,
+                    answer_value: formData[currentQuestion].value,
+                    category: 'preferences'
+               });
+
                slideAnimation.value = withTiming(-1, {
                     duration: 200,
                     easing: Easing.out(Easing.ease),
@@ -213,6 +227,13 @@ export default function Preferences() {
           } else {
                // Submit form
                setLoading(true);
+
+               // Track form completion
+               trackEvent('preferences_form_submitted', {
+                    total_questions: formData.length,
+                    completion_time_ms: Date.now(), // You can calculate actual time if needed
+                    category: 'preferences'
+               });
 
                try {
                     const formattedData = formData.map((question) => {

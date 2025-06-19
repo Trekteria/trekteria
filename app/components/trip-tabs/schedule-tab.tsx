@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../../../services/supabaseConfig";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
+import { trackScreen, trackEvent } from "../../../services/analyticsService";
 
 // Add interface for component props
 interface ScheduleTabProps {
@@ -31,6 +32,15 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  // Track tab view
+  useEffect(() => {
+    trackScreen('trip_schedule_tab');
+    trackEvent('trip_schedule_tab_viewed', {
+      trip_id: tripId,
+      category: 'trip_interaction'
+    });
+  }, [tripId]);
 
   // Fetch schedule from Supabase or tripData
   useEffect(() => {
@@ -96,6 +106,14 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
 
   const goToPreviousDay = () => {
     if (currentDayIndex > 0) {
+      trackEvent('schedule_day_navigation', {
+        trip_id: tripId,
+        direction: 'previous',
+        from_day: currentDayIndex + 1,
+        to_day: currentDayIndex,
+        category: 'trip_interaction'
+      });
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setCurrentDayIndex(currentDayIndex - 1);
     }
@@ -103,6 +121,14 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
 
   const goToNextDay = () => {
     if (currentDayIndex < schedule.length - 1) {
+      trackEvent('schedule_day_navigation', {
+        trip_id: tripId,
+        direction: 'next',
+        from_day: currentDayIndex + 1,
+        to_day: currentDayIndex + 2,
+        category: 'trip_interaction'
+      });
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setCurrentDayIndex(currentDayIndex + 1);
     }
