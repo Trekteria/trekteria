@@ -241,8 +241,7 @@ export default function Result() {
 
         {routePlanId ? (
           <>
-            <Text style={[styles.title, { color: theme.primary }]}>Your Saved Trip</Text>
-            <Text style={[styles.secondTitle, { color: theme.primary }]}>Trip Details</Text>
+            <Text style={[styles.title, { color: theme.primary }]}>Recommended Trips</Text>
           </>
         ) : (
           <>
@@ -297,19 +296,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   scrollView: {
+    marginTop: 10,
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 20,
+    height: "100%",
   },
   closeButton: {
     zIndex: 10,
-    marginBottom: 20,
+    marginBottom: 0,
   },
   title: {
     ...Typography.text.h2,
-    marginBottom: 5,
     textAlign: "left",
+    marginVertical: 10,
   },
   secondTitle: {
     ...Typography.text.h1,
@@ -362,13 +362,17 @@ const styles = StyleSheet.create({
     color: "white",
   },
   tripsContainer: {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    justifyContent: "space-between",
     marginBottom: 30,
   },
   tripCard: {
-    marginBottom: 10,
     borderRadius: 20,
     overflow: "hidden",
-    height: 210,
+    height: "32.5%",
     elevation: 4,
   },
   cardOverlay: {

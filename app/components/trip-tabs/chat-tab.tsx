@@ -368,11 +368,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                          onPress={handleSend}
                          disabled={sending || !newMessage.trim()}
                     >
-                         {sending ? (
-                              <ActivityIndicator size="small" color="white" />
-                         ) : (
-                              <Ionicons name="send" size={24} color="white" />
-                         )}
+                         <Ionicons name="send" size={24} color="white" />
                     </TouchableOpacity>
                </View>
           </KeyboardAvoidingView>
@@ -422,7 +418,8 @@ const styles = StyleSheet.create({
      },
      messageText: {
           ...Typography.text.body,
-          fontSize: 16,
+          fontSize: 14,
+          lineHeight: 22,
      },
      inputContainer: {
           flexDirection: "row",

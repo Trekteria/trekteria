@@ -505,7 +505,7 @@ ${
     : ""
 }
 
-Please tailor your responses to provide specific information relevant to this trip when appropriate.
+Please tailor your responses to provide specific information relevant to this trip when appropriate. Do not include enter new lines at the end of your response.
 `
     : ""
 }

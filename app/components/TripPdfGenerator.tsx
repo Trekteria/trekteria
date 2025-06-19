@@ -350,11 +350,11 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
 
   return (
     <>
-      {pdfGenerating && (
+      {/* {pdfGenerating && (
         <View style={styles.loadingOverlay}>
           <Text style={styles.loadingText}>Preparing your trip document...</Text>
         </View>
-      )}
+      )} */}
       <TouchableOpacity style={styles.downloadButton} onPress={() => {
         trackEvent('trip_pdf_downloaded', {
           trip_id: tripId,
@@ -362,7 +362,7 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
         });
         handleDownloadTripInfo();
       }}>
-        <Ionicons name="download-outline" size={20} color={Colors.white} />
+        <Ionicons name="print-outline" size={20} color={Colors.white} />
       </TouchableOpacity>
     </>
   );
