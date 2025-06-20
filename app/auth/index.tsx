@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { signInWithGoogle } from '../../services/googleAuth';
+import { supabase } from '../../services/supabaseConfig';
 
 // Main authentication screen component
 export default function AuthIndex() {
@@ -34,8 +35,38 @@ export default function AuthIndex() {
       return;
     }
 
-    console.log("Attempting to log in with email:", email);
-    console.log("Password:", password);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: password,
+      });
+
+      if (error) {
+        console.error("Login error:", error.message);
+        alert(error.message);
+        return;
+      }
+
+      if (data.user) {
+        // Check if email is verified in Supabase Auth
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        if (user && user.email_confirmed_at) {
+          // Update your users table
+          await supabase
+            .from('users')
+            .update({ emailVerified: true })
+            .eq('user_id', user.id);
+        }
+
+        console.log("User logged in successfully:", data.user.email);
+        router.replace('/(app)/home');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred during login. Please try again.");
+    }
   };
 
   // Handles forgot password
@@ -46,7 +77,22 @@ export default function AuthIndex() {
       return;
     }
 
-    console.log("Attempting to reset password for email:", email);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: 'https://www.trekteria.com/',
+      });
+
+      if (error) {
+        console.error("Password reset error:", error.message);
+        alert(error.message);
+        return;
+      }
+
+      alert("Password reset instructions have been sent to your email.");
+    } catch (error) {
+      console.error("Password reset error:", error);
+      alert("An error occurred while sending reset instructions. Please try again.");
+    }
   };
 
   // Navigate to the signup screen
@@ -74,7 +120,7 @@ export default function AuthIndex() {
       {/* Login form */}
       <View style={styles.form}>
         {/* Email input */}
-        {/* <View style={styles.inputContainer}>
+        <View style={styles.inputContainer}>
           <TextInput
             style={[
               styles.input,
@@ -91,10 +137,10 @@ export default function AuthIndex() {
             value={email}
             onChangeText={setEmail}
           />
-        </View> */}
+        </View>
 
         {/* Password input with visibility toggle */}
-        {/* <View style={styles.inputContainer}>
+        <View style={styles.inputContainer}>
           <View style={[
             styles.passwordContainer,
             {
@@ -121,30 +167,30 @@ export default function AuthIndex() {
               />
             </TouchableOpacity>
           </View>
-        </View> */}
+        </View>
 
         {/* Login button */}
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={[styles.loginButton, { backgroundColor: theme.buttonBackground }]}
           onPress={handleLogin}
         >
           <Text style={[styles.loginButtonText, { color: theme.buttonText }]}>Log In</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Forgot password link */}
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.forgotPassword}
           onPress={handleForgotPassword}
         >
           <Text style={[styles.forgotPasswordText, { color: theme.text }]}>Forgot your Password?</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Divider for social login */}
-        {/* <View style={styles.dividerContainer}>
+        <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
           <Text style={[styles.dividerText, { color: theme.inactive }]}>or</Text>
           <View style={[styles.divider, { backgroundColor: theme.inactive }]} />
-        </View> */}
+        </View>
 
         {/* Social login buttons */}
         <TouchableOpacity
@@ -159,22 +205,22 @@ export default function AuthIndex() {
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        {/* <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
+        <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
           <FontAwesome
             name="apple"
             size={24}
             color={theme.text}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Registration link */}
-        {/* <View style={styles.registerContainer}>
+        <View style={styles.registerContainer}>
           <Text style={[styles.registerText, { color: theme.inactive }]}>Not a member? </Text>
           <TouchableOpacity onPress={handleSignup}>
             <Text style={[styles.registerLink, { color: theme.primary }]}>Register now</Text>
           </TouchableOpacity>
-        </View> */}
+        </View>
       </View>
     </View>
   );

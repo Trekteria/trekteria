@@ -8,6 +8,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -15,6 +16,7 @@ import { Typography } from "../../constants/Typography";
 import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { supabase } from "../../services/supabaseConfig";
 
 export default function Signup() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Get color scheme
   const { effectiveColorScheme } = useColorScheme();
@@ -37,17 +40,123 @@ export default function Signup() {
   const handleSignup = async () => {
     // Validate that all fields are filled
     if (!firstname || !lastname || !email || !password || !confirmPassword) {
-      alert("Please fill in all fields.");
+      Alert.alert("Error ✗", "Please fill in all fields.");
       return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      Alert.alert("Error ✗", "Passwords do not match.");
       return;
     }
 
-    console.log("Attempting to sign up with email:", email);
+    // Validate password length
+    if (password.length < 6) {
+      Alert.alert("Error ✗", "Password must be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('Starting signup process for email:', email.trim());
+      
+      // Sign up the user with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: {
+            firstname: firstname.trim(),
+            lastname: lastname.trim(),
+          },
+          // emailRedirectTo: 'trekteria://auth/callback',
+          emailRedirectTo: 'https://www.trekteria.com/',
+        },
+      });
+
+      // Check for duplicate email error
+      if (error) {
+        if (
+          error.message.toLowerCase().includes("user already registered") ||
+          error.message.toLowerCase().includes("user already exists") ||
+          error.message.toLowerCase().includes("email")
+        ) {
+          Alert.alert("You already have an account", "You already have an account, try logging in.");
+          setLoading(false);
+          return;
+        }
+        Alert.alert("Error ✗", error.message);
+        setLoading(false);
+        return;
+      }
+
+      console.log('Signup successful, user data:', data);
+
+      if (data.user) {
+        console.log('Creating user profile in database...');
+        
+        // Store user data in the users table
+        const { error: upsertError } = await supabase
+          .from('users')
+          .upsert({
+            user_id: data.user.id,
+            email: data.user.email,
+            emailVerified: false,
+            firstname: firstname.trim(),
+            lastname: lastname.trim(),
+            ecoPoints: 0,
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (upsertError) {
+          console.error("Error storing user data:", upsertError);
+          Alert.alert("Error ✗", "Failed to create user profile. Please try again.");
+          return;
+        }
+
+        console.log('User profile created successfully');
+
+        // Check if email confirmation is required
+        if (data.session === null) {
+          console.log('Email confirmation required');
+          Alert.alert(
+            "Verification Email Sent ↗",
+            "Please check your email to verify your account before logging in. If you don't see the email, please check your spam folder.",
+            [
+              {
+                text: "Resend Email",
+                onPress: async () => {
+                  try {
+                    const { error: resendError } = await supabase.auth.resend({
+                      type: 'signup',
+                      email: email.trim(),
+                    });
+                    if (resendError) throw resendError;
+                    Alert.alert("Success ✓", "Verification email has been resent.");
+                  } catch (error) {
+                    console.error("Error resending verification email:", error);
+                    Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
+                  }
+                },
+              },
+              {
+                text: "OK",
+                onPress: () => router.replace("/auth"),
+              },
+            ]
+          );
+        } else {
+          console.log('No email confirmation required, user is already verified');
+          router.replace('/(app)/home');
+        }
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      Alert.alert("Error ✗", "An error occurred during signup. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Function to navigate back to the login screen
@@ -207,10 +316,17 @@ export default function Signup() {
 
           {/* Register Button */}
           <TouchableOpacity
-            style={[styles.signupButton, { backgroundColor: theme.buttonBackground }]}
+            style={[
+              styles.signupButton,
+              { backgroundColor: theme.buttonBackground },
+              loading && styles.buttonDisabled
+            ]}
             onPress={handleSignup}
+            disabled={loading}
           >
-            <Text style={[styles.signupButtonText, { color: theme.buttonText }]}>Register</Text>
+            <Text style={[styles.signupButtonText, { color: theme.buttonText }]}>
+              {loading ? "Creating Account..." : "Register"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -283,6 +399,9 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     alignItems: "center",
     marginTop: 10,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   signupButtonText: {
     ...Typography.text.button,
