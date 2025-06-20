@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { supabase } from "../../services/supabaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../hooks/useTemperatureUnit";
 import { Share } from "react-native";
+import { trackScreen, trackEvent, analyticsService } from "../../services/analyticsService";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -29,15 +30,36 @@ export default function SettingsPage() {
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
+  // Track screen view
+  useEffect(() => {
+    trackScreen('settings');
+  }, []);
+
   const handleLogout = async () => {
     try {
+      trackEvent('settings_logout_clicked', {
+        category: 'authentication'
+      });
+
       const { error } = await supabase.auth.signOut();
       if (error) {
+        trackEvent('settings_logout_failed', {
+          error_message: error.message,
+          category: 'authentication'
+        });
         Alert.alert("Error", "Failed to log out. Please try again.");
       } else {
+        trackEvent('settings_logout_success', {
+          category: 'authentication'
+        });
+        analyticsService.clearUser();
         router.replace("/auth");
       }
     } catch (error) {
+      trackEvent('settings_logout_failed', {
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        category: 'authentication'
+      });
       Alert.alert("Error", "Failed to log out. Please try again.");
     }
   };
@@ -153,6 +175,11 @@ export default function SettingsPage() {
                   temperatureUnit === "°F" && { backgroundColor: Colors.primary + '20' }
                 ]}
                 onPress={() => {
+                  trackEvent('settings_temperature_unit_changed', {
+                    new_unit: '°F',
+                    previous_unit: temperatureUnit,
+                    category: 'preferences'
+                  });
                   setTemperatureUnit("°F");
                   setShowTemperatureModal(false);
                 }}
@@ -169,6 +196,11 @@ export default function SettingsPage() {
                   temperatureUnit === "°C" && { backgroundColor: Colors.primary + '20' }
                 ]}
                 onPress={() => {
+                  trackEvent('settings_temperature_unit_changed', {
+                    new_unit: '°C',
+                    previous_unit: temperatureUnit,
+                    category: 'preferences'
+                  });
                   setTemperatureUnit("°C");
                   setShowTemperatureModal(false);
                 }}
@@ -257,6 +289,11 @@ export default function SettingsPage() {
                   colorScheme === "light" && { backgroundColor: Colors.primary + '20' }
                 ]}
                 onPress={() => {
+                  trackEvent('settings_theme_changed', {
+                    new_theme: 'light',
+                    previous_theme: colorScheme,
+                    category: 'preferences'
+                  });
                   setColorScheme("light");
                   setShowThemeModal(false);
                 }}
@@ -273,6 +310,11 @@ export default function SettingsPage() {
                   colorScheme === "dark" && { backgroundColor: Colors.primary + '20' }
                 ]}
                 onPress={() => {
+                  trackEvent('settings_theme_changed', {
+                    new_theme: 'dark',
+                    previous_theme: colorScheme,
+                    category: 'preferences'
+                  });
                   setColorScheme("dark");
                   setShowThemeModal(false);
                 }}
@@ -289,6 +331,11 @@ export default function SettingsPage() {
                   colorScheme === "system" && { backgroundColor: Colors.primary + '20' }
                 ]}
                 onPress={() => {
+                  trackEvent('settings_theme_changed', {
+                    new_theme: 'system',
+                    previous_theme: colorScheme,
+                    category: 'preferences'
+                  });
                   setColorScheme("system");
                   setShowThemeModal(false);
                 }}

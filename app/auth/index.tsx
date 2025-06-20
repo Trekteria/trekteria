@@ -10,11 +10,12 @@ import {
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import { Typography } from "../../constants/Typography";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { signInWithGoogle } from '../../services/googleAuth';
+import { trackScreen, trackAuthEvent, trackEvent } from '../../services/analyticsService';
 import { supabase } from '../../services/supabaseConfig';
 
 // Main authentication screen component
@@ -26,6 +27,11 @@ export default function AuthIndex() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  // Track screen view
+  useEffect(() => {
+    trackScreen('auth_signin');
+  }, []);
 
   // Handles user login
   const handleLogin = async () => {
@@ -195,7 +201,14 @@ export default function AuthIndex() {
         {/* Social login buttons */}
         <TouchableOpacity
           style={[styles.socialButton, { borderColor: theme.borderColor }]}
-          onPress={signInWithGoogle}
+          onPress={() => {
+            trackEvent('google_signin_button_clicked', {
+              method: 'google',
+              screen: 'auth_signin',
+              category: 'authentication'
+            });
+            signInWithGoogle();
+          }}
         >
           <FontAwesome
             name="google"

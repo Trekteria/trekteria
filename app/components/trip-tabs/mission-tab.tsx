@@ -12,6 +12,7 @@ import { Typography } from "../../../constants/Typography";
 import { Colors } from "../../../constants/Colors";
 import { supabase } from "../../../services/supabaseConfig";
 import { useColorScheme } from "../../../hooks/useColorScheme";
+import { trackScreen, trackEvent } from "../../../services/analyticsService";
 
 // Add this interface to define the component props
 interface MissionTabProps {
@@ -26,6 +27,15 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  // Track tab view
+  useEffect(() => {
+    trackScreen('trip_mission_tab');
+    trackEvent('trip_mission_tab_viewed', {
+      trip_id: tripId,
+      category: 'trip_interaction'
+    });
+  }, [tripId]);
 
   // Fetch missions from Supabase or tripData
   useEffect(() => {
@@ -212,6 +222,13 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             if (pointsError) {
               console.error("Error updating eco points:", pointsError);
             } else {
+              trackEvent('mission_completed', {
+                trip_id: currentTripId,
+                mission_id: id,
+                points_earned: missionPoints,
+                new_total_points: currentPoints + missionPoints,
+                category: 'mission_interaction'
+              });
               console.log(
                 `Added ${missionPoints} eco points. New total: ${currentPoints + missionPoints}`
               );
@@ -227,6 +244,13 @@ export default function MissionTab({ tripId, tripData }: MissionTabProps) {
             if (pointsError) {
               console.error("Error updating eco points:", pointsError);
             } else {
+              trackEvent('mission_uncompleted', {
+                trip_id: currentTripId,
+                mission_id: id,
+                points_lost: missionPoints,
+                new_total_points: newTotal,
+                category: 'mission_interaction'
+              });
               console.log(
                 `Removed ${missionPoints} eco points. New total: ${newTotal}`
               );

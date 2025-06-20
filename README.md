@@ -1,24 +1,23 @@
-# TrailMate ⛰️
+# Trekteria ⛰️
 
-![TrailMate App](assets/images/app-cover.jpg)
+![Trekteria App](assets/images/app-cover.png)
 
-TrailMate is an eco-friendly trail exploration app helping outdoor enthusiasts discover and enjoy nature sustainably.
+Trekteria is a trail exploration app helping outdoor enthusiasts discover and enjoy nature.
 
 ## About
 
-TrailMate combines technology with environmental consciousness to enhance your outdoor adventures:
+Trekteria enhances your outdoor adventures with smart technology:
 
-- **Smart TrailFinder**: Personalized trails based on preferences, difficulty level, and environmental impact
+- **Smart TrailFinder**: Personalized trails based on preferences, difficulty level, and location
 - **AI Trail Assistant**: Real-time guidance and survival tips about local ecosystems
-- **Trip Planner**: Weather-aware routing, viewpoints, and sustainable campsite options
-- **Smart Eco Packing**: Minimalist packing lists with environmentally friendly alternatives
-- **Eco Missions**: Environmental challenges with rewards to track your positive impact
+- **Trip Planner**: Weather-aware routing, viewpoints, and campsite options
+- **Smart Packing**: Minimalist packing lists and gear recommendations
 
 ## Beta Access
 
 We're currently inviting users to join our beta program!
 
-👉 [Get Early Access](https://trytrailmate.vercel.app/)
+👉 [Get Early Access](https://www.trekteria.com/)
 
 ## Development
 
@@ -37,12 +36,12 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 
 ## Links
 
-- [Website](https://trytrailmate.vercel.app/)
-- [Features](https://trytrailmate.vercel.app/#features)
-- [Contact Us](https://trytrailmate.vercel.app/#contact)
+- [Website](https://www.trekteria.com/)
+- [Features](https://www.trekteria.com//#features)
+- [Contact Us](https://www.trekteria.com//#contact)
 - [Architectural Design](https://github.com/Trail-Mate/trail-mate/blob/main/Architecture.png)
 - [Additional Diagrams](https://github.com/Trail-Mate/trail-mate/tree/main/diagrams)
-  
+
 ## Development Team
 
 - **Erik Hein** - _Full-stack Developer & Visual Designer_ - [LinkedIn](https://www.linkedin.com/in/erikhein/)
@@ -51,11 +50,12 @@ This is an [Expo](https://expo.dev) project. To run it locally:
 
 ## Diagrams
 
-Class Diagram 
+Class Diagram
+
 ```
-/diagrams/TrailMate Class Diagram.pdf
+/diagrams/Trekteria Class Diagram.pdf
 ```
 
 ## License
 
-© 2025 TrailMate. All rights reserved.
+© 2025 Trekteria. All rights reserved.

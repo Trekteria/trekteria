@@ -20,6 +20,7 @@ import { useColorScheme } from "../../../hooks/useColorScheme";
 import { supabase } from "../../../services/supabaseConfig";
 import { generateChatResponse } from "../../../services/geminiService";
 import { v4 as uuidv4 } from 'uuid';
+import { trackScreen, trackEvent } from "../../../services/analyticsService";
 
 // Message type definition
 interface Message {
@@ -107,6 +108,15 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      const { effectiveColorScheme } = useColorScheme();
      const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
+
+     // Track tab view
+     useEffect(() => {
+          trackScreen('trip_chat_tab');
+          trackEvent('trip_chat_tab_viewed', {
+               trip_id: tripId,
+               category: 'trip_interaction'
+          });
+     }, [tripId]);
 
      // Load trip details and chat messages
      useEffect(() => {
@@ -206,6 +216,13 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                     timestamp: new Date().toISOString()
                };
 
+               // Track message sent
+               trackEvent('trip_chat_message_sent', {
+                    trip_id: tripId,
+                    message_length: userMessage.text.length,
+                    category: 'trip_interaction'
+               });
+
                // Save user message
                await saveMessage(userMessage);
 
@@ -239,10 +256,22 @@ export default function ChatTab({ tripId }: ChatTabProps) {
 
                await saveMessage(botMessage);
 
+               // Track AI response received
+               trackEvent('trip_chat_ai_response_received', {
+                    trip_id: tripId,
+                    response_length: aiResponse.length,
+                    category: 'ai_interaction'
+               });
+
                // Auto-scroll to bottom again after bot response
                scrollViewRef.current?.scrollToEnd({ animated: true });
           } catch (error) {
                console.error("Error sending message:", error);
+               trackEvent('trip_chat_error', {
+                    trip_id: tripId,
+                    error_message: error instanceof Error ? error.message : 'Unknown error',
+                    category: 'ai_interaction'
+               });
                Alert.alert("Error", "Failed to send message");
           } finally {
                setSending(false);
@@ -339,11 +368,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                          onPress={handleSend}
                          disabled={sending || !newMessage.trim()}
                     >
-                         {sending ? (
-                              <ActivityIndicator size="small" color="white" />
-                         ) : (
-                              <Ionicons name="send" size={24} color="white" />
-                         )}
+                         <Ionicons name="send" size={24} color="white" />
                     </TouchableOpacity>
                </View>
           </KeyboardAvoidingView>
@@ -393,7 +418,8 @@ const styles = StyleSheet.create({
      },
      messageText: {
           ...Typography.text.body,
-          fontSize: 16,
+          fontSize: 14,
+          lineHeight: 22,
      },
      inputContainer: {
           flexDirection: "row",

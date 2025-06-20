@@ -5,6 +5,7 @@ import { Colors } from "../constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../services/supabaseConfig";
 import { checkSession, handleSessionChange } from "../services/sessionManager";
+import { analyticsService } from "../services/analyticsService";
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
@@ -19,6 +20,9 @@ export default function Index() {
     const setupApp = async () => {
       try {
         console.log('🚀 Starting app initialization...');
+
+        // Initialize analytics
+        await analyticsService.initialize();
 
         // Check onboarding status
         const onboardingStatus = await AsyncStorage.getItem("hasCompletedOnboarding");

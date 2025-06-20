@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { supabase } from "../../../services/supabaseConfig";
 import { Trip } from "../../../types/Types";
+import { trackScreen, trackEvent } from "../../../services/analyticsService";
 
 // Add interface for component props
 interface PackingTabProps {
@@ -54,6 +55,15 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   // Ref to hold the current trip ID
   const currentTripIdRef = useRef<string>("");
+
+  // Track tab view
+  useEffect(() => {
+    trackScreen('trip_packing_tab');
+    trackEvent('trip_packing_tab_viewed', {
+      trip_id: tripId,
+      category: 'trip_interaction'
+    });
+  }, [tripId]);
 
   // Fetch packing items from Supabase or tripData
   useEffect(() => {
@@ -147,6 +157,18 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   const togglePackingItem = async (id: string) => {
     try {
+      const item = packingItems.find(item => item.id === id);
+      const isChecking = !item?.checked;
+
+      // Track packing item toggle
+      trackEvent('packing_item_toggled', {
+        trip_id: tripId,
+        item_id: id,
+        item_title: item?.title,
+        is_checked: isChecking,
+        category: 'trip_interaction'
+      });
+
       // Update local state immediately for better UX
       setPackingItems((prevItems) =>
         prevItems.map((item) =>
@@ -190,6 +212,12 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
     if (!newItemText.trim()) return;
 
     try {
+      // Track item addition
+      trackEvent('packing_item_added', {
+        trip_id: tripId,
+        item_title: newItemText.trim(),
+        category: 'trip_interaction'
+      });
       // Find the highest existing ID and increment by 1
       let maxId = 0;
 
@@ -261,6 +289,16 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
           style: "destructive",
           onPress: async () => {
             try {
+              const itemToDelete = packingItems.find(item => item.id === id);
+
+              // Track item deletion
+              trackEvent('packing_item_deleted', {
+                trip_id: tripId,
+                item_id: id,
+                item_title: itemToDelete?.title,
+                category: 'trip_interaction'
+              });
+
               const updatedItems = packingItems.filter(
                 (item) => item.id !== id
               );
@@ -345,6 +383,13 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   // Add function to handle Amazon search
   const handleAmazonSearch = async (itemTitle: string) => {
+    // Track Amazon search
+    trackEvent('packing_item_amazon_search', {
+      trip_id: tripId,
+      item_title: itemTitle,
+      category: 'trip_interaction'
+    });
+
     // Remove emojis and clean the search term
     const searchTerm = itemTitle.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
     const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`;

@@ -9,6 +9,7 @@ import { Colors } from "../../../constants/Colors";
 import { Typography } from "../../../constants/Typography";
 import { getCachedWeatherData, cacheWeatherData, getCachedTrailData, cacheTrailData } from '../../../services/cacheService';
 import { Trip } from "../../../types/Types";
+import { trackScreen, trackEvent } from "../../../services/analyticsService";
 
 interface InfoTabProps {
   tripId?: string;
@@ -54,6 +55,15 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   const [weather, setWeather] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedDescription, setEditedDescription] = useState(tripData?.description || "");
+
+  // Track tab view
+  useEffect(() => {
+    trackScreen('trip_info_tab');
+    trackEvent('trip_info_tab_viewed', {
+      trip_id: tripId,
+      category: 'trip_interaction'
+    });
+  }, [tripId]);
 
   useEffect(() => {
     const fetchTripInfo = async () => {
@@ -186,6 +196,12 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
   const handleOpenMap = () => {
     if (tripData?.coordinates) {
+      trackEvent('trip_info_directions_clicked', {
+        trip_id: tripId,
+        trip_name: tripData.name,
+        category: 'trip_interaction'
+      });
+
       const { latitude, longitude } = tripData.coordinates;
       const url = Platform.select({
         ios: `maps://app?daddr=${latitude},${longitude}`,
@@ -201,6 +217,12 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
   const handleOpenWebsite = () => {
     if (tripData?.parkWebsite) {
+      trackEvent('trip_info_website_clicked', {
+        trip_id: tripId,
+        website_url: tripData.parkWebsite,
+        category: 'trip_interaction'
+      });
+
       Linking.openURL(tripData.parkWebsite).catch((err) =>
         Alert.alert("Error", "Could not open website")
       );
@@ -209,6 +231,12 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
 
   const handleCall = () => {
     if (tripData?.parkContact) {
+      trackEvent('trip_info_phone_clicked', {
+        trip_id: tripId,
+        phone_number: tripData.parkContact,
+        category: 'trip_interaction'
+      });
+
       Linking.openURL(`tel:${tripData.parkContact}`).catch((err) =>
         Alert.alert("Error", "Could not open phone app")
       );

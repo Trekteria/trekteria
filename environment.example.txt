@@ -1,0 +1,18 @@
+# Environment Variables Configuration
+# Copy this file to .env and fill in your actual values
+
+# Amplitude Analytics
+EXPO_PUBLIC_AMPLITUDE_API_KEY=your_amplitude_api_key
+
+# Supabase Configuration  
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Google Generative AI
+EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+
+# Instructions:
+# 1. Sign up for Amplitude at https://amplitude.com
+# 2. Create a new project and get your API key
+# 3. Replace 'your_amplitude_api_key_here' with your actual Amplitude API key
+# 4. Make sure to keep the EXPO_PUBLIC_ prefix for Expo environment variables 

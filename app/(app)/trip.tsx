@@ -24,6 +24,7 @@ import { Trip as TripType } from "../../types/Types";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
 import { supabase } from "../../services/supabaseConfig";
+import { trackScreen, trackEvent } from "../../services/analyticsService";
 
 import InfoTab from "../components/trip-tabs/info-tab";
 import ScheduleTab from "../components/trip-tabs/schedule-tab";
@@ -65,6 +66,17 @@ function Trip() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+
+  // Track screen view and trip access
+  useEffect(() => {
+    trackScreen('trip');
+    trackEvent('trip_viewed', {
+      trip_id: tripData.trip_id,
+      trip_name: tripData.name,
+      trip_location: tripData.location,
+      category: 'trip_interaction'
+    });
+  }, []);
 
   // Fetch full trip data from Supabase
   useEffect(() => {
@@ -159,7 +171,9 @@ function Trip() {
                 styles.tabButton,
                 { backgroundColor: isActive ? theme.primary : (isDarkMode ? "#333" : "#f2f2f2") },
               ]}
-              onPress={() => setIndex(i)}
+              onPress={() => {
+                setIndex(i);
+              }}
             >
               <Ionicons
                 name={iconMap[route.key]}
@@ -192,7 +206,13 @@ function Trip() {
           showsCompass={true}
           showsScale={true}
           mapPadding={{ top: 80, right: 20, bottom: 0, left: 20 }}
-          onPress={() => actionSheetRef.current?.show()}
+          onPress={() => {
+            trackEvent('trip_map_tapped', {
+              trip_id: tripData.trip_id,
+              category: 'trip_interaction'
+            });
+            actionSheetRef.current?.show();
+          }}
           userInterfaceStyle={isDarkMode ? "dark" : "light"}
         >
           <Marker
