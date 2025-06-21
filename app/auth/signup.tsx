@@ -135,8 +135,8 @@ export default function Signup() {
             firstname: firstname.trim(),
             lastname: lastname.trim(),
           },
-          // emailRedirectTo: 'trekteria://auth/callback',
-          emailRedirectTo: 'https://www.trekteria.com/',
+          // Use OTP verification instead of magic links
+          emailRedirectTo: undefined,
         },
       });
 
@@ -177,33 +177,9 @@ export default function Signup() {
 
         // Check if email confirmation is required
         if (data.session === null) {
-          console.log('Email confirmation required');
-          Alert.alert(
-            "Verification Email Sent ↗",
-            "Please check your email to verify your account before logging in. If you don't see the email, please check your spam folder.",
-            [
-              {
-                text: "Resend Email",
-                onPress: async () => {
-                  try {
-                    const { error: resendError } = await supabase.auth.resend({
-                      type: 'signup',
-                      email: email.trim(),
-                    });
-                    if (resendError) throw resendError;
-                    Alert.alert("Success ✓", "Verification email has been resent.");
-                  } catch (error) {
-                    console.error("Error resending verification email:", error);
-                    Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
-                  }
-                },
-              },
-              {
-                text: "OK",
-                onPress: () => router.replace("/auth"),
-              },
-            ]
-          );
+          console.log('Email confirmation required - redirecting to OTP verification');
+          // Navigate to OTP verification screen
+          router.replace(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
         } else {
           console.log('No email confirmation required, user is already verified');
           router.replace('/(app)/home');
@@ -267,7 +243,6 @@ export default function Signup() {
               ]}
               placeholder="First Name"
               placeholderTextColor={theme.inactive}
-              autoCapitalize="words"
               value={firstname}
               onChangeText={setFirstname}
             />
@@ -286,7 +261,6 @@ export default function Signup() {
               ]}
               placeholder="Last Name"
               placeholderTextColor={theme.inactive}
-              autoCapitalize="words"
               value={lastname}
               onChangeText={setLastname}
             />
