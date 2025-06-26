@@ -20,6 +20,26 @@ import { useTemperatureUnit } from "../../hooks/useTemperatureUnit";
 import { Share } from "react-native";
 import { trackScreen, trackEvent, analyticsService } from "../../services/analyticsService";
 
+// Function to check if user is logged in via OAuth (Google)
+const isOAuthUser = (user: any): boolean => {
+  if (!user) return false;
+
+  // Check if user has identities (OAuth users have identities)
+  if (user.identities && user.identities.length > 0) {
+    // Check if any identity is from Google
+    return user.identities.some((identity: any) =>
+      identity.provider === 'google'
+    );
+  }
+
+  // Fallback: check app_metadata for provider
+  if (user.app_metadata && user.app_metadata.provider) {
+    return user.app_metadata.provider === 'google';
+  }
+
+  return false;
+};
+
 export default function SettingsPage() {
   const router = useRouter();
   const { colorScheme, setColorScheme, effectiveColorScheme } = useColorScheme();
@@ -29,10 +49,29 @@ export default function SettingsPage() {
   const [showTemperatureModal, setShowTemperatureModal] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [isOAuth, setIsOAuth] = useState(false);
 
   // Track screen view
   useEffect(() => {
     trackScreen('settings');
+  }, []);
+
+  // Check if user is OAuth user on component mount
+  useEffect(() => {
+    const checkUserAuthType = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+
+        if (user) {
+          setIsOAuth(isOAuthUser(user));
+        }
+      } catch (error) {
+        console.error('Error checking user auth type:', error);
+      }
+    };
+
+    checkUserAuthType();
   }, []);
 
   const handleLogout = async () => {
@@ -147,16 +186,52 @@ export default function SettingsPage() {
           <Text style={[styles.label, { color: theme.text }]}>Change name</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.row, { borderBottomColor: theme.borderColor }]}
-          onPress={() => router.push("/(app)/settings/change-email")}
+          style={[
+            styles.row,
+            {
+              borderBottomColor: theme.borderColor,
+              opacity: isOAuth ? 0.5 : 1
+            }
+          ]}
+          onPress={() => {
+            if (!isOAuth) {
+              router.push("/(app)/settings/change-email");
+            } else {
+              Alert.alert(
+                "Email Change Not Available",
+                "Email changes are not available for Google sign-in accounts. Please manage your email through your Google account settings.",
+                [{ text: "OK" }]
+              );
+            }
+          }}
         >
-          <Text style={[styles.label, { color: theme.text }]}>Change email</Text>
+          <View style={styles.labelContainer}>
+            <Text style={[styles.label, { color: theme.text }]}>Change email</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.row, { borderBottomColor: theme.borderColor }]}
-          onPress={() => router.push("/(app)/settings/change-password")}
+          style={[
+            styles.row,
+            {
+              borderBottomColor: theme.borderColor,
+              opacity: isOAuth ? 0.5 : 1
+            }
+          ]}
+          onPress={() => {
+            if (!isOAuth) {
+              router.push("/(app)/settings/change-password");
+            } else {
+              Alert.alert(
+                "Password Change Not Available",
+                "Password changes are not available for Google sign-in accounts. Please manage your password through your Google account settings.",
+                [{ text: "OK" }]
+              );
+            }
+          }}
         >
-          <Text style={[styles.label, { color: theme.text }]}>Change password</Text>
+          <View style={styles.labelContainer}>
+            <Text style={[styles.label, { color: theme.text }]}>Change password</Text>
+          </View>
         </TouchableOpacity>
 
         {/* Temperature Selection Modal */}
@@ -498,5 +573,17 @@ const styles = StyleSheet.create({
   modalCloseText: {
     ...Typography.text.button,
     color: "white",
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  oauthNote: {
+    ...Typography.text.caption,
+    marginLeft: 5,
+  },
+  oauthInfo: {
+    ...Typography.text.caption,
+    marginBottom: 10,
   },
 });
