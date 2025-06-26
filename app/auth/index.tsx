@@ -218,14 +218,14 @@ export default function AuthIndex() {
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
+        {/* <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
           <FontAwesome
             name="apple"
             size={24}
             color={theme.text}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Registration link */}
         <View style={styles.registerContainer}>
@@ -307,7 +307,6 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     alignSelf: "center",
-    marginBottom: 20,
   },
   forgotPasswordText: {
     fontSize: 14,
