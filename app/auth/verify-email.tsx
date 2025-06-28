@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -83,7 +84,7 @@ export default function VerifyEmail() {
       });
 
       Alert.alert(
-        "Success", 
+        "Success",
         "Your email has been verified successfully! You can now log in.",
         [
           {
@@ -131,25 +132,23 @@ export default function VerifyEmail() {
     }
   };
 
-  const handleBackToAuth = () => {
-    router.replace("/auth");
+  const handleBack = () => {
+    router.back();
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require("../../assets/images/logo-green.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={[styles.appName, { color: theme.primary }]}>Verify Email</Text>
+      <View style={styles.titleContainer}>
+        <TouchableOpacity style={styles.closeButton} onPress={handleBack}>
+          <Ionicons name="chevron-back" size={30} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.primary }]}>Verification Code</Text>
+        <Text style={[styles.description, { color: theme.text }]}>
+          We have sent the verification code to your email address.
+        </Text>
       </View>
 
       <View style={styles.form}>
-        <Text style={[styles.description, { color: theme.text }]}>
-          Please enter the 6-digit code below.
-        </Text>
 
         <View style={styles.otpContainer}>
           {otp.map((digit, index) => (
@@ -179,8 +178,8 @@ export default function VerifyEmail() {
 
         <TouchableOpacity
           style={[
-            styles.verifyButton, 
-            { 
+            styles.verifyButton,
+            {
               backgroundColor: theme.buttonBackground,
               opacity: isLoading ? 0.7 : 1
             }
@@ -202,16 +201,7 @@ export default function VerifyEmail() {
           disabled={resendLoading}
         >
           <Text style={[styles.resendButtonText, { color: theme.primary }]}>
-            {resendLoading ? "Sending..." : "Resend Code"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.backToAuth}
-          onPress={handleBackToAuth}
-        >
-          <Text style={[styles.backToAuthText, { color: theme.text }]}>
-            Back to Sign In
+            {resendLoading ? "Sending..." : "Resend new code"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -224,27 +214,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  logoContainer: {
-    alignItems: "center",
-    marginTop: 100,
-    marginBottom: 50,
+  closeButton: {
+    zIndex: 10,
   },
-  logo: {
-    width: 70,
-    height: 70,
+  titleContainer: {
+    marginTop: Dimensions.get('window').height * 0.05,
   },
-  appName: {
-    ...Typography.text.h3,
-    marginTop: 20,
+  title: {
+    ...Typography.text.h1,
+    fontSize: 35,
+    marginTop: 30,
   },
   form: {
     marginBottom: 30,
   },
   description: {
     ...Typography.text.body,
-    textAlign: "center",
+    marginTop: 10,
     marginBottom: 30,
     lineHeight: 22,
+    opacity: 0.5,
   },
   otpContainer: {
     flexDirection: "row",
@@ -266,8 +255,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
-    marginBottom: 15,
-    marginTop: 20,
   },
   verifyButtonText: {
     ...Typography.text.button,

@@ -107,6 +107,7 @@ export default function Signup() {
                     });
                     if (resendError) throw resendError;
                     Alert.alert("Success ✓", "Verification email has been resent.");
+                    router.push(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
                   } catch (error) {
                     console.error("Error resending verification email:", error);
                     Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
@@ -179,7 +180,7 @@ export default function Signup() {
         if (data.session === null) {
           console.log('Email confirmation required - redirecting to OTP verification');
           // Navigate to OTP verification screen
-          router.replace(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
+          router.push(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
         } else {
           console.log('No email confirmation required, user is already verified');
           router.replace('/(app)/home');
@@ -383,16 +384,16 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: Dimensions.get('window').height * 0.1,
+    marginTop: Dimensions.get('window').height * 0.08,
     marginBottom: 20,
   },
   logo: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
   },
   appName: {
     ...Typography.text.h3,
-    marginTop: 20,
+    marginTop: 10,
   },
   contentContainer: {
     padding: 20,
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
   buttonDisabled: {
     opacity: 0.7,
