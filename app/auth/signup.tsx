@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -408,8 +409,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 100,
-    marginBottom: 50,
+    marginTop: Dimensions.get('window').height * 0.1,
+    marginBottom: 20,
   },
   logo: {
     width: 70,
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingVertical: 20,
+    paddingVertical: 15,
     ...Typography.text.body,
   },
   eyeIcon: {
