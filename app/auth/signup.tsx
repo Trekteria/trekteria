@@ -59,7 +59,72 @@ export default function Signup() {
     setLoading(true);
     try {
       console.log('Starting signup process for email:', email.trim());
-      
+
+      // Check if email already exists in the database
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('email, emailVerified')
+        .eq('email', email.trim())
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows found
+        console.error('Error checking existing email:', checkError);
+        Alert.alert("Error ✗", "Failed to verify email. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // If user exists, check verification status
+      if (existingUser) {
+        if (existingUser.emailVerified) {
+          Alert.alert(
+            "Account Already Exists",
+            "An account with this email already exists and is verified. Please try logging in instead.",
+            [
+              {
+                text: "Go to Login",
+                onPress: () => router.replace("/auth"),
+              },
+              {
+                text: "Cancel",
+                style: "cancel"
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            "Account Exists - Verification Required",
+            "An account with this email exists but hasn't been verified yet. Please check your email for the verification link.",
+            [
+              {
+                text: "Resend Verification",
+                onPress: async () => {
+                  try {
+                    const { error: resendError } = await supabase.auth.resend({
+                      type: 'signup',
+                      email: email.trim(),
+                    });
+                    if (resendError) throw resendError;
+                    Alert.alert("Success ✓", "Verification email has been resent.");
+                  } catch (error) {
+                    console.error("Error resending verification email:", error);
+                    Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
+                  }
+                },
+              },
+              {
+                text: "Cancel",
+                style: "cancel"
+              }
+            ]
+          );
+        }
+        setLoading(false);
+        return;
+      }
+
+      console.log('Email is available, proceeding with signup...');
+
       // Sign up the user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -74,17 +139,9 @@ export default function Signup() {
         },
       });
 
-      // Check for duplicate email error
+      // Handle any signup errors
       if (error) {
-        if (
-          error.message.toLowerCase().includes("user already registered") ||
-          error.message.toLowerCase().includes("user already exists") ||
-          error.message.toLowerCase().includes("email")
-        ) {
-          Alert.alert("You already have an account", "You already have an account, try logging in.");
-          setLoading(false);
-          return;
-        }
+        console.error("Signup error:", error);
         Alert.alert("Error ✗", error.message);
         setLoading(false);
         return;
@@ -94,7 +151,7 @@ export default function Signup() {
 
       if (data.user) {
         console.log('Creating user profile in database...');
-        
+
         // Store user data in the users table
         const { error: upsertError } = await supabase
           .from('users')
