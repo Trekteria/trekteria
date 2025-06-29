@@ -18,7 +18,7 @@ const OnboardingContent1 = () => (
           <View style={styles.textContainer}>
                <Text style={styles.title}>Your Camping Journey Begins</Text>
                <Text style={styles.description}>
-                    Meet Trekteria, your personal camping companion. We'll help you discover hidden gems, from secluded forest spots to lakeside retreats, all waiting for your next adventure.
+                    Meet Trekteria, your camping companion. Discover hidden gems from forest spots to lakeside retreats.
                </Text>
           </View>
      </View>
@@ -32,9 +32,9 @@ const OnboardingContent2 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Plan Like a Pro</Text>
+               <Text style={styles.title}>Smart Camping Planning</Text>
                <Text style={styles.description}>
-                    Trekteria's AI becomes your camping expert, crafting the perfect gear list, suggesting the best routes, and ensuring you're prepared for anything nature throws your way.
+                    Trekteria's AI crafts perfect gear lists and suggests the best routes for your camping adventure.
                </Text>
           </View>
      </View>
@@ -50,7 +50,7 @@ const OnboardingContent3 = () => (
           <View style={styles.textContainer}>
                <Text style={styles.title}>Create Lasting Memories</Text>
                <Text style={styles.description}>
-                    Every camping trip becomes an epic adventure with Trekteria. Build unforgettable experiences and create memories that you'll cherish forever.
+                    Every camping trip becomes an epic adventure with Trekteria. Build unforgettable experiences.
                </Text>
           </View>
      </View>
