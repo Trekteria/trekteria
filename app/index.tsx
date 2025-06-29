@@ -111,7 +111,7 @@ export default function Index() {
     return <Redirect href="/(app)/home" />;
   } else if (hasCompletedOnboarding) {
     // User has completed onboarding but is not logged in - go to auth
-    return <Redirect href="/onboarding" />;
+    return <Redirect href="/auth" />;
   } else {
     // First time user - go to onboarding
     return <Redirect href="/onboarding" />;
