@@ -16,9 +16,9 @@ const OnboardingContent1 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Discover New Trails & Adventures</Text>
+               <Text style={styles.title}>Your Camping Journey Begins</Text>
                <Text style={styles.description}>
-                    Find the best trails, campsites, and hidden gems near you. Let TrailMate be your guide to the great outdoors!
+                    Meet Trekteria, your personal camping companion. We'll help you discover hidden gems, from secluded forest spots to lakeside retreats, all waiting for your next adventure.
                </Text>
           </View>
      </View>
@@ -32,9 +32,9 @@ const OnboardingContent2 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Smart Planning, Hassle-Free Trips</Text>
+               <Text style={styles.title}>Plan Like a Pro</Text>
                <Text style={styles.description}>
-                    Plan your adventure with ease! Get AI-powered routes, customized packing checklists, and offline maps.
+                    Trekteria's AI becomes your camping expert, crafting the perfect gear list, suggesting the best routes, and ensuring you're prepared for anything nature throws your way.
                </Text>
           </View>
      </View>
@@ -48,9 +48,9 @@ const OnboardingContent3 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Explore Responsibly & Have Fun</Text>
+               <Text style={styles.title}>Create Lasting Memories</Text>
                <Text style={styles.description}>
-                    Turn your trips into a game! Complete missions, earn rewards, and leave no trace behind. Adventure, but make it fun!
+                    Every camping trip becomes an epic adventure with Trekteria. Build unforgettable experiences and create memories that you'll cherish forever.
                </Text>
           </View>
      </View>
