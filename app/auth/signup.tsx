@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -106,6 +107,7 @@ export default function Signup() {
                     });
                     if (resendError) throw resendError;
                     Alert.alert("Success ✓", "Verification email has been resent.");
+                    router.push(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
                   } catch (error) {
                     console.error("Error resending verification email:", error);
                     Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
@@ -134,8 +136,8 @@ export default function Signup() {
             firstname: firstname.trim(),
             lastname: lastname.trim(),
           },
-          // emailRedirectTo: 'trekteria://auth/callback',
-          emailRedirectTo: 'https://www.trekteria.com/',
+          // Use OTP verification instead of magic links
+          emailRedirectTo: undefined,
         },
       });
 
@@ -176,33 +178,9 @@ export default function Signup() {
 
         // Check if email confirmation is required
         if (data.session === null) {
-          console.log('Email confirmation required');
-          Alert.alert(
-            "Verification Email Sent ↗",
-            "Please check your email to verify your account before logging in. If you don't see the email, please check your spam folder.",
-            [
-              {
-                text: "Resend Email",
-                onPress: async () => {
-                  try {
-                    const { error: resendError } = await supabase.auth.resend({
-                      type: 'signup',
-                      email: email.trim(),
-                    });
-                    if (resendError) throw resendError;
-                    Alert.alert("Success ✓", "Verification email has been resent.");
-                  } catch (error) {
-                    console.error("Error resending verification email:", error);
-                    Alert.alert("Error ✗", "Failed to resend verification email. Please try again.");
-                  }
-                },
-              },
-              {
-                text: "OK",
-                onPress: () => router.replace("/auth"),
-              },
-            ]
-          );
+          console.log('Email confirmation required - redirecting to OTP verification');
+          // Navigate to OTP verification screen
+          router.push(`/auth/verify-email?email=${encodeURIComponent(email.trim())}` as any);
         } else {
           console.log('No email confirmation required, user is already verified');
           router.replace('/(app)/home');
@@ -266,7 +244,6 @@ export default function Signup() {
               ]}
               placeholder="First Name"
               placeholderTextColor={theme.inactive}
-              autoCapitalize="words"
               value={firstname}
               onChangeText={setFirstname}
             />
@@ -285,7 +262,6 @@ export default function Signup() {
               ]}
               placeholder="Last Name"
               placeholderTextColor={theme.inactive}
-              autoCapitalize="words"
               value={lastname}
               onChangeText={setLastname}
             />
@@ -408,16 +384,16 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 100,
-    marginBottom: 50,
+    marginTop: Dimensions.get('window').height * 0.08,
+    marginBottom: 20,
   },
   logo: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
   },
   appName: {
     ...Typography.text.h3,
-    marginTop: 20,
+    marginTop: 10,
   },
   contentContainer: {
     padding: 20,
@@ -445,7 +421,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingVertical: 20,
+    paddingVertical: 15,
     ...Typography.text.body,
   },
   eyeIcon: {
@@ -455,7 +431,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 100,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
   buttonDisabled: {
     opacity: 0.7,

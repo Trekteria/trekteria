@@ -16,9 +16,9 @@ const OnboardingContent1 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Discover New Trails & Adventures</Text>
+               <Text style={styles.title}>Your Camping Journey Begins</Text>
                <Text style={styles.description}>
-                    Find the best trails, campsites, and hidden gems near you. Let TrailMate be your guide to the great outdoors!
+                    Meet Trekteria, your camping companion. Discover hidden gems from forest spots to lakeside retreats.
                </Text>
           </View>
      </View>
@@ -32,9 +32,9 @@ const OnboardingContent2 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Smart Planning, Hassle-Free Trips</Text>
+               <Text style={styles.title}>Smart Camping Planning</Text>
                <Text style={styles.description}>
-                    Plan your adventure with ease! Get AI-powered routes, customized packing checklists, and offline maps.
+                    Trekteria's AI crafts perfect gear lists and suggests the best routes for your camping adventure.
                </Text>
           </View>
      </View>
@@ -48,9 +48,9 @@ const OnboardingContent3 = () => (
                resizeMode="cover"
           />
           <View style={styles.textContainer}>
-               <Text style={styles.title}>Explore Responsibly & Have Fun</Text>
+               <Text style={styles.title}>Create Lasting Memories</Text>
                <Text style={styles.description}>
-                    Turn your trips into a game! Complete missions, earn rewards, and leave no trace behind. Adventure, but make it fun!
+                    Every camping trip becomes an epic adventure with Trekteria. Build unforgettable experiences.
                </Text>
           </View>
      </View>

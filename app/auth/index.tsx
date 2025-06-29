@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
@@ -258,16 +259,16 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 100,
-    marginBottom: 50,
+    marginTop: Dimensions.get('window').height * 0.08,
+    marginBottom: 30,
   },
   logo: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
   },
   appName: {
     ...Typography.text.h3,
-    marginTop: 20,
+    marginTop: 10,
   },
   buttonContainer: {
     marginBottom: 50,
