@@ -185,7 +185,7 @@ export default function SettingsPage() {
         >
           <Text style={[styles.label, { color: theme.text }]}>Change name</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.row,
             {
@@ -208,7 +208,7 @@ export default function SettingsPage() {
           <View style={styles.labelContainer}>
             <Text style={[styles.label, { color: theme.text }]}>Change email</Text>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={[
             styles.row,
@@ -471,7 +471,7 @@ export default function SettingsPage() {
         </TouchableOpacity>
 
         {/* Footer Version */}
-        <Text style={[styles.version, { color: theme.icon }]}>1.0.0</Text>
+        {/* <Text style={[styles.version, { color: theme.icon }]}>1.0.0</Text> */}
       </ScrollView>
     </SafeAreaView>
   );

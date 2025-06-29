@@ -185,12 +185,12 @@ export default function AuthIndex() {
         </TouchableOpacity>
 
         {/* Forgot password link */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.forgotPassword}
           onPress={handleForgotPassword}
         >
           <Text style={[styles.forgotPasswordText, { color: theme.text }]}>Forgot your Password?</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Divider for social login */}
         <View style={styles.dividerContainer}>
