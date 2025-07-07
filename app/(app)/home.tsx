@@ -390,7 +390,7 @@ export default function Home() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
-  const [activeTab, setActiveTab] = useState('favorites');
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
   const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
 
   // Animation values
@@ -538,6 +538,9 @@ export default function Home() {
           });
 
           setTrips(sortedTrips);
+
+          // Set default tab based on whether there are favorite trips
+          setActiveTab(sortedTrips.length === 0 ? 'plans' : 'favorites');
         }
       }
     } catch (error) {
@@ -825,7 +828,7 @@ export default function Home() {
                   showsHorizontalScrollIndicator={false}
                   ListEmptyComponent={EmptyPlansComponent}
                 />
-              ) : (
+              ) : activeTab === 'plans' ? (
                 <FlatList
                   horizontal
                   snapToInterval={Dimensions.get('window').width * 0.9 + 40}
@@ -845,7 +848,7 @@ export default function Home() {
                   showsHorizontalScrollIndicator={false}
                   ListEmptyComponent={EmptyPlansComponent}
                 />
-              )}
+              ) : null}
             </ScrollView>
           </Animated.View>
         </View>

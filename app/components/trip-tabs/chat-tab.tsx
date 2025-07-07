@@ -418,7 +418,6 @@ const styles = StyleSheet.create({
      },
      messageText: {
           ...Typography.text.body,
-          fontSize: 14,
           lineHeight: 22,
      },
      inputContainer: {

@@ -195,17 +195,20 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
   }, [tripInfo, temperatureUnit]);
 
   const handleOpenMap = () => {
-    if (tripData?.coordinates) {
+    console.log("tripData", tripData);
+    if (tripData?.name || tripData?.coordinates) {
       trackEvent('trip_info_directions_clicked', {
         trip_id: tripId,
         trip_name: tripData.name,
         category: 'trip_interaction'
       });
 
-      const { latitude, longitude } = tripData.coordinates;
+      // Use location name if available, otherwise fall back to coordinates
+      const destination = tripData.name || `${tripData.coordinates?.latitude},${tripData.coordinates?.longitude}`;
+
       const url = Platform.select({
-        ios: `maps://app?daddr=${latitude},${longitude}`,
-        android: `google.navigation:q=${latitude},${longitude}`,
+        ios: `maps://app?daddr=${encodeURIComponent(destination)}`,
+        android: `google.navigation:q=${encodeURIComponent(destination)}`,
       });
       if (url) {
         Linking.openURL(url).catch((err) =>
@@ -363,10 +366,9 @@ export default function InfoTab({ tripId, tripData }: InfoTabProps) {
           <Ionicons name="location" size={18} color={theme.tint} />
           <Text style={[styles.locationText, { color: theme.text }]}>{tripInfo.location}</Text>
         </View>
-        <Text style={[styles.difficultyText, { color: theme.icon }]}>
-          {/* {tripInfo.difficultyLevel?.slice(0, -1)} Difficulty */}
+        {/* <Text style={[styles.difficultyText, { color: theme.icon }]}>
           {tripInfo.difficultyLevel?.split(" ")[0].replace(/[^\w]/g, "")} Difficulty
-        </Text>
+        </Text> */}
       </View>
 
       {/* Description Section */}

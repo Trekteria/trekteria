@@ -362,7 +362,7 @@ const TripPdfGenerator: React.FC<TripPdfGeneratorProps> = ({ tripId, tripData })
         });
         handleDownloadTripInfo();
       }}>
-        <Ionicons name="print-outline" size={20} color={Colors.white} />
+        <Ionicons name="print-outline" size={30} color={Colors.white} />
       </TouchableOpacity>
     </>
   );

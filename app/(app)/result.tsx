@@ -411,8 +411,8 @@ const styles = StyleSheet.create({
   detailText: {
     ...Typography.text.body,
     color: "white",
-    fontSize: 12,
     marginLeft: 10,
+    fontSize: 12,
   },
   dateContainer: {
     position: "absolute",
@@ -426,7 +426,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: "white",
-    fontSize: 12,
     fontWeight: "500",
   },
 });

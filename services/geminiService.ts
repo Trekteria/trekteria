@@ -21,7 +21,7 @@ const model = genAI.getGenerativeModel({
 
 // Configuration for the generative model - reduced temperature for more accurate responses
 const generationConfig = {
-  temperature: 0.3, // Reduced from 1.0 for more consistent, accurate responses
+  temperature: 0.1, // Reduced from 1.0 for more consistent, accurate responses
   topP: 0.8, // Reduced from 0.95 for more focused responses
   topK: 40, // Reduced from 64 for more predictable outputs
   maxOutputTokens: 8192,
