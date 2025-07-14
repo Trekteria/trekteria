@@ -24,6 +24,7 @@ import { useColorScheme } from "../../hooks/useColorScheme";
 import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
 import DarkModeBackground from "../../components/DarkModeBackground";
 import { supabase } from '../../services/supabaseConfig';
+import { useUserStore } from '../../store';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -385,8 +386,9 @@ export default function Home() {
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
-  const [userName, setUserName] = useState("");
-  const [ecoPoints, setEcoPoints] = useState(0); // Add state for eco points
+  // Zustand store
+  const { firstName, ecoPoints, fetchUserData } = useUserStore();
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
@@ -415,28 +417,7 @@ export default function Home() {
     });
   };
 
-  // Replace fetchUserData with Supabase implementation
-  const fetchUserData = async () => {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('firstname')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) throw error;
-        if (data) {
-          setUserName(data.firstname || 'User');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
 
   // Replace fetchPlans with Supabase implementation
   const fetchPlans = async () => {
@@ -548,13 +529,13 @@ export default function Home() {
     }
   };
 
-  // Update the useFocusEffect to use fetchUserData instead of fetchUserName
+  // Update the useFocusEffect to use Zustand store
   useFocusEffect(
     useCallback(() => {
-      fetchUserData(); // Replace fetchUserName with fetchUserData
+      fetchUserData(); // From Zustand store
       fetchTrips();
       fetchPlans();
-    }, [])
+    }, [fetchUserData])
   );
 
   const goToSettings = () => router.push("/(app)/settings");
@@ -773,7 +754,7 @@ export default function Home() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.nameRow}>
-            <Text style={[styles.greeting, { color: isDarkMode ? '#FFFFFF' : theme.primary }]}>Hello, {userName}</Text>
+            <Text style={[styles.greeting, { color: isDarkMode ? '#FFFFFF' : theme.primary }]}>Hello, {firstName}</Text>
           </View>
           <TouchableOpacity onPress={goToSettings}>
             <Ionicons name="settings-outline" size={32} color={theme.text} />

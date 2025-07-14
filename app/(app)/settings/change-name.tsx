@@ -14,42 +14,31 @@ import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import { supabase } from '../../../services/supabaseConfig';
+import { useUserStore } from '../../../store';
 
 export default function ChangeName() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [loading, setLoading] = useState(false);
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
+  // Zustand store
+  const { firstName: storeFirstName, lastName: storeLastName, updateUserName, isLoading, error, clearError } = useUserStore();
+
+  // Local state for form inputs
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
+  // Initialize form inputs with store values
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
+    setFirstName(storeFirstName);
+    setLastName(storeLastName);
+  }, [storeFirstName, storeLastName]);
 
-        if (user) {
-          const { data, error } = await supabase
-            .from('users')
-            .select('firstname, lastname')
-            .eq('user_id', user.id)
-            .single();
-
-          if (error) throw error;
-          if (data) {
-            setFirstName(data.firstname || "");
-            setLastName(data.lastname || "");
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        Alert.alert("Error", "Failed to fetch user data");
-      }
-    };
-    fetchUserData();
-  }, []);
+  // Clear any errors when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const handleUpdateName = async () => {
     if (!firstName.trim()) {
@@ -57,29 +46,12 @@ export default function ChangeName() {
       return;
     }
 
-    setLoading(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      if (user) {
-        const { error } = await supabase
-          .from('users')
-          .update({
-            firstname: firstName.trim(),
-            lastname: lastName.trim(),
-          })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        Alert.alert("Success ✓", "Name updated successfully");
-        router.back();
-      }
+      await updateUserName(firstName, lastName);
+      Alert.alert("Success ✓", "Name updated successfully");
+      router.back();
     } catch (error) {
-      console.error('Error updating name:', error);
       Alert.alert("Error ✗", "Failed to update name. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -135,13 +107,13 @@ export default function ChangeName() {
           style={[
             styles.button,
             { backgroundColor: theme.buttonBackground },
-            loading && styles.buttonDisabled
+            isLoading && styles.buttonDisabled
           ]}
           onPress={handleUpdateName}
-          disabled={loading}
+          disabled={isLoading}
         >
           <Text style={[styles.buttonText, { color: theme.buttonText }]}>
-            {loading ? "Updating..." : "Update Name"}
+            {isLoading ? "Updating..." : "Update Name"}
           </Text>
         </TouchableOpacity>
       </View>

@@ -6,12 +6,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../services/supabaseConfig";
 import { checkSession, handleSessionChange } from "../services/sessionManager";
 import { analyticsService } from "../services/analyticsService";
+import { useUserStore } from "../store";
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Initialize user store
+  const { fetchUserData, reset } = useUserStore();
 
   useEffect(() => {
     let isMounted = true;
@@ -44,6 +48,13 @@ export default function Index() {
             if (isMounted) {
               setIsLoggedIn(!!session);
               console.log("Auth state changed:", event, !!session);
+
+              // Initialize or reset user store based on auth state
+              if (session) {
+                fetchUserData();
+              } else {
+                reset();
+              }
             }
           }
         );
