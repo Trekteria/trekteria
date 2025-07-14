@@ -25,6 +25,7 @@ import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/
 import DarkModeBackground from "../../components/DarkModeBackground";
 import { supabase } from '../../services/supabaseConfig';
 import { useUserStore } from '../../store';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Define types for the data
 interface Trip extends TripType {
@@ -399,6 +400,37 @@ export default function Home() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  // Load saved tab preference on component mount
+  useEffect(() => {
+    const loadSavedTab = async () => {
+      try {
+        const savedTab = await AsyncStorage.getItem('activeTab');
+        if (savedTab) {
+          setActiveTab(savedTab);
+        }
+      } catch (error) {
+        console.error('Error loading saved tab:', error);
+      }
+    };
+
+    loadSavedTab();
+  }, []);
+
+  // Save tab preference whenever it changes
+  useEffect(() => {
+    const saveTabPreference = async () => {
+      if (activeTab) {
+        try {
+          await AsyncStorage.setItem('activeTab', activeTab);
+        } catch (error) {
+          console.error('Error saving tab preference:', error);
+        }
+      }
+    };
+
+    saveTabPreference();
+  }, [activeTab]);
+
   const handleTripPress = (trip: Trip) => {
     router.push({
       pathname: "/(app)/trip",
@@ -520,8 +552,10 @@ export default function Home() {
 
           setTrips(sortedTrips);
 
-          // Set default tab based on whether there are favorite trips
-          setActiveTab(sortedTrips.length === 0 ? 'plans' : 'favorites');
+          // Set default tab based on whether there are favorite trips (only if no saved preference)
+          if (activeTab === undefined) {
+            setActiveTab(sortedTrips.length === 0 ? 'plans' : 'favorites');
+          }
         }
       }
     } catch (error) {

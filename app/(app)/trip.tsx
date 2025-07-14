@@ -144,7 +144,7 @@ function Trip() {
   useEffect(() => {
     // Small delay to ensure component is fully rendered
     const timer = setTimeout(() => {
-      actionSheetRef.current?.show(0); // Show at first snapPoint (45%)
+      actionSheetRef.current?.show(1); // Show at second snapPoint (45%)
     }, 300);
 
     return () => clearTimeout(timer);
@@ -246,8 +246,9 @@ function Trip() {
           ref={actionSheetRef}
           containerStyle={actionSheetStyle}
           overlayColor="transparent"
+          closable={false}
           gestureEnabled
-          snapPoints={[45, 100]}
+          snapPoints={[10, 45, 100]}
           backgroundInteractionEnabled={true}
         >
           <View style={styles.sheetContent}>

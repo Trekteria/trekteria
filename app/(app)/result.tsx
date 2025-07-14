@@ -118,7 +118,7 @@ export default function Result() {
   }, [routePlanId]);
 
   const handleClose = () => {
-    router.push("/(app)/home");
+    router.back();
   };
 
   const handleRetry = () => {

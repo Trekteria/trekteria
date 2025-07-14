@@ -390,7 +390,7 @@ export default function Preferences() {
                               setSuccess(true);
 
                               // Navigate to results page
-                              router.push({
+                              router.replace({
                                    pathname: '/(app)/result'
                               });
                          } catch (error: any) {
