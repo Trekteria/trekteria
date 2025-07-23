@@ -16,6 +16,56 @@ interface ScheduleTabProps {
   tripData?: any;
 }
 
+// Helper function to get icon based on activity type
+const getActivityIcon = (activity: string): any => {
+  const activityLower = activity.toLowerCase();
+
+  // Food/meal activities
+  if (activityLower.includes('breakfast') || activityLower.includes('lunch') || activityLower.includes('dinner') ||
+    activityLower.includes('meal') || activityLower.includes('eat') || activityLower.includes('food')) {
+    return 'restaurant';
+  }
+
+  // Photography/scenic activities
+  if (activityLower.includes('photo') || activityLower.includes('view') || activityLower.includes('scenic') || activityLower.includes('photo')) {
+    return 'camera';
+  }
+
+  // Hiking and trail activities
+  if (activityLower.includes('hike') || activityLower.includes('trail') || activityLower.includes('walk')) {
+    return 'walk';
+  }
+
+  // Sleep activities
+  if (activityLower.includes('sleep')) {
+    return 'bed';
+  }
+
+  // Rest/break activities
+  if (activityLower.includes('rest') || activityLower.includes('break') || activityLower.includes('stop') || activityLower.includes('relax')) {
+    return 'pause-circle';
+  }
+
+  // Travel/transportation
+  if (activityLower.includes('drive') || activityLower.includes('transport') || activityLower.includes('travel')) {
+    return 'car';
+  }
+
+  // Summit/peak activities
+  if (activityLower.includes('summit') || activityLower.includes('peak') || activityLower.includes('top')) {
+    return 'flag';
+  }
+
+  // Water activities
+  if (activityLower.includes('water') || activityLower.includes('lake') || activityLower.includes('river') ||
+    activityLower.includes('stream')) {
+    return 'water';
+  }
+
+  // Default fallback
+  return 'location-sharp';
+};
+
 function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
   const [schedule, setSchedule] = useState<Array<{
     day: number;
@@ -198,7 +248,7 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
         renderItem={({ item, index }) => (
           <View style={styles.stepContainer}>
             <View style={styles.iconColumn}>
-              <Ionicons name="location-sharp" size={28} color={theme.primary} />
+              <Ionicons name={getActivityIcon(item.activity)} size={28} color={theme.primary} />
               {/* {index !== currentDay.activities.length - 1 && (
                 <View style={styles.lineContainer}>
                   <View style={styles.dashedLine} />
