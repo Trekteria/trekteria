@@ -249,18 +249,16 @@ function ScheduleTab({ tripId, tripData }: ScheduleTabProps) {
           <View style={styles.stepContainer}>
             <View style={styles.iconColumn}>
               <Ionicons name={getActivityIcon(item.activity)} size={28} color={theme.primary} />
-              {/* {index !== currentDay.activities.length - 1 && (
-                <View style={styles.lineContainer}>
-                  <View style={styles.dashedLine} />
-                  <View style={styles.dashedLine} />
-                  <View style={styles.dashedLine} />
-                </View> 
-              {/* )} */}
+              {index !== currentDay.activities.length - 1 && (
+                <View style={styles.lineContainer} />
+              )}
             </View>
 
             <View style={styles.instructionRow}>
               <Text style={[styles.instructionText, { color: theme.text }]}>{item.activity}</Text>
-              <Text style={[styles.timeText, { color: theme.inactive }]}>{(item.startTime).slice(0, -2)} - {(item.endTime)}</Text>
+              <Text style={[styles.timeText, { color: theme.inactive }]}>
+                {(item.startTime).slice(0, -2).replace(/^0/, '').replace(/:00$/, '')} - {(item.endTime).slice(0, -2).replace(/^0/, '').replace(/:00$/, '')} {item.endTime.slice(-2)}
+              </Text>
             </View>
           </View>
         )}
@@ -296,16 +294,19 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     width: "100%",
     minHeight: 30,
-    marginBottom: 30,
   },
   iconColumn: {
     alignItems: "center",
     width: 30,
     height: "100%",
+    paddingBottom: 5,
   },
   lineContainer: {
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
+    marginTop: 5,
+    width: 1,
+    flex: 1,
+    backgroundColor: Colors.inactive,
+    opacity: 0.3,
   },
   dashedLine: {
     width: 1.5,
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginLeft: 15,
     flex: 1,
+    paddingBottom: 40,
   },
   instructionText: {
     ...Typography.text.body,

@@ -553,9 +553,9 @@ export default function Home() {
           setTrips(sortedTrips);
 
           // Set default tab based on whether there are favorite trips (only if no saved preference)
-          if (activeTab === undefined) {
-            setActiveTab(sortedTrips.length === 0 ? 'plans' : 'favorites');
-          }
+          // if (activeTab === undefined) {
+          //   setActiveTab(sortedTrips.length === 0 ? 'plans' : 'favorites');
+          // }
         }
       }
     } catch (error) {
@@ -775,9 +775,9 @@ export default function Home() {
         color={Colors.inactive}
         style={styles.emptyIcon}
       />
-      <Text style={[styles.emptyText, { color: isDarkMode ? '#FFFFFF' : theme.text }]}>No items found</Text>
+      <Text style={[styles.emptyText, { color: isDarkMode ? '#FFFFFF' : theme.text }]}>{activeTab === 'favorites' ? 'No favorite trips' : 'No plans yet'}</Text>
       <Text style={[styles.emptySubtext, { color: isDarkMode ? '#FFFFFF' : theme.text }]}>
-        Start planning your first adventure!
+        {activeTab === 'favorites' ? 'Add trips to your favorites to see them here.' : 'Start planning your first adventure!'}
       </Text>
     </View>
   );
