@@ -49,6 +49,7 @@ interface TripBoxProps {
   onDelete: (id: string) => void;
   theme: any;
   isDeleting?: boolean;
+  isExpired?: boolean;
 }
 
 const TripBox: React.FC<TripBoxProps> = ({
@@ -58,6 +59,7 @@ const TripBox: React.FC<TripBoxProps> = ({
   onDelete,
   theme,
   isDeleting = false,
+  isExpired = false,
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -136,7 +138,7 @@ const TripBox: React.FC<TripBoxProps> = ({
         <Ionicons name="heart" size={30} color={Colors.white} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.planBox}
+        style={[styles.planBox, { opacity: isExpired ? 0.5 : 1 }]}
         onPress={() => onPress(item)}
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
@@ -154,6 +156,16 @@ const TripBox: React.FC<TripBoxProps> = ({
             <Text style={styles.dateText}>{dateText}</Text>
           </View>
         </View>
+
+        {/* Archived Overlay */}
+        {isExpired && (
+          <View style={styles.archivedOverlay}>
+            <View style={styles.archivedBadge}>
+              <Ionicons name="archive-outline" size={24} color="#333" />
+              <Text style={styles.archivedText}>Archived</Text>
+            </View>
+          </View>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -166,6 +178,7 @@ interface PlanBoxProps {
   onDelete: (id: string) => void;
   theme: any;
   isDeleting?: boolean;
+  isExpired?: boolean;
 }
 
 const PlanBox: React.FC<PlanBoxProps> = ({
@@ -174,6 +187,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   onDelete,
   theme,
   isDeleting = false,
+  isExpired = false,
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -256,7 +270,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
         <Ionicons name="trash" size={28} color={theme.text} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.planBox}
+        style={[styles.planBox, { opacity: isExpired ? 0.5 : 1 }]}
         onPress={() => onPress(item.id || "")}
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
@@ -273,6 +287,16 @@ const PlanBox: React.FC<PlanBoxProps> = ({
             <Text style={styles.dateText}>{dateText}</Text>
           </View>
         </View>
+
+        {/* Archived Overlay */}
+        {isExpired && (
+          <View style={styles.archivedOverlay}>
+            <View style={styles.archivedBadge}>
+              <Ionicons name="archive-outline" size={24} color="#333" />
+              <Text style={styles.archivedText}>Archived</Text>
+            </View>
+          </View>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -473,8 +497,17 @@ export default function Home() {
             image: plan.imageUrl || placeholderImage,
           })) as Plan[];
 
-          // Sort plans by date (oldest first)
+          // Sort plans: non-expired first (oldest first), then expired (oldest first)
           const sortedPlans = transformedPlans.sort((a, b) => {
+            const aExpired = isExpired(a.preferences?.dateRange?.startDate, a.preferences?.dateRange?.endDate);
+            const bExpired = isExpired(b.preferences?.dateRange?.startDate, b.preferences?.dateRange?.endDate);
+
+            // If one is expired and the other isn't, non-expired comes first
+            if (aExpired !== bExpired) {
+              return aExpired ? 1 : -1;
+            }
+
+            // If both have same expiry status, sort by date (oldest first)
             const dateA = a.preferences?.dateRange?.startDate
               ? new Date(a.preferences.dateRange.startDate).getTime()
               : 0;
@@ -539,13 +572,25 @@ export default function Home() {
 
           setTripDates(dates);
 
-          // Sort trips by date
+          // Sort trips: non-expired first (oldest first), then expired (oldest first)
           const sortedTrips = transformedTrips.sort((a, b) => {
-            const dateA = dates[a.id || ""]?.startDate
-              ? new Date(dates[a.id || ""]?.startDate).getTime()
+            const tripDateA = dates[a.id || ""];
+            const tripDateB = dates[b.id || ""];
+
+            const aExpired = isExpired(tripDateA?.startDate, tripDateA?.endDate);
+            const bExpired = isExpired(tripDateB?.startDate, tripDateB?.endDate);
+
+            // If one is expired and the other isn't, non-expired comes first
+            if (aExpired !== bExpired) {
+              return aExpired ? 1 : -1;
+            }
+
+            // If both have same expiry status, sort by date (oldest first)
+            const dateA = tripDateA?.startDate
+              ? new Date(tripDateA.startDate).getTime()
               : 0;
-            const dateB = dates[b.id || ""]?.startDate
-              ? new Date(dates[b.id || ""]?.startDate).getTime()
+            const dateB = tripDateB?.startDate
+              ? new Date(tripDateB.startDate).getTime()
               : 0;
             return dateA - dateB;
           });
@@ -830,16 +875,22 @@ export default function Home() {
                   snapToAlignment="center"
                   data={trips}
                   keyExtractor={(item) => item.id || String(Math.random())}
-                  renderItem={({ item, index }) => (
-                    <TripBox
-                      item={item}
-                      tripDate={tripDates[item.id || ""] || { startDate: "" }}
-                      onPress={handleTripPress}
-                      onDelete={handleDeleteTrip}
-                      theme={theme}
-                      isDeleting={deletingItems.has(item.id || "")}
-                    />
-                  )}
+                  renderItem={({ item, index }) => {
+                    const tripDate = tripDates[item.id || ""] || { startDate: "" };
+                    const itemExpired = isExpired(tripDate.startDate, tripDate.endDate);
+
+                    return (
+                      <TripBox
+                        item={item}
+                        tripDate={tripDate}
+                        onPress={handleTripPress}
+                        onDelete={handleDeleteTrip}
+                        theme={theme}
+                        isDeleting={deletingItems.has(item.id || "")}
+                        isExpired={itemExpired}
+                      />
+                    );
+                  }}
                   showsHorizontalScrollIndicator={false}
                   ListEmptyComponent={EmptyPlansComponent}
                 />
@@ -851,15 +902,23 @@ export default function Home() {
                   snapToAlignment="center"
                   data={plans}
                   keyExtractor={(item) => item.id || String(Math.random())}
-                  renderItem={({ item, index }) => (
-                    <PlanBox
-                      item={item}
-                      onPress={goToTrip}
-                      onDelete={handleDeletePlan}
-                      theme={theme}
-                      isDeleting={deletingItems.has(item.id || "")}
-                    />
-                  )}
+                  renderItem={({ item, index }) => {
+                    const itemExpired = isExpired(
+                      item.preferences?.dateRange?.startDate,
+                      item.preferences?.dateRange?.endDate
+                    );
+
+                    return (
+                      <PlanBox
+                        item={item}
+                        onPress={goToTrip}
+                        onDelete={handleDeletePlan}
+                        theme={theme}
+                        isDeleting={deletingItems.has(item.id || "")}
+                        isExpired={itemExpired}
+                      />
+                    );
+                  }}
                   showsHorizontalScrollIndicator={false}
                   ListEmptyComponent={EmptyPlansComponent}
                 />
@@ -1080,6 +1139,40 @@ const styles = StyleSheet.create({
     ...Typography.text.h4,
     color: '#fff',
   },
+  archivedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 30,
+  },
+  archivedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  archivedText: {
+    ...Typography.text.h4,
+    color: '#333',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });
 
 // Helper function to format dates
@@ -1108,5 +1201,31 @@ const formatDateRange = (startDate: string, endDate?: string) => {
     })}`;
   } catch (error) {
     return startDate; // Fallback to raw string if parsing fails
+  }
+};
+
+// Helper function to check if a plan or trip is expired
+const isExpired = (startDate?: string, endDate?: string) => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+  try {
+    // If there's an end date, check if it has passed
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Set to end of day
+      return end < now;
+    }
+
+    // If no end date, check if start date has passed
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(23, 59, 59, 999); // Set to end of day
+      return start < now;
+    }
+
+    return false;
+  } catch (error) {
+    return false; // If date parsing fails, assume not expired
   }
 };
