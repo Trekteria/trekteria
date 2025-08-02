@@ -14,7 +14,7 @@ import {
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Typography } from "../../constants/Typography";
 import { Colors } from "../../constants/Colors";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
@@ -56,6 +56,7 @@ function Trip() {
   const router = useRouter();
   const tripData = JSON.parse(trip as string);
   const actionSheetRef = useRef<ActionSheetRef>(null);
+  const mapRef = useRef<MapView>(null);
   const [activeTab, setActiveTab] = useState<string>("info");
   const tabWidth = Dimensions.get("window").width / 5; // Width for each tab
   const animatedValue = useRef(new Animated.Value(0)).current;
@@ -78,6 +79,84 @@ function Trip() {
     });
   }, []);
 
+  // Extract coordinates from schedule activities
+  const getActivityCoordinates = () => {
+    if (!fullTripData?.schedule) return [];
+
+    const coordinates: Array<{
+      latitude: number;
+      longitude: number;
+      title: string;
+      description: string;
+      day: number;
+      time: string;
+    }> = [];
+
+    fullTripData.schedule.forEach(daySchedule => {
+      daySchedule.activities.forEach(activity => {
+        if (activity.coordinates?.latitude && activity.coordinates?.longitude) {
+          coordinates.push({
+            latitude: activity.coordinates.latitude,
+            longitude: activity.coordinates.longitude,
+            title: activity.activity,
+            description: `Day ${daySchedule.day} • ${activity.startTime} - ${activity.endTime}`,
+            day: daySchedule.day,
+            time: `${activity.startTime} - ${activity.endTime}`,
+          });
+        }
+      });
+    });
+
+    return coordinates;
+  };
+
+  // Calculate map region to fit all markers
+  const calculateMapRegion = () => {
+    const activityCoords = getActivityCoordinates();
+
+    // If no activity coordinates, use main trip coordinates
+    if (activityCoords.length === 0) {
+      return {
+        latitude: tripData.latitude || 37.7749,
+        longitude: tripData.longitude || -122.4194,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+    }
+
+    // Include main trip coordinates in calculation
+    const allCoords = [
+      ...activityCoords,
+      {
+        latitude: tripData.latitude || 37.7749,
+        longitude: tripData.longitude || -122.4194,
+      }
+    ];
+
+    // Calculate bounds
+    const latitudes = allCoords.map(coord => coord.latitude);
+    const longitudes = allCoords.map(coord => coord.longitude);
+
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+
+    // Add padding around the markers
+    const latDelta = (maxLat - minLat) * 1.4 || 0.0922;
+    const lngDelta = (maxLng - minLng) * 1.4 || 0.0421;
+
+    return {
+      latitude: centerLat,
+      longitude: centerLng,
+      latitudeDelta: Math.max(latDelta, 0.01), // Minimum zoom level
+      longitudeDelta: Math.max(lngDelta, 0.01),
+    };
+  };
+
   // Fetch full trip data from Supabase
   useEffect(() => {
     const fetchTripData = async () => {
@@ -96,6 +175,23 @@ function Trip() {
         if (error) throw error;
         if (trip) {
           setFullTripData(trip);
+          // Fit all markers after data is loaded
+          setTimeout(() => {
+            const activityCoords = getActivityCoordinates();
+            if (activityCoords.length > 0 && mapRef.current) {
+              const allCoords = [
+                ...activityCoords,
+                {
+                  latitude: tripData.latitude || 37.7749,
+                  longitude: tripData.longitude || -122.4194,
+                }
+              ];
+              mapRef.current.fitToCoordinates(allCoords, {
+                edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
+                animated: true,
+              });
+            }
+          }, 1000);
         }
       } catch (error) {
         console.error("Error fetching trip data:", error);
@@ -150,13 +246,9 @@ function Trip() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Use the actual coordinates from the trip data, or fallback to default coordinates
-  const initialRegion = {
-    latitude: tripData.latitude || 37.7749,
-    longitude: tripData.longitude || -122.4194,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  };
+  // Use the calculated region that fits all markers
+  const initialRegion = calculateMapRegion();
+  const activityCoordinates = getActivityCoordinates();
 
   // Custom TabBar renderer with just icons
   const renderTabBar = (props: any) => {
@@ -214,6 +306,7 @@ function Trip() {
             actionSheetRef.current?.show();
           }}
           userInterfaceStyle={isDarkMode ? "dark" : "light"}
+          ref={mapRef}
         >
           <Marker
             coordinate={{
@@ -222,7 +315,28 @@ function Trip() {
             }}
             title={tripData.name}
             description={tripData.location}
+            pinColor="red"
           />
+          {activityCoordinates.map((activity, index) => (
+            <Marker
+              key={index}
+              coordinate={{ latitude: activity.latitude, longitude: activity.longitude }}
+              title={activity.title}
+              description={activity.description}
+              pinColor="blue"
+            >
+              <View style={styles.activityMarker}>
+                <Ionicons
+                  name="location-sharp"
+                  size={30}
+                  color={theme.primary}
+                />
+                <Text style={[styles.dayBadge, { backgroundColor: theme.primary }]}>
+                  {activity.day}
+                </Text>
+              </View>
+            </Marker>
+          ))}
         </MapView>
         <View style={styles.topBar}>
           <TouchableOpacity
@@ -352,6 +466,27 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 15,
     marginHorizontal: 5,
+  },
+  activityMarker: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  dayBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "white",
   },
 });
 

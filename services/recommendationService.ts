@@ -189,19 +189,37 @@ export const parseRecommendations = async (
                     activity: "Error parsing activity",
                     startTime: "invalid",
                     endTime: "invalid",
+                    coordinates: null,
                   };
                 }
 
-                const activityParts = activity.split("@");
+                // Split by & to separate activity/time from coordinates
+                const [activityTimeStr, coordinatesStr] = activity.split("&");
+
+                const activityParts = activityTimeStr.split("@");
                 const activityName =
                   activityParts[0]?.trim() || "Default activity";
                 const timeRange = activityParts[1] || "9:00 AM-5:00 PM";
                 const timeParts = timeRange.split("-");
 
+                // Parse coordinates if they exist
+                let coordinates = null;
+                if (coordinatesStr && coordinatesStr.includes(",")) {
+                  const [lat, lng] = coordinatesStr.split(",");
+                  const latitude = parseFloat(lat?.trim());
+                  const longitude = parseFloat(lng?.trim());
+
+                  // Only include coordinates if they're valid numbers
+                  if (!isNaN(latitude) && !isNaN(longitude)) {
+                    coordinates = { latitude, longitude };
+                  }
+                }
+
                 return {
                   activity: activityName,
                   startTime: timeParts[0]?.trim() || "9:00 AM",
                   endTime: timeParts[1]?.trim() || "5:00 PM",
+                  coordinates,
                 };
               })
               .filter(

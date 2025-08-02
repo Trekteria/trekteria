@@ -216,22 +216,30 @@ IMPORTANT REQUIREMENTS:
 3. Include appropriate breaks and transition times
 4. Plan for 1-3 days maximum unless specified otherwise
 5. Use realistic activity durations
+6. For location-specific activities (hiking trails, viewpoints, attractions), provide accurate GPS coordinates
 
 FORMAT REQUIREMENTS:
 Return exactly in this format (no additional text):
-$Day1#activity1@startTime1-endTime1#activity2@startTime2-endTime2#Day2#activity1@startTime1-endTime1#activity2@startTime2-endTime2
+$Day1#activity1@startTime1-endTime1&lat1,long1#activity2@startTime2-endTime2#activity3@startTime3-endTime3&lat3,long3$Day2#activity1@startTime1-endTime1&lat1,long1
 
 Where:
 - Day1, Day2, etc.: Day number or date
 - activity: Realistic camping activity
 - startTime-endTime: 24-hour format (e.g., 09:00AM-11:00AM)
+- &lat,long: GPS coordinates for location-specific activities (use & separator)
+- For campsite activities (meals, sleep, campfire), do NOT include coordinates
+- For hiking trails, viewpoints, attractions, DO include accurate coordinates
 
 EXAMPLE FORMAT:
-$Day 1#Arrive and set up camp@10:00AM-11:30AM#Hike main trail@12:00PM-2:00PM#Lunch and rest@2:00PM-3:00PM#Explore nearby area@3:00PM-5:00PM#Prepare dinner@5:00PM-6:00PM#Campfire and relaxation@6:00PM-9:00PM#Sleep@9:00PM-7:00AM$Day 2#Morning hike@8:00AM-10:00AM#Breakfast@10:00AM-11:00AM#Pack up camp@11:00AM-12:00PM#Depart@12:00PM-1:00PM
+$Day 1#Arrive and set up camp@10:00AM-11:30AM#Hike Mist Trail@12:00PM-2:00PM&37.7322,-119.5962#Lunch and rest@2:00PM-3:00PM#Visit Tunnel View@3:00PM-5:00PM&37.7156,-119.6763#Prepare dinner@5:00PM-6:00PM#Campfire and relaxation@6:00PM-9:00PM#Sleep@9:00PM-7:00AM$Day 2#Morning hike to Glacier Point@8:00AM-10:00AM&37.7281,-119.5739#Breakfast@10:00AM-11:00AM#Pack up camp@11:00AM-12:00PM#Depart@12:00PM-1:00PM
 
 User preferences: ${preferences}
 
-Remember: Create practical, realistic schedules that campers can actually follow.
+Remember: 
+- Create practical, realistic schedules that campers can actually follow
+- Include accurate GPS coordinates for trails, viewpoints, and attractions
+- Do NOT include coordinates for general campsite activities
+- Use real, verified coordinates when possible
 `;
 
     // Send the prompt to Gemini

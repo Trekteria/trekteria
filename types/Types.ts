@@ -49,10 +49,10 @@ export interface Trip {
   userId: string;
   name: string;
   location: string;
-  coordinates: {
+  coordinates?: {
     latitude: number;
     longitude: number;
-  };
+  } | null;
   address?: string;
   description?: string;
   dateRange?: {
@@ -74,6 +74,10 @@ export interface Trip {
       startTime: string;
       endTime: string;
       activity: string;
+      coordinates?: {
+        latitude: number;
+        longitude: number;
+      } | null;
     }[];
   }[];
 
