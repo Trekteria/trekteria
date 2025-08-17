@@ -317,7 +317,7 @@ function Trip() {
             description={tripData.location}
             pinColor="red"
           />
-          {activityCoordinates.map((activity, index) => (
+          {/* {activityCoordinates.map((activity, index) => (
             <Marker
               key={index}
               coordinate={{ latitude: activity.latitude, longitude: activity.longitude }}
@@ -336,7 +336,7 @@ function Trip() {
                 </Text>
               </View>
             </Marker>
-          ))}
+          ))} */}
         </MapView>
         <View style={styles.topBar}>
           <TouchableOpacity
