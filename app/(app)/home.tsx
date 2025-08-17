@@ -161,8 +161,8 @@ const TripBox: React.FC<TripBoxProps> = ({
         {isExpired && (
           <View style={styles.archivedOverlay}>
             <View style={styles.archivedBadge}>
-              <Ionicons name="archive-outline" size={24} color="#333" />
-              <Text style={styles.archivedText}>Archived</Text>
+              <Ionicons name="time-outline" size={24} color="#333" />
+              <Text style={styles.archivedText}>Expired</Text>
             </View>
           </View>
         )}
@@ -292,8 +292,8 @@ const PlanBox: React.FC<PlanBoxProps> = ({
         {isExpired && (
           <View style={styles.archivedOverlay}>
             <View style={styles.archivedBadge}>
-              <Ionicons name="archive-outline" size={24} color="#333" />
-              <Text style={styles.archivedText}>Archived</Text>
+              <Ionicons name="time-outline" size={24} color="#333" />
+              <Text style={styles.archivedText}>Expired</Text>
             </View>
           </View>
         )}

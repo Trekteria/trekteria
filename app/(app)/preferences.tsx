@@ -19,7 +19,7 @@ import Animated, {
 import { generateTripRecommendations } from '@/services/geminiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trackScreen, trackPreferencesEvent, trackEvent } from '../../services/analyticsService';
-import { processRecommendations } from '@/services/recommendationService';
+import { processRecommendations } from '@/services/recommendation';
 import { supabase } from '@/services/supabaseConfig';
 import { useColorScheme } from '../../hooks/useColorScheme';
 

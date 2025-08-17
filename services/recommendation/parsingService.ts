@@ -1,59 +1,17 @@
-import "react-native-get-random-values";
-import { Trip } from "../types/Types";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "./supabaseConfig";
+/**
+ * Service for parsing Gemini API recommendations into structured trip data
+ */
+
+import { Trip } from "../../types/Types";
 import {
   generateInfo,
   generateSchedule,
   generateTripMissions,
   generatePackingList,
-} from "./geminiService";
-import { fetchUnsplashImage } from "./imageService";
-import { v4 as uuidv4 } from "uuid";
-
-/**
- * Fetch coordinates from OpenStreetMap API
- * @param name Trip name
- * @param location Trip location
- * @returns Object with latitude and longitude or null
- */
-export const fetchCoordinates = async (
-  name: string,
-  location: string
-): Promise<{ latitude: number; longitude: number } | null> => {
-  try {
-    console.log("Fetching coordinates for:", name + ", " + location);
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        name + ", " + location
-      )}`
-    );
-    const data = await response.json();
-    if (data && data[0]) {
-      return {
-        latitude: parseFloat(data[0].lat),
-        longitude: parseFloat(data[0].lon),
-      };
-    } else {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          location
-        )}`
-      );
-      const data = await response.json();
-      if (data && data[0]) {
-        return {
-          latitude: parseFloat(data[0].lat),
-          longitude: parseFloat(data[0].lon),
-        };
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error("Error fetching coordinates:", error);
-    return null;
-  }
-};
+} from "../geminiService";
+import { fetchUnsplashImage } from "../imageService";
+import { fetchCoordinates } from "./coordinatesService";
+import { searchAndStorePlace } from "./placesService";
 
 /**
  * Parse the recommendation string into structured trip data
@@ -260,6 +218,21 @@ export const parseRecommendations = async (
       // Fetch image URL for the trip
       const imageUrl = (await fetchUnsplashImage(name, true)) || "";
 
+      // ------ SEARCH DATABASE FIRST, THEN GOOGLE PLACES DATA ------
+      const placesData = await searchAndStorePlace(name + ", " + location);
+
+      // Use places data when available for more accurate information
+      const finalCoordinates = {
+        latitude: placesData?.latitude,
+        longitude: placesData?.longitude,
+      };
+      const finalAddress = placesData?.formatted_address || address;
+      const finalParkWebsite = placesData?.website_uri || parkWebsite;
+      const finalParkContact =
+        placesData?.international_phone ||
+        placesData?.national_phone ||
+        parkContact;
+
       // Create a structured trip object
       return {
         createdAt: new Date().toISOString(),
@@ -268,8 +241,8 @@ export const parseRecommendations = async (
         userId,
         name: name.trim(),
         location: location.trim(),
-        coordinates,
-        address: address,
+        coordinates: finalCoordinates,
+        address: finalAddress,
         description: description,
         imageUrl: imageUrl,
         dateRange: formData[1]?.value || {
@@ -280,9 +253,9 @@ export const parseRecommendations = async (
         difficultyLevel: difficultyLevel,
         amenities: amenitiesArr,
         highlights: highlightsArr,
-        parkWebsite: parkWebsite,
+        parkWebsite: finalParkWebsite,
         cellService: cellService,
-        parkContact: parkContact,
+        parkContact: finalParkContact,
         schedule: scheduleArr,
         packingChecklist: packingChecklistArr,
         missions: missionsArr,
@@ -295,194 +268,4 @@ export const parseRecommendations = async (
 
   // Filter out any null entries from invalid trips
   return trips.filter((trip): trip is Trip => trip !== null);
-};
-
-/**
- * Save a plan and its trips to Supabase and AsyncStorage
- * @param userId The ID of the current user
- * @param formData Form data from preferences
- * @param formattedSummary Text summary of preferences
- * @param trips Array of parsed trips
- * @returns The ID of the created plan
- */
-export const savePlan = async (
-  userId: string,
-  formData: any,
-  formattedSummary: string,
-  trips: Trip[]
-): Promise<string> => {
-  try {
-    // Format the preferences data structure to match our new schema
-    const preferences = {
-      dateRange: formData[1]?.value || {},
-      location: {
-        fromLocation: formData[0]?.value?.fromLocation || "",
-        toLocation: formData[0]?.value?.toLocation || "",
-        radius: formData[0]?.value?.radius || 25,
-      },
-      groupComposition: {
-        adults: formData[2]?.value?.adults || 0,
-        kids: formData[2]?.value?.kids || 0,
-        toddlers: formData[2]?.value?.toddlers || 0,
-        pets: formData[2]?.value?.pets || 0,
-        wheelchairUsers: formData[2]?.value?.wheelchairUsers || 0,
-        serviceAnimals: formData[2]?.value?.serviceAnimals || 0,
-      },
-      campingExperience: formData[3]?.value || "",
-      campingType: formData[4]?.value ? formData[4].value.split(" - ")[0] : "",
-      amenities: formData[5]?.value || [],
-      activities: formData[6]?.value || [],
-      mustHaves: formData[7]?.value || [],
-      weatherPreference: formData[8]?.value
-        ? formData[8].value.split(" - ")[0]
-        : "",
-    };
-
-    // Calculate total group size for quick access
-    const totalGroupSize = Object.values(preferences.groupComposition).reduce(
-      (sum: number, count: number) => sum + count,
-      0
-    );
-
-    // Calculate accessibility needs flag
-    const hasAccessibilityNeeds =
-      preferences.groupComposition.wheelchairUsers > 0 ||
-      preferences.groupComposition.serviceAnimals > 0;
-
-    // Fetch image URL for the plan using the destination location
-    const imageUrl =
-      (await fetchUnsplashImage(preferences.location.toLocation, false)) || "";
-
-    // Generate a unique plan ID
-    const planId = uuidv4();
-
-    // Create a new plan in Supabase with optimized structure
-    const planData = {
-      plan_id: planId,
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
-      imageUrl,
-      preferences,
-      summary: formattedSummary,
-      userId,
-      tripIds: [],
-      totalGroupSize,
-    };
-
-    // Save the plan to Supabase
-    const { error: planError } = await supabase.from("plans").insert(planData);
-
-    if (planError) throw planError;
-
-    // Process trips in parallel with optimized data
-    const tripPromises = trips.map(async (trip) => {
-      const tripId = uuidv4();
-      const welcomeMessage = {
-        id: uuidv4(),
-        text: `👋 Welcome to your trip to ${trip.name}! I'm your Trekteria AI assistant. I can help with trail recommendations, gear advice, safety tips, and anything else about your hiking adventure. What would you like to know?`,
-        sender: "bot",
-        timestamp: new Date().toISOString(),
-      };
-
-      const tripData = {
-        trip_id: tripId,
-        createdAt: new Date().toISOString(),
-        planId,
-        userId,
-        bookmarked: false,
-        name: trip.name,
-        location: trip.location,
-        coordinates: trip.coordinates,
-        address: trip.address,
-        description: trip.description,
-        imageUrl: trip.imageUrl,
-        dateRange: trip.dateRange,
-        groupSize: totalGroupSize,
-        difficultyLevel: trip.difficultyLevel,
-        amenities: trip.amenities,
-        highlights: trip.highlights,
-        parkWebsite: trip.parkWebsite,
-        cellService: trip.cellService,
-        parkContact: trip.parkContact,
-        schedule: trip.schedule,
-        packingChecklist: trip.packingChecklist,
-        missions: trip.missions,
-        warnings: trip.warnings,
-        thingsToKnow: trip.thingsToKnow,
-        hasAccessibilityNeeds,
-        chatHistory: [welcomeMessage],
-      };
-
-      const { error: tripError } = await supabase
-        .from("trips")
-        .insert(tripData);
-
-      if (tripError) throw tripError;
-      return tripId;
-    });
-
-    // Wait for all trips to be created
-    const tripIds = await Promise.all(tripPromises);
-
-    // Update the plan with the trip IDs
-    const { error: updateError } = await supabase
-      .from("plans")
-      .update({
-        tripIds,
-        lastUpdated: new Date().toISOString(),
-      })
-      .eq("plan_id", planId);
-
-    if (updateError) throw updateError;
-
-    // Store only essential data in AsyncStorage
-    await AsyncStorage.multiSet([
-      ["tripSummary", formattedSummary],
-      ["lastPlanId", planId],
-      ["lastPlanGroupSize", totalGroupSize.toString()],
-      ["lastPlanAccessibility", hasAccessibilityNeeds.toString()],
-    ]);
-
-    return planId;
-  } catch (error) {
-    console.error("Error saving plan and trips:", error);
-    throw error;
-  }
-};
-
-/**
- * Process recommendations from Gemini API
- * @param userId Current user ID
- * @param formData Raw form data
- * @param formattedSummary User's preferences summary (text)
- * @param recommendationsString Raw recommendations from Gemini API
- * @returns The ID of the created plan
- */
-export const processRecommendations = async (
-  userId: string,
-  formData: any,
-  formattedSummary: string,
-  recommendationsString: string
-): Promise<string> => {
-  try {
-    // Parse the recommendations
-    const trips = await parseRecommendations(
-      recommendationsString,
-      userId,
-      formattedSummary,
-      formData
-    );
-
-    if (trips.length === 0) {
-      throw new Error("No valid trip recommendations found");
-    }
-
-    // Save the plan and trips to Supabase and AsyncStorage
-    const planId = await savePlan(userId, formData, formattedSummary, trips);
-
-    return planId;
-  } catch (error) {
-    console.error("Error processing recommendations:", error);
-    throw error;
-  }
 };
