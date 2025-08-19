@@ -193,6 +193,7 @@ const PlanBox: React.FC<PlanBoxProps> = ({
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     if (isDeleting) {
@@ -264,14 +265,39 @@ const PlanBox: React.FC<PlanBoxProps> = ({
       ]}
     >
       <TouchableOpacity
-        style={[styles.deleteButton, { backgroundColor: theme.background }]}
-        onPress={() => item.id && onDelete(item.id)}
+        style={[styles.moreButton]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setShowDropdown(!showDropdown);
+        }}
       >
-        <Ionicons name="trash" size={28} color={theme.text} />
+        <Ionicons name="ellipsis-vertical" size={28} color={Colors.white} />
       </TouchableOpacity>
+
+      {/* Dropdown Menu */}
+      {showDropdown && (
+        <View style={[styles.dropdown]}>
+          <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => {
+              setShowDropdown(false);
+              item.id && onDelete(item.id);
+            }}
+          >
+            <Ionicons name="trash-outline" size={20} color="#FF4444" />
+            <Text style={[styles.dropdownText, { color: '#FF4444' }]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <TouchableOpacity
         style={[styles.planBox, { opacity: isExpired ? 0.5 : 1 }]}
-        onPress={() => onPress(item.id || "")}
+        onPress={() => {
+          if (showDropdown) {
+            setShowDropdown(false);
+          } else {
+            onPress(item.id || "");
+          }
+        }}
       >
         <Image source={{ uri: item.image }} style={styles.planImage} />
         <LinearGradient
@@ -1010,6 +1036,43 @@ const styles = StyleSheet.create({
     zIndex: 1,
     padding: 8,
     borderRadius: 100,
+  },
+  moreButton: {
+    position: 'absolute',
+    top: 10,
+    right: 30,
+    zIndex: 1,
+    padding: 8,
+    borderRadius: 100,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 60,
+    right: 25,
+    zIndex: 2,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 120,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  dropdownText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   dateContainer: {
     backgroundColor: '#DBDBDB30',
