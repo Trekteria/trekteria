@@ -11,6 +11,8 @@ import Animated, {
      useAnimatedStyle,
      withTiming,
      withSpring,
+     withRepeat,
+     withSequence,
      interpolate,
      interpolateColor,
      Easing,
@@ -59,6 +61,30 @@ export default function Preferences() {
           startDate: null,
           endDate: null,
      });
+
+     // Loading steps state
+     const [currentStep, setCurrentStep] = useState<number>(0);
+     const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+     const [lastCompletedStep, setLastCompletedStep] = useState<number | null>(null);
+
+     const loadingSteps = [
+          {
+               title: "Analyzing your camping preferences",
+               icon: "analytics-outline" as keyof typeof Ionicons.glyphMap,
+          },
+          {
+               title: "Finding perfect locations & activities",
+               icon: "sparkles-outline" as keyof typeof Ionicons.glyphMap,
+          },
+          {
+               title: "Creating your personalized itinerary",
+               icon: "construct-outline" as keyof typeof Ionicons.glyphMap,
+          },
+          {
+               title: "Preparing your adventure guide",
+               icon: "checkmark-circle-outline" as keyof typeof Ionicons.glyphMap,
+          }
+     ];
 
      // Clear previous storage data when component mounts
      useEffect(() => {
@@ -179,6 +205,92 @@ export default function Preferences() {
           setCurrentQuestion(index);
      }, []);
 
+     // Loading step progression functions
+     const resetLoadingSteps = useCallback(() => {
+          setCurrentStep(0);
+          setCompletedSteps(new Set());
+     }, []);
+
+     // Mark current step as completed and move to next
+     const completeCurrentStep = useCallback(() => {
+          setCurrentStep(prevCurrentStep => {
+               setLastCompletedStep(prevCurrentStep);
+               setCompletedSteps(prev => new Set([...prev, prevCurrentStep]));
+
+               if (prevCurrentStep < loadingSteps.length - 1) {
+                    return prevCurrentStep + 1;
+               }
+               return prevCurrentStep;
+          });
+     }, [loadingSteps.length]);
+
+     // Simulate step progression with timing
+     const simulateStepProgression = useCallback(async () => {
+          resetLoadingSteps();
+
+          const stepTimings = [1500, 2000, 1800, 2500, 1000, 800]; // Different timing for each step
+
+          for (let i = 0; i < loadingSteps.length; i++) {
+               if (i > 0) {
+                    // Mark previous step as completed and move to next
+                    setLastCompletedStep(i - 1);
+                    setCompletedSteps(prev => new Set([...prev, i - 1]));
+                    setCurrentStep(i);
+               }
+
+               // Wait for the duration of this step
+               await new Promise(resolve => setTimeout(resolve, stepTimings[i] || 1500));
+          }
+
+          // Mark final step as completed
+          setLastCompletedStep(loadingSteps.length - 1);
+          setCompletedSteps(prev => new Set([...prev, loadingSteps.length - 1]));
+     }, [loadingSteps, resetLoadingSteps]);
+
+     // Enhanced animations for loading steps
+     const currentStepRotation = useSharedValue(0);
+     const stepScale = useSharedValue(1);
+     const stepOpacity = useSharedValue(1);
+     const completedStepScales = loadingSteps.map(() => useSharedValue(1));
+
+     useEffect(() => {
+          if (currentStep < loadingSteps.length) {
+
+               // Pulse animation for current step
+               stepScale.value = withRepeat(
+                    withSequence(
+                         withTiming(1.1, { duration: 800, easing: Easing.bezier(0.4, 0, 0.2, 1) }),
+                         withTiming(1, { duration: 800, easing: Easing.bezier(0.4, 0, 0.2, 1) })
+                    ),
+                    -1,
+                    true
+               );
+          }
+     }, [currentStep]);
+
+     // Animate only the last completed step with a bounce effect
+     useEffect(() => {
+          if (lastCompletedStep !== null && lastCompletedStep < loadingSteps.length) {
+               completedStepScales[lastCompletedStep].value = withSequence(
+                    withTiming(1.2, { duration: 300, easing: Easing.bezier(0.68, -0.55, 0.265, 1.55) }),
+                    withTiming(1, { duration: 300, easing: Easing.bezier(0.68, -0.55, 0.265, 1.55) })
+               );
+          }
+     }, [lastCompletedStep]);
+
+     const currentStepAnimatedStyle = useAnimatedStyle(() => ({
+          transform: [
+               { rotate: `${currentStepRotation.value}deg` },
+               { scale: stepScale.value }
+          ]
+     }));
+
+     const completedStepAnimatedStyles = completedStepScales.map((scale, index) =>
+          useAnimatedStyle(() => ({
+               transform: [{ scale: scale.value }]
+          }))
+     );
+
      useEffect(() => {
           // Animate progress bar
           progressAnimation.value = withTiming(currentQuestion / (formData.length - 1), {
@@ -227,6 +339,7 @@ export default function Preferences() {
           } else {
                // Submit form
                setLoading(true);
+               resetLoadingSteps();
 
                // Track form completion
                trackEvent('preferences_form_submitted', {
@@ -373,8 +486,12 @@ export default function Preferences() {
                          console.log('Form summary:', formattedSummary);
 
                          try {
-                              // Generate trip recommendations here
+                              // Step 1: Analyzing
+                              completeCurrentStep(); // Complete step 0
+
+                              // Step 2: Generating
                               const recommendations = await generateTripRecommendations(formattedSummary);
+                              completeCurrentStep(); // Complete step 1
 
                               // Get current user ID from Supabase
                               const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -387,6 +504,13 @@ export default function Preferences() {
                               // Process recommendations and save to Supabase and AsyncStorage
                               await processRecommendations(user.id, formattedData, formattedSummary, recommendations);
 
+                              // Step 3: Building
+                              completeCurrentStep(); // Complete step 2
+
+                              // Step 4: Finalizing
+                              await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause
+                              completeCurrentStep(); // Complete step 3 (final)
+
                               setSuccess(true);
 
                               // Navigate to results page
@@ -395,13 +519,15 @@ export default function Preferences() {
                               });
                          } catch (error: any) {
                               console.error('Error generating recommendations:', error);
+
+                              // Reset loading steps on error
+                              resetLoadingSteps();
+
                               // Store the error and summary in AsyncStorage
                               await AsyncStorage.setItem('tripSummary', formattedSummary);
                               const errorMessage = error.toString().includes("429") || error.toString().includes("quota")
                                    ? "We're experiencing high demand right now. The trip recommendation service has reached its limit. Please try again later or contact support if this persists."
                                    : "Failed to generate trip recommendations. Please try again.";
-                              await AsyncStorage.setItem('tripError', errorMessage);
-                              // Clear any previous plan ID as this request failed
                               await AsyncStorage.removeItem('lastPlanId');
 
                               setError(true);
@@ -416,6 +542,9 @@ export default function Preferences() {
                     });
                } catch (error) {
                     console.error("Error processing form:", error);
+
+                    // Reset loading steps on error
+                    resetLoadingSteps();
                     setLoading(false);
                     router.push('/(app)/result');
                }
@@ -883,8 +1012,57 @@ export default function Preferences() {
           <>
                {loading ? (
                     <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-                         <ActivityIndicator size="large" color={theme.primary} />
-                         <Text style={[styles.loadingText, { color: theme.primary }]}>Finding the perfect trips{'\n'}for your adventure... Hold tight!</Text>
+                         <View style={styles.sequentialStepsContainer}>
+                              {loadingSteps.map((step, index) => {
+                                   const isCompleted = completedSteps.has(index);
+                                   const isCurrent = currentStep === index;
+                                   const isUpcoming = index > currentStep;
+
+                                   return (
+                                        <View key={index} style={styles.sequentialStepItem}>
+                                             {/* Step Icon */}
+                                             <View style={styles.stepIconContainer}>
+                                                  {isCompleted ? (
+                                                       <Animated.View style={[styles.stepIcon, styles.completedStepIcon, { backgroundColor: theme.primary }, completedStepAnimatedStyles[index]]}>
+                                                            <Ionicons
+                                                                 name={step.icon}
+                                                                 size={16}
+                                                                 color="white"
+                                                            />
+                                                       </Animated.View>
+                                                  ) : isCurrent ? (
+                                                       <Animated.View style={[styles.stepIcon, styles.currentStepIcon, { borderColor: theme.primary }, currentStepAnimatedStyle]}>
+                                                            <Ionicons
+                                                                 name={step.icon}
+                                                                 size={14}
+                                                                 color={theme.primary}
+                                                            />
+                                                       </Animated.View>
+                                                  ) : (
+                                                       <View style={[styles.stepIcon, styles.upcomingStepIcon, { borderColor: theme.borderColor }]}>
+                                                            <Ionicons
+                                                                 name={step.icon}
+                                                                 size={16}
+                                                                 color={theme.borderColor}
+                                                            />
+                                                       </View>
+                                                  )}
+                                             </View>
+
+                                             {/* Step Text */}
+                                             <Text style={[
+                                                  styles.stepText,
+                                                  {
+                                                       color: isCompleted ? theme.icon : isCurrent ? theme.text : theme.icon,
+                                                       fontWeight: '600'
+                                                  }
+                                             ]}>
+                                                  {step.title}
+                                             </Text>
+                                        </View>
+                                   );
+                              })}
+                         </View>
                     </View>
                ) : (
                     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -1186,6 +1364,60 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           gap: 20,
           padding: 20,
+     },
+     sequentialStepsContainer: {
+          width: '100%',
+          paddingHorizontal: 10,
+     },
+     sequentialStepItem: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 28,
+          paddingVertical: 4,
+     },
+     stepIconContainer: {
+          marginRight: 20,
+     },
+     stepIcon: {
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 2,
+     },
+     completedStepIcon: {
+          // backgroundColor will be set dynamically
+     },
+     currentStepIcon: {
+          borderWidth: 2,
+          backgroundColor: 'transparent',
+     },
+     upcomingStepIcon: {
+          borderWidth: 1,
+          backgroundColor: 'transparent',
+     },
+     stepText: {
+          ...Typography.text.body,
+          fontSize: 18,
+          fontWeight: '400',
+          flex: 1,
+          lineHeight: 24,
+     },
+     stepTextContainer: {
+          flex: 1,
+          gap: 4,
+     },
+     stepDescription: {
+          ...Typography.text.body,
+          fontSize: 14,
+          fontWeight: '400',
+          lineHeight: 18,
+          opacity: 0.7,
      },
      loadingText: {
           ...Typography.text.h3,
