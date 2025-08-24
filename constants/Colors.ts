@@ -35,6 +35,8 @@ export const Colors = {
     buttonBackground: primaryColor,
     buttonText: "#FFFFFF",
     inactive: inactiveColor,
+    success: "#4CAF50", // Green for success/online status
+    error: "#F44336", // Red for error/offline status
   },
   dark: {
     text: darkModeTextColor,
@@ -50,5 +52,7 @@ export const Colors = {
     buttonBackground: primaryColor,
     buttonText: "#FFFFFF",
     inactive: inactiveColorDark,
+    success: "#66BB6A", // Lighter green for dark mode
+    error: "#EF5350", // Lighter red for dark mode
   },
 };

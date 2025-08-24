@@ -26,6 +26,8 @@ import DarkModeBackground from "../../components/DarkModeBackground";
 import { supabase } from '../../services/supabaseConfig';
 import { useUserStore } from '../../store';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+
 
 // Define types for the data
 interface Trip extends TripType {
@@ -440,6 +442,9 @@ export default function Home() {
   // Zustand store
   const { firstName, ecoPoints, fetchUserData } = useUserStore();
 
+  // Network status
+  const { isOnline } = useNetworkStatus();
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripDates, setTripDates] = useState<{ [tripId: string]: { startDate: string; endDate?: string } }>({});
@@ -644,7 +649,13 @@ export default function Home() {
   );
 
   const goToSettings = () => router.push("/(app)/settings");
-  const goToTripPlanning = () => router.push("/(app)/preferences");
+  const goToTripPlanning = () => {
+    if (isOnline) {
+      router.push("/(app)/preferences");
+    } else {
+      Alert.alert("No internet connection", "Please check your internet connection and try again.");
+    }
+  };
   const goToTrip = (id: string) =>
     router.push({
       pathname: "/(app)/result",
@@ -869,11 +880,29 @@ export default function Home() {
         {/* Plan a Trip Button */}
         <View style={{ width: '100%', paddingHorizontal: 20 }}>
           <TouchableOpacity
-            style={[styles.planButton, { backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background }]}
+            style={[
+              styles.planButton,
+              {
+                backgroundColor: isDarkMode ? '#FFFFFF17' : theme.background,
+                opacity: isOnline ? 1 : 0.5,
+              }
+            ]}
             onPress={goToTripPlanning}
+            disabled={!isOnline}
           >
-            <Ionicons name="map-outline" size={20} color={theme.text} />
-            <Text style={[styles.planButtonText, { color: theme.text }]}>Plan a Trip</Text>
+            <Ionicons
+              name="map-outline"
+              size={20}
+              color={isOnline ? theme.text : Colors.inactive}
+            />
+            <Text style={[
+              styles.planButtonText,
+              {
+                color: isOnline ? theme.text : Colors.inactive
+              }
+            ]}>
+              Plan a Trip
+            </Text>
           </TouchableOpacity>
         </View>
 
