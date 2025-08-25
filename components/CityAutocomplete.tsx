@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
-  FlatList,
+  ScrollView,
   Text,
   TouchableOpacity,
   StyleSheet,
@@ -93,12 +93,14 @@ export default function CityAutocomplete({ onSelect, placeholder = "Enter city",
 
       {results.length > 0 && (
         <View style={styles.suggestionsContainer}>
-          <FlatList
+          <ScrollView
             keyboardShouldPersistTaps="handled"
-            data={results}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
+            {results.map((item, index) => (
               <TouchableOpacity
+                key={index}
                 style={[
                   styles.suggestion,
                   {
@@ -113,8 +115,8 @@ export default function CityAutocomplete({ onSelect, placeholder = "Enter city",
                   { color: theme?.text || '#333' }
                 ]}>{item.city}, {item.state_id}</Text>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
