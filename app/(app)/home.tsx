@@ -441,7 +441,7 @@ export default function Home() {
 
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
-  const { getPlans, getTrips, isInitialized } = useOfflineData();
+  const { getPlans, getBookmarkedTrips, isInitialized } = useOfflineData();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -551,7 +551,7 @@ export default function Home() {
   const fetchTrips = useCallback(async () => {
     try {
       if (userId) {
-        const tripsList = await getTrips(userId);
+        const tripsList = await getBookmarkedTrips(userId);
 
         if (tripsList) {
           const transformedTrips = tripsList.map(trip => ({
@@ -614,7 +614,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching trips:", error);
     }
-  }, [userId, getTrips, getPlans]);
+  }, [userId, getBookmarkedTrips, getPlans]);
 
   // Update the useFocusEffect to use Zustand store
   useFocusEffect(

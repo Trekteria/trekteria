@@ -139,6 +139,21 @@ export const useSQLite = () => {
     }
   }, []);
 
+  const getBookmarkedTrips = useCallback(
+    async (userId: string): Promise<Trip[]> => {
+      try {
+        setError(null);
+        return await sqliteService.getBookmarkedTrips(userId);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to get bookmarked trips";
+        setError(errorMessage);
+        throw err;
+      }
+    },
+    []
+  );
+
   const getTrip = useCallback(async (id: string): Promise<Trip | null> => {
     try {
       setError(null);
@@ -296,6 +311,7 @@ export const useSQLite = () => {
     // Trip operations
     saveTrip,
     getTrips,
+    getBookmarkedTrips,
     getTrip,
     getTripsByPlan,
     updateTripBookmark,

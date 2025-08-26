@@ -29,6 +29,7 @@ export const useOfflineData = () => {
 
     // Read operations (always from local SQLite)
     getTrips: sqlite.getTrips,
+    getBookmarkedTrips: sqlite.getBookmarkedTrips,
     getTrip: sqlite.getTrip,
     getTripsByPlan: sqlite.getTripsByPlan,
     getPlans: sqlite.getPlans,
