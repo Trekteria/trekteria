@@ -23,7 +23,8 @@ import { useColorScheme } from "../../hooks/useColorScheme";
 import { Trip as TripType } from "../../types/Types";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
-import { supabase } from "../../services/supabaseConfig";
+import { useOfflineData } from "../../hooks/useOfflineData";
+import { useUserStore } from "../../store";
 import { trackScreen, trackEvent } from "../../services/analyticsService";
 
 import InfoTab from "../components/trip-tabs/info-tab";
@@ -67,6 +68,8 @@ function Trip() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { userId } = useUserStore();
+  const { getTrip, isInitialized } = useOfflineData();
 
   // Track screen view and trip access
   useEffect(() => {
@@ -157,7 +160,7 @@ function Trip() {
     };
   };
 
-  // Fetch full trip data from Supabase
+  // Fetch full trip data from offline database
   useEffect(() => {
     const fetchTripData = async () => {
       try {
@@ -166,13 +169,14 @@ function Trip() {
           return;
         }
 
-        const { data: trip, error } = await supabase
-          .from('trips')
-          .select('*')
-          .eq('trip_id', tripData.trip_id)
-          .single();
+        // Check if database is initialized
+        if (!isInitialized) {
+          console.log("Database not yet initialized, skipping fetchTripData");
+          return;
+        }
 
-        if (error) throw error;
+        const trip = await getTrip(tripData.trip_id);
+
         if (trip) {
           setFullTripData(trip);
           // Fit all markers after data is loaded
@@ -200,7 +204,7 @@ function Trip() {
     };
 
     fetchTripData();
-  }, [tripData.trip_id]);
+  }, [tripData.trip_id, isInitialized, getTrip]);
 
   // Replace the simple SceneMap with a function that passes props
   const renderScene = ({ route }: { route: { key: string } }) => {
