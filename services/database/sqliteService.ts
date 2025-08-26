@@ -254,6 +254,17 @@ class SQLiteService {
     return result.map((trip) => this.parseTripFromDB(trip));
   }
 
+  async getBookmarkedTrips(userId: string): Promise<Trip[]> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const result = await this.db.getAllAsync<Trip>(
+      'SELECT * FROM trips WHERE "userId" = ? AND bookmarked = 1 ORDER BY "createdAt" DESC',
+      [userId]
+    );
+
+    return result.map((trip) => this.parseTripFromDB(trip));
+  }
+
   async getTrip(id: string): Promise<Trip | null> {
     if (!this.db) throw new Error("Database not initialized");
 
