@@ -27,7 +27,7 @@ import { supabase } from '../../services/supabaseConfig';
 import { useUserStore } from '../../store';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
-
+import { sqliteService } from '../../services/database/sqliteService';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -440,7 +440,7 @@ export default function Home() {
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   // Zustand store
-  const { firstName, ecoPoints, fetchUserData } = useUserStore();
+  const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -503,8 +503,6 @@ export default function Home() {
       },
     });
   };
-
-
 
   // Replace fetchPlans with Supabase implementation
   const fetchPlans = async () => {

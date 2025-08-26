@@ -1,13 +1,17 @@
 export interface User {
   id: string;
   email: string;
-  // Add other user properties as needed
+  firstName: string;
+  lastName: string;
+  ecoPoints: number;
+  emailVerified: boolean;
+  updatedAt: string;
 }
 
 export interface Plan {
   id?: string;
   createdAt: string; // ISO string date
-  lastUpdated?: string; // ISO string date
+  updatedAt: string; // ISO string date
   imageUrl?: string;
   totalGroupSize?: number;
   preferences: {
@@ -43,6 +47,7 @@ export interface Plan {
 export interface Trip {
   id?: string;
   createdAt: string; // ISO string date
+  updatedAt: string; // ISO string date
   imageUrl?: string;
   planId: string; // reference to the plan this trip belongs to
   bookmarked?: boolean;
@@ -92,6 +97,7 @@ export interface Trip {
   }[];
   warnings?: string[];
   thingsToKnow?: string[];
+  hasAccessibilityNeeds?: boolean;
 
   // Add chat history
   chatHistory?: {
@@ -109,5 +115,6 @@ export interface Feedback {
   subject: string;
   message: string;
   createdAt: string; // ISO string date
+  updatedAt: string; // ISO string date
   category?: "bug" | "feature" | "improvement" | "other";
 }

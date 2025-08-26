@@ -7,6 +7,7 @@ import {
   analyticsService,
   trackEvent,
 } from "./analyticsService";
+import { syncService } from "./database/syncService";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -114,6 +115,13 @@ export async function signInWithGoogle() {
             name: user.user_metadata?.full_name || "User",
             hasCompletedOnboarding: !!existingUser,
           });
+
+          // Pull data from Supabase to local SQLite
+          try {
+            await syncService.pullData(user.id);
+          } catch (error) {
+            console.error("Error pulling data:", error);
+          }
         }
 
         console.log("Google OAuth successful! User is signed in.");

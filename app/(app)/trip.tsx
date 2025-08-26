@@ -83,14 +83,14 @@ function Trip() {
   const getActivityCoordinates = () => {
     if (!fullTripData?.schedule) return [];
 
-    const coordinates: Array<{
+    const coordinates: {
       latitude: number;
       longitude: number;
       title: string;
       description: string;
       day: number;
       time: string;
-    }> = [];
+    }[] = [];
 
     fullTripData.schedule.forEach(daySchedule => {
       daySchedule.activities.forEach(activity => {
