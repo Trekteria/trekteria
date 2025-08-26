@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   ImageBackground,
+  Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Typography } from "../../constants/Typography";
@@ -17,6 +18,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Trip as TripType } from "@/types/Types";
 import { supabase } from "../../services/supabaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
+import { useOfflineData } from "../../hooks/useOfflineData";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus";
 
 // Define the Trip interface for type safety
 interface Trip {
@@ -42,6 +45,7 @@ export default function Result() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     const loadData = async () => {
@@ -137,6 +141,11 @@ export default function Result() {
   };
 
   const handleBookmarkPress = async (trip: Trip, index: number) => {
+    if (!isOnline) {
+      Alert.alert("No internet connection", "Please check your internet connection and try again.");
+      return;
+    }
+
     try {
       // Get current user from Supabase
       const { data: { user }, error: userError } = await supabase.auth.getUser();
