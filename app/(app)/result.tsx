@@ -20,6 +20,7 @@ import { supabase } from "../../services/supabaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { useOfflineData } from "../../hooks/useOfflineData";
 import { useNetworkStatus } from "../../hooks/useNetworkStatus";
+import { useUserStore } from "../../store";
 
 // Define the Trip interface for type safety
 interface Trip {
@@ -46,11 +47,19 @@ export default function Result() {
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
   const { isOnline } = useNetworkStatus();
+  const { userId } = useUserStore();
+  const { getTripsByPlan, saveTrip, isInitialized } = useOfflineData();
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
+        // Wait for database to be initialized
+        if (!isInitialized) {
+          setLoading(false);
+          return;
+        }
+
         const [summaryValue, errorValue, lastPlanId] = await Promise.all([
           AsyncStorage.getItem("tripSummary"),
           AsyncStorage.getItem("tripError"),
@@ -69,28 +78,20 @@ export default function Result() {
 
         const targetPlanId = routePlanId ? String(routePlanId) : lastPlanId;
 
-        if (targetPlanId) {
-          // Get current user from Supabase
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError) throw userError;
-
-          if (!user) {
-            setError("You must be logged in to view recommendations");
+        if (targetPlanId && userId) {
+          // Check if database is initialized
+          if (!isInitialized) {
+            setError("Database not yet initialized. Please try again.");
             setLoading(false);
             return;
           }
 
-          // Fetch trips from Supabase
-          const { data: trips, error: tripsError } = await supabase
-            .from('trips')
-            .select('*')
-            .eq('planId', targetPlanId);
-
-          if (tripsError) throw tripsError;
+          // Fetch trips from local SQLite database
+          const trips = await getTripsByPlan(targetPlanId);
 
           if (trips) {
             const tripsForDisplay = trips.map((trip) => ({
-              trip_id: trip.trip_id,
+              trip_id: trip.id,
               name: trip.name,
               location: trip.location,
               keyFeatures: trip.highlights?.join(", ") || "",
@@ -119,7 +120,7 @@ export default function Result() {
     };
 
     loadData();
-  }, [routePlanId]);
+  }, [routePlanId, isInitialized, getTripsByPlan, userId]);
 
   const handleClose = () => {
     router.back();
@@ -147,11 +148,7 @@ export default function Result() {
     }
 
     try {
-      // Get current user from Supabase
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      if (!user) {
+      if (!userId) {
         console.error("User must be logged in to bookmark trips");
         return;
       }
