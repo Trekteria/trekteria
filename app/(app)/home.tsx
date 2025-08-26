@@ -27,7 +27,7 @@ import { supabase } from '../../services/supabaseConfig';
 import { useUserStore } from '../../store';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
-import { sqliteService } from '../../services/database/sqliteService';
+import { useOfflineData } from '../../hooks/useOfflineData';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -441,6 +441,7 @@ export default function Home() {
 
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
+  const { getPlans, getTrips, isInitialized } = useOfflineData();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -486,6 +487,8 @@ export default function Home() {
     saveTabPreference();
   }, [activeTab]);
 
+
+
   const handleTripPress = (trip: Trip) => {
     router.push({
       pathname: "/(app)/trip",
@@ -505,23 +508,14 @@ export default function Home() {
   };
 
   // Replace fetchPlans with Supabase implementation
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      if (user) {
-        const { data: plansList, error: plansError } = await supabase
-          .from('plans')
-          .select('*')
-          .eq('userId', user.id);
-
-        if (plansError) throw plansError;
+      if (userId) {
+        const plansList = await getPlans(userId);
 
         if (plansList) {
           // Transform the data to match the Plan interface
           const transformedPlans = plansList.map(plan => ({
-            id: plan.plan_id,
             ...plan,
             image: plan.imageUrl || placeholderImage,
           })) as Plan[];
@@ -552,37 +546,22 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching plans:", error);
     }
-  };
+  }, [userId, getPlans]);
 
-  const fetchTrips = async () => {
+  const fetchTrips = useCallback(async () => {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      if (user) {
-        // Fetch bookmarked trips for the current user
-        const { data: tripsList, error: tripsError } = await supabase
-          .from('trips')
-          .select('*')
-          .eq('userId', user.id)
-          .eq('bookmarked', true);
-
-        if (tripsError) throw tripsError;
+      if (userId) {
+        const tripsList = await getTrips(userId);
 
         if (tripsList) {
           const transformedTrips = tripsList.map(trip => ({
-            id: trip.trip_id,
+            id: trip.id,
             ...trip,
             image: trip.imageUrl || placeholderImage,
           })) as Trip[];
 
           // Fetch dates from plans
-          const { data: plansList, error: plansError } = await supabase
-            .from('plans')
-            .select('plan_id, preferences, tripIds')
-            .eq('userId', user.id);
-
-          if (plansError) throw plansError;
+          const plansList = await getPlans(userId);
 
           // Create dates mapping
           const dates: { [tripId: string]: { startDate: string; endDate?: string } } = {};
@@ -591,8 +570,8 @@ export default function Home() {
               if (plan.tripIds && plan.preferences?.dateRange?.startDate) {
                 plan.tripIds.forEach((tripId: string) => {
                   dates[tripId] = {
-                    startDate: plan.preferences.dateRange.startDate,
-                    endDate: plan.preferences.dateRange.endDate
+                    startDate: plan.preferences?.dateRange?.startDate || "",
+                    endDate: plan.preferences?.dateRange?.endDate || ""
                   };
                 });
               }
@@ -635,7 +614,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching trips:", error);
     }
-  };
+  }, [userId, getTrips, getPlans]);
 
   // Update the useFocusEffect to use Zustand store
   useFocusEffect(
@@ -643,7 +622,7 @@ export default function Home() {
       fetchUserData(); // From Zustand store
       fetchTrips();
       fetchPlans();
-    }, [fetchUserData])
+    }, [fetchUserData, fetchPlans, fetchTrips])
   );
 
   const goToSettings = () => router.push("/(app)/settings");
