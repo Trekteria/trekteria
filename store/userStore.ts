@@ -3,6 +3,7 @@ import { supabase } from "../services/supabaseConfig";
 
 interface UserState {
   // User data
+  userId: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -20,6 +21,7 @@ interface UserState {
 
 export const useUserStore = create<UserState>((set, get) => ({
   // Initial state
+  userId: "",
   firstName: "",
   lastName: "",
   fullName: "",
@@ -53,6 +55,7 @@ export const useUserStore = create<UserState>((set, get) => ({
           const fullName = `${firstName} ${lastName}`.trim() || "User";
 
           set({
+            userId: user.id,
             firstName,
             lastName,
             fullName,
@@ -141,6 +144,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   reset: () =>
     set({
+      userId: "",
       firstName: "",
       lastName: "",
       fullName: "",

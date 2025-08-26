@@ -18,6 +18,7 @@ import { useColorScheme } from "../../hooks/useColorScheme";
 import { signInWithGoogle } from '../../services/googleAuth';
 import { trackScreen, trackAuthEvent, trackEvent } from '../../services/analyticsService';
 import { supabase } from '../../services/supabaseConfig';
+import { useOfflineData } from '../../hooks/useOfflineData';
 
 // Main authentication screen component
 export default function AuthIndex() {
@@ -28,6 +29,7 @@ export default function AuthIndex() {
   const { effectiveColorScheme } = useColorScheme();
   const isDarkMode = effectiveColorScheme === 'dark';
   const theme = isDarkMode ? Colors.dark : Colors.light;
+  const { pullData } = useOfflineData();
 
   // Track screen view
   useEffect(() => {
@@ -65,6 +67,13 @@ export default function AuthIndex() {
             .from('users')
             .update({ emailVerified: true })
             .eq('user_id', user.id);
+        }
+
+        // Pull data from Supabase to local SQLite
+        try {
+          await pullData(data.user.id);
+        } catch (error) {
+          console.error("Error pulling data:", error);
         }
 
         console.log("User logged in successfully:", data.user.email);

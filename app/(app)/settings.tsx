@@ -19,6 +19,7 @@ import { useColorScheme } from "../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../hooks/useTemperatureUnit";
 import { Share } from "react-native";
 import { trackScreen, trackEvent, analyticsService } from "../../services/analyticsService";
+import { sqliteService } from "../../services/database/sqliteService";
 
 // Function to check if user is logged in via OAuth (Google)
 const isOAuthUser = (user: any): boolean => {
@@ -91,6 +92,15 @@ export default function SettingsPage() {
         trackEvent('settings_logout_success', {
           category: 'authentication'
         });
+
+        // Clear local SQLite data
+        try {
+          await sqliteService.clearAllData();
+          console.log('🗑️ Local SQLite data cleared successfully');
+        } catch (error) {
+          console.warn('⚠️ Failed to clear local SQLite data:', error);
+        }
+
         analyticsService.clearUser();
         router.replace("/auth");
       }
