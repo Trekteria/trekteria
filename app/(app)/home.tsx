@@ -441,7 +441,7 @@ export default function Home() {
 
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
-  const { getPlans, getBookmarkedTrips, isInitialized } = useOfflineData();
+  const { getPlans, getTrips, updateTripBookmark, isInitialized } = useOfflineData();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -551,7 +551,7 @@ export default function Home() {
   const fetchTrips = useCallback(async () => {
     try {
       if (userId) {
-        const tripsList = await getBookmarkedTrips(userId);
+        const tripsList = await getTrips(userId);
 
         if (tripsList) {
           const transformedTrips = tripsList.map(trip => ({
@@ -614,7 +614,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching trips:", error);
     }
-  }, [userId, getBookmarkedTrips, getPlans]);
+  }, [userId, getTrips, getPlans]);
 
   // Update the useFocusEffect to use Zustand store
   useFocusEffect(
@@ -678,6 +678,12 @@ export default function Home() {
 
   // Replace handleDeleteTrip with Supabase implementation
   const handleDeleteTrip = async (tripId: string) => {
+
+    if (!isOnline) {
+      Alert.alert("No internet connection", "Please check your internet connection and try again.");
+      return;
+    }
+
     Alert.alert(
       "Remove Trip",
       "Are you sure you want to remove this trip from your favorites?",
@@ -742,6 +748,11 @@ export default function Home() {
 
   // Replace handleDeletePlan with Supabase implementation
   const handleDeletePlan = async (planId: string) => {
+    if (!isOnline) {
+      Alert.alert("No internet connection", "Please check your internet connection and try again.");
+      return;
+    }
+
     Alert.alert(
       "Delete Plan",
       "Are you sure you want to delete this plan and its associated trips? This action cannot be undone.",
@@ -865,7 +876,6 @@ export default function Home() {
               }
             ]}
             onPress={goToTripPlanning}
-            disabled={!isOnline}
           >
             <Ionicons
               name="map-outline"
