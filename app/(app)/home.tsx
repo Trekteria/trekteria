@@ -28,6 +28,7 @@ import { useUserStore } from '../../store/userStore';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { useOfflineData } from '../../hooks/useOfflineData';
+import { useSQLite } from '../../hooks/useSQLite';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -442,6 +443,7 @@ export default function Home() {
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
   const { getPlans, getTrips, getBookmarkedTrips, updateTripBookmark, isInitialized, pullData } = useOfflineData();
+  const { deletePlan } = useSQLite();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -620,11 +622,17 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       fetchUserData(); // From Zustand store
-      if (isInitialized) {
-        fetchTrips();
-        fetchPlans();
-      }
-    }, [fetchUserData, fetchPlans, fetchTrips, isInitialized])
+      const refreshData = async () => {
+        if (isOnline) {
+          await pullData(userId);
+        }
+        if (isInitialized) {
+          fetchTrips();
+          fetchPlans();
+        }
+      };
+      refreshData();
+    }, [fetchUserData, fetchPlans, fetchTrips, isInitialized, pullData, userId, isOnline])
   );
 
   const goToSettings = () => router.push("/(app)/settings");
@@ -720,11 +728,6 @@ export default function Home() {
 
                 if (updateError) throw updateError;
 
-                // Pull data from Supabase
-                await pullData(userId);
-                await fetchTrips();
-                await fetchPlans();
-
                 // Update local trips state
                 setTrips((prevTrips) =>
                   prevTrips.filter((trip) => trip.id !== tripId)
@@ -815,6 +818,7 @@ export default function Home() {
                   .eq('plan_id', planId);
 
                 if (deletePlanError) throw deletePlanError;
+
                 // 4. Update local plans state
                 setPlans((prevPlans) =>
                   prevPlans.filter((plan) => plan.id !== planId)
@@ -827,10 +831,8 @@ export default function Home() {
                   return newSet;
                 });
 
-                // Pull data from Supabase
-                await pullData(userId);
-                await fetchTrips();
-                await fetchPlans();
+                // 5. Delete the plan from SQLite
+                await deletePlan(planId);
 
               } catch (error) {
                 console.error("Error deleting plan and associated trips:", error);
