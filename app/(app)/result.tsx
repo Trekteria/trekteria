@@ -48,7 +48,7 @@ export default function Result() {
   const theme = isDarkMode ? Colors.dark : Colors.light;
   const { isOnline } = useNetworkStatus();
   const { userId } = useUserStore();
-  const { getTripsByPlan, saveTrip, isInitialized } = useOfflineData();
+  const { getTripsByPlan, saveTrip, isInitialized, pullData } = useOfflineData();
 
   useEffect(() => {
     const loadData = async () => {
@@ -167,6 +167,9 @@ export default function Result() {
         .eq('trip_id', trip.trip_id);
 
       if (updateError) throw updateError;
+
+      // Pull data from Supabase  
+      await pullData(userId);
 
       const updatedTrips = [...parsedTrips];
       updatedTrips[index] = {
