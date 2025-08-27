@@ -219,7 +219,7 @@ function Trip() {
       // case "mission":
       //   return <MissionTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       case "chat":
-        return <ChatTab tripId={tripData.trip_id} />;
+        return <ChatTab tripId={tripData.trip_id} tripData={fullTripData || tripData} />;
       default:
         return null;
     }
