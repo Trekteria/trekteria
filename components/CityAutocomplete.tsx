@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -29,6 +29,8 @@ interface City {
 
 interface CityAutocompleteProps {
   onSelect: (city: City) => void;
+  onInputChange?: (text: string) => void; // Add callback for raw text input
+  value?: string; // Add value prop to make component controlled
   placeholder?: string;
   style?: any;
   theme?: {
@@ -40,15 +42,25 @@ interface CityAutocompleteProps {
   onSuggestionsVisibilityChange?: (visible: boolean) => void;
 }
 
-export default function CityAutocomplete({ onSelect, placeholder = "Enter city", style, theme, onSuggestionsVisibilityChange }: CityAutocompleteProps) {
-  const [query, setQuery] = useState("");
+export default function CityAutocomplete({ onSelect, onInputChange, value, placeholder = "Enter city", style, theme, onSuggestionsVisibilityChange }: CityAutocompleteProps) {
+  const [query, setQuery] = useState(value || "");
   const [results, setResults] = useState<City[]>([]);
   const inputRef = useRef<TextInput>(null);
+
+  // Update internal state when value prop changes
+  useEffect(() => {
+    if (value !== undefined) {
+      setQuery(value);
+    }
+  }, [value]);
 
   const handleSearch = (text: string) => {
     setQuery(text);
 
-    if (text.length < 2) {
+    // Call onInputChange callback to allow parent component to handle raw text
+    onInputChange?.(text);
+
+    if (text.length < 1) {
       setResults([]);
       onSuggestionsVisibilityChange?.(false);
       return;
@@ -57,10 +69,10 @@ export default function CityAutocomplete({ onSelect, placeholder = "Enter city",
     // Case-insensitive search by city name
     const filtered = (citiesData as City[])
       .filter((c) =>
-        c.city.toLowerCase().startsWith(text.toLowerCase())
+        c.city.toLowerCase().includes(text.toLowerCase())
       )
       .sort((a, b) => b.population - a.population) // bigger cities first
-      .slice(0, 10); // limit results
+      .slice(0, 50); // limit results
 
     setResults(filtered);
     onSuggestionsVisibilityChange?.(filtered.length > 0);
@@ -92,29 +104,30 @@ export default function CityAutocomplete({ onSelect, placeholder = "Enter city",
       />
 
       {results.length > 0 && (
-        <View style={styles.suggestionsContainer}>
+        <View style={[styles.suggestionsContainer, { backgroundColor: theme?.card || '#fff' }]}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled={true}
           >
             {results.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.suggestion,
-                  {
-                    backgroundColor: theme?.card || '#fff',
-                    borderBottomColor: theme?.borderColor || '#eee',
-                  }
-                ]}
-                onPress={() => handleSelect(item)}
-              >
-                <Text style={[
-                  styles.suggestionText,
-                  { color: theme?.text || '#333' }
-                ]}>{item.city}, {item.state_id}</Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.suggestion,
+                  ]}
+                  onPress={() => handleSelect(item)}
+                >
+                  <Text style={[
+                    styles.suggestionText,
+                    { color: theme?.text || '#333' }
+                  ]}>{item.city}, {item.state_id}</Text>
+                </TouchableOpacity>
+                {index !== results.length - 1 && (
+                  <View style={styles.divider} />
+                )}
+              </>
             ))}
           </ScrollView>
         </View>
@@ -137,8 +150,6 @@ const styles = StyleSheet.create({
   },
   suggestion: {
     padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   suggestionText: {
     // Color will be set dynamically based on theme
@@ -148,8 +159,8 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: 'white',
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 20,
     maxHeight: 200,
     shadowColor: '#000',
     shadowOffset: {
@@ -160,6 +171,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 1000,
-    marginTop: 4,
+    marginTop: 10,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    opacity: 0.1,
   },
 });

@@ -17,8 +17,11 @@ export const fetchUnsplashImage = async (
     return defaultTripImages[0];
   }
 
+  // Clean the query by removing everything starting from ','
+  const cleanedQuery = query.split(",")[0].trim();
+
   // Try cache first
-  const cacheKey = query;
+  const cacheKey = cleanedQuery;
   const cachedUrl = await getCachedImageUrl(cacheKey);
   if (cachedUrl) {
     console.log("-------Successfully fetched image from CACHE-------");
@@ -34,7 +37,7 @@ export const fetchUnsplashImage = async (
 
     const response = await fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
-        query
+        cleanedQuery
       )}&per_page=1&client_id=${UNSPLASH_ACCESS_KEY}&auto=format&fit=crop&q=80&w=1000`
     );
 

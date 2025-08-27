@@ -749,13 +749,21 @@ export default function Preferences() {
                                              };
                                              updateValue(newValue);
                                         }}
+                                        onInputChange={(text) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  fromLocation: text
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        value={question.value.fromLocation}
                                         placeholder="Starting Location"
                                         style={styles.cityAutocompleteInput}
                                         theme={theme}
                                         onSuggestionsVisibilityChange={setIsLocationSuggestionsVisible}
                                    />
                               </View>
-                              
+
                               <View style={[styles.locationInputContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
                                    <Ionicons name="location-outline" size={20} color={theme.icon} style={styles.locationIcon} />
                                    <CityAutocomplete
@@ -775,13 +783,21 @@ export default function Preferences() {
                                              };
                                              updateValue(newValue);
                                         }}
+                                        onInputChange={(text) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  toLocation: text
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        value={question.value.toLocation}
                                         placeholder="Destination"
                                         style={styles.cityAutocompleteInput}
                                         theme={theme}
                                         onSuggestionsVisibilityChange={setIsLocationSuggestionsVisible}
                                    />
                               </View>
-                              
+
                               {!isLocationSuggestionsVisible && (
                                    <View style={[styles.radiusContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
                                         <View style={styles.radiusLabelContainer}>
