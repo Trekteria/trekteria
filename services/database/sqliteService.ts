@@ -8,6 +8,7 @@ class SQLiteService {
   async initDatabase(): Promise<void> {
     try {
       this.db = await SQLite.openDatabaseAsync("trekteria.db");
+
       await this.createTables();
 
       console.log("SQLite database initialized successfully");

@@ -24,7 +24,7 @@ import { useColorScheme } from "../../hooks/useColorScheme";
 import { deleteCachedTrailData, deleteCachedChatMessages } from '../../services/cacheService';
 import DarkModeBackground from "../../components/DarkModeBackground";
 import { supabase } from '../../services/supabaseConfig';
-import { useUserStore } from '../../store';
+import { useUserStore } from '../../store/userStore';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { useOfflineData } from '../../hooks/useOfflineData';
@@ -441,7 +441,7 @@ export default function Home() {
 
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
-  const { getPlans, getTrips, updateTripBookmark, isInitialized } = useOfflineData();
+  const { getPlans, getTrips, getBookmarkedTrips, updateTripBookmark, isInitialized } = useOfflineData();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -551,7 +551,7 @@ export default function Home() {
   const fetchTrips = useCallback(async () => {
     try {
       if (userId) {
-        const tripsList = await getTrips(userId);
+        const tripsList = await getBookmarkedTrips(userId);
 
         if (tripsList) {
           const transformedTrips = tripsList.map(trip => ({
@@ -614,15 +614,17 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching trips:", error);
     }
-  }, [userId, getTrips, getPlans]);
+  }, [userId, getBookmarkedTrips, getPlans]);
 
   // Update the useFocusEffect to use Zustand store
   useFocusEffect(
     useCallback(() => {
       fetchUserData(); // From Zustand store
-      fetchTrips();
-      fetchPlans();
-    }, [fetchUserData, fetchPlans, fetchTrips])
+      if (isInitialized) {
+        fetchTrips();
+        fetchPlans();
+      }
+    }, [fetchUserData, fetchPlans, fetchTrips, isInitialized])
   );
 
   const goToSettings = () => router.push("/(app)/settings");

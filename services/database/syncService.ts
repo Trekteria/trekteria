@@ -420,12 +420,9 @@ class SyncService {
 
       // Save to local SQLite with timestamp comparison
       if (user) {
-        // Get the updatedAt timestamp, handling both field names
-        const userUpdatedAt = user.updatedAt || user.updated_at;
-
         const shouldUpdate = await sqliteService.shouldUpdateUser(
           user.user_id,
-          userUpdatedAt
+          user.updatedAt
         );
         if (shouldUpdate) {
           await sqliteService.saveUser(this.convertSupabaseUserToLocal(user));
@@ -433,12 +430,9 @@ class SyncService {
       }
 
       for (const plan of plans || []) {
-        // Get the updatedAt timestamp, handling both field names
-        const planUpdatedAt = plan.updatedAt || plan.updated_at;
-
         const shouldUpdate = await sqliteService.shouldUpdatePlan(
           plan.plan_id,
-          planUpdatedAt
+          plan.updatedAt
         );
         if (shouldUpdate) {
           await sqliteService.savePlan(this.convertSupabasePlanToLocal(plan));
@@ -446,27 +440,19 @@ class SyncService {
       }
 
       for (const trip of trips || []) {
-        // Get the updatedAt timestamp, handling both field names
-        const tripUpdatedAt = trip.updatedAt || trip.updated_at;
-
         const shouldUpdate = await sqliteService.shouldUpdateTrip(
           trip.trip_id,
-          tripUpdatedAt
+          trip.updatedAt
         );
-
         if (shouldUpdate) {
-          const convertedTrip = this.convertSupabaseTripToLocal(trip);
-          await sqliteService.saveTrip(convertedTrip);
+          await sqliteService.saveTrip(this.convertSupabaseTripToLocal(trip));
         }
       }
 
       for (const fb of feedback || []) {
-        // Get the updatedAt timestamp, handling both field names
-        const feedbackUpdatedAt = fb.updatedAt || fb.updated_at;
-
         const shouldUpdate = await sqliteService.shouldUpdateFeedback(
           fb.feedback_id,
-          feedbackUpdatedAt
+          fb.updatedAt
         );
         if (shouldUpdate) {
           await sqliteService.saveFeedback(
@@ -475,7 +461,9 @@ class SyncService {
         }
       }
 
-      console.log("Data pulled successfully from Supabase");
+      console.log(
+        "Data pulled successfully from Supabase with timestamp comparison"
+      );
     } catch (error) {
       console.error("Failed to pull data:", error);
       throw error;
@@ -498,12 +486,9 @@ class SyncService {
   private convertSupabasePlanToLocal(supabasePlan: any): Plan {
     return {
       id: supabasePlan.plan_id,
-      userId: supabasePlan.userId || supabasePlan.user_id, // Handle both field names
+      userId: supabasePlan.userId,
       createdAt: supabasePlan.createdAt,
-      updatedAt:
-        supabasePlan.updatedAt ||
-        supabasePlan.updated_at ||
-        new Date().toISOString(), // Handle both field names and provide fallback
+      updatedAt: supabasePlan.updatedAt,
       imageUrl: supabasePlan.imageUrl,
       totalGroupSize: supabasePlan.totalGroupSize,
       preferences: supabasePlan.preferences,
@@ -515,13 +500,10 @@ class SyncService {
   private convertSupabaseTripToLocal(supabaseTrip: any): Trip {
     return {
       id: supabaseTrip.trip_id,
-      userId: supabaseTrip.userId || supabaseTrip.user_id, // Handle both field names
-      planId: supabaseTrip.planId || supabaseTrip.plan_id, // Handle both field names
+      userId: supabaseTrip.userId,
+      planId: supabaseTrip.planId,
       createdAt: supabaseTrip.createdAt,
-      updatedAt:
-        supabaseTrip.updatedAt ||
-        supabaseTrip.updated_at ||
-        new Date().toISOString(), // Handle both field names and provide fallback
+      updatedAt: supabaseTrip.updatedAt,
       imageUrl: supabaseTrip.imageUrl,
       bookmarked: supabaseTrip.bookmarked,
       name: supabaseTrip.name,
@@ -550,15 +532,12 @@ class SyncService {
   private convertSupabaseFeedbackToLocal(supabaseFeedback: any): Feedback {
     return {
       id: supabaseFeedback.feedback_id,
-      userId: supabaseFeedback.userId || supabaseFeedback.user_id, // Handle both field names
+      userId: supabaseFeedback.userId,
       email: supabaseFeedback.email,
       subject: supabaseFeedback.subject,
       message: supabaseFeedback.message,
       createdAt: supabaseFeedback.createdAt,
-      updatedAt:
-        supabaseFeedback.updatedAt ||
-        supabaseFeedback.updated_at ||
-        new Date().toISOString(), // Handle both field names and provide fallback
+      updatedAt: supabaseFeedback.updatedAt,
       category: supabaseFeedback.category,
     };
   }

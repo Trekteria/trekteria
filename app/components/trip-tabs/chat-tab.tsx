@@ -21,6 +21,11 @@ import { supabase } from "../../../services/supabaseConfig";
 import { generateChatResponse } from "../../../services/geminiService";
 import { v4 as uuidv4 } from 'uuid';
 import { trackScreen, trackEvent } from "../../../services/analyticsService";
+import { Trip } from "../../../types/Types";
+import { useUserStore } from "../../../store/userStore";
+import { useOfflineData } from "../../../hooks/useOfflineData";
+import { useNetworkStatus } from "../../../hooks/useNetworkStatus";
+
 
 // Message type definition
 interface Message {
@@ -33,6 +38,7 @@ interface Message {
 // Props type definition
 interface ChatTabProps {
      tripId: string;
+     tripData: Trip;
 }
 
 // TypingBubble component
@@ -97,7 +103,12 @@ const TypingBubble = () => {
      );
 };
 
-export default function ChatTab({ tripId }: ChatTabProps) {
+// Helper function to remove trailing newlines
+const removeTrailingNewlines = (text: string): string => {
+     return text.replace(/\n+$/, '');
+};
+
+export default function ChatTab({ tripId, tripData }: ChatTabProps) {
      const [messages, setMessages] = useState<Message[]>([]);
      const [newMessage, setNewMessage] = useState("");
      const [loading, setLoading] = useState(true);
@@ -108,6 +119,9 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      const { effectiveColorScheme } = useColorScheme();
      const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
+     const { fetchUserData, userId } = useUserStore();
+     const { isOnline } = useNetworkStatus();
+     const { pullData } = useOfflineData();
 
      // Track tab view
      useEffect(() => {
@@ -122,12 +136,17 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      useEffect(() => {
           const loadData = async () => {
                try {
-                    // Get current user
-                    const { data: { user }, error: userError } = await supabase.auth.getUser();
-                    if (userError) throw userError;
 
-                    if (!user) {
-                         throw new Error("User not authenticated");
+                    if (!isOnline) {
+                         setMessages(tripData.chatHistory?.map(message => ({
+                              id: message.id,
+                              text: message.text,
+                              sender: message.sender,
+                              timestamp: message.timestamp
+                         })) || []);
+                         setTripDetails(tripData);
+                         setLoading(false);
+                         return;
                     }
 
                     // Fetch trip data including chat history
@@ -195,6 +214,9 @@ export default function ChatTab({ tripId }: ChatTabProps) {
 
                if (updateError) throw updateError;
 
+               // Sync to sqlite
+               await pullData(userId);
+
                // Update local state
                setMessages(updatedChatHistory);
           } catch (error) {
@@ -206,6 +228,11 @@ export default function ChatTab({ tripId }: ChatTabProps) {
      // Handle sending a new message
      const handleSend = async () => {
           if (!newMessage.trim()) return;
+
+          if (!isOnline) {
+               Alert.alert("No internet connection", "Please check your internet connection and try again.");
+               return;
+          }
 
           setSending(true);
           try {
@@ -324,7 +351,7 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                                              { color: message.sender === "user" ? "white" : theme.text },
                                         ]}
                                    >
-                                        {message.text}
+                                        {removeTrailingNewlines(message.text)}
                                    </Text>
                               </View>
                          </View>
@@ -362,11 +389,11 @@ export default function ChatTab({ tripId }: ChatTabProps) {
                     <TouchableOpacity
                          style={[
                               styles.sendButton,
-                              { backgroundColor: theme.primary },
+                              { backgroundColor: isOnline ? theme.primary : theme.icon },
                               sending && styles.sendingButton,
                          ]}
                          onPress={handleSend}
-                         disabled={sending || !newMessage.trim()}
+                         disabled={sending || !newMessage.trim() || !isOnline}
                     >
                          <Ionicons name="send" size={24} color="white" />
                     </TouchableOpacity>
