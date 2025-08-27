@@ -26,6 +26,25 @@ import { supabase } from '@/services/supabaseConfig';
 import { useColorScheme } from '../../hooks/useColorScheme';
 import { useOfflineData } from '../../hooks/useOfflineData';
 import { useUserStore } from '../../store';
+import CityAutocomplete from '../../components/CityAutocomplete';
+
+interface City {
+     city: string;
+     city_ascii: string;
+     state_id: string;
+     state_name: string;
+     lat: number;
+     lng: number;
+     population: number;
+     density: number;
+     source: string;
+     military: boolean;
+     incorporated: boolean;
+     timezone: string;
+     ranking: number;
+     zips: string;
+     id: number;
+}
 
 type TravelerGroup = {
      label: string;
@@ -71,6 +90,7 @@ export default function Preferences() {
      const [currentStep, setCurrentStep] = useState<number>(0);
      const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
      const [lastCompletedStep, setLastCompletedStep] = useState<number | null>(null);
+     const [isLocationSuggestionsVisible, setIsLocationSuggestionsVisible] = useState<boolean>(false);
 
      const loadingSteps = [
           {
@@ -718,85 +738,112 @@ export default function Preferences() {
                case 'location':
                     return (
                          <View style={styles.locationContainer}>
-                              <View style={[styles.locationInputWrapper, { borderColor: theme.borderColor }]}>
-                                   <View style={[styles.locationInputContainer, { backgroundColor: theme.card }]}>
-                                        <Ionicons name="locate-outline" size={20} color={theme.icon} style={styles.locationIcon} />
-                                        <TextInput
-                                             style={[styles.locationInput, {
-                                                  color: theme.text,
-                                                  borderColor: theme.borderColor,
-                                                  backgroundColor: theme.card
-                                             }]}
-                                             value={question.value.fromLocation}
-                                             onChangeText={(text) => {
-                                                  const newValue = {
-                                                       ...question.value,
-                                                       fromLocation: text
-                                                  };
-                                                  updateValue(newValue);
-                                             }}
-                                             placeholder="Starting Location"
-                                             placeholderTextColor={theme.inactive}
-                                        />
-                                   </View>
-                                   <View style={[styles.locationDivider, { backgroundColor: theme.borderColor }]} />
-                                   <View style={[styles.locationInputContainer, { backgroundColor: theme.card }]}>
-                                        <Ionicons name="location-outline" size={20} color={theme.icon} style={styles.locationIcon} />
-                                        <TextInput
-                                             style={[styles.locationInput, {
-                                                  color: theme.text,
-                                                  borderColor: theme.borderColor,
-                                                  backgroundColor: theme.card
-                                             }]}
-                                             value={question.value.toLocation}
-                                             onChangeText={(text) => {
-                                                  const newValue = {
-                                                       ...question.value,
-                                                       toLocation: text
-                                                  };
-                                                  updateValue(newValue);
-                                             }}
-                                             placeholder="Destination"
-                                             placeholderTextColor={theme.inactive}
-                                        />
-                                   </View>
+                              <View style={[styles.locationInputContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
+                                   <Ionicons name="locate-outline" size={20} color={theme.icon} style={styles.locationIcon} />
+                                   <CityAutocomplete
+                                        onSelect={(city: City) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  fromLocation: `${city.city}, ${city.state_id}`,
+                                                  fromLocationData: {
+                                                       city: city.city,
+                                                       state: city.state_name,
+                                                       stateCode: city.state_id,
+                                                       coordinates: {
+                                                            lat: city.lat,
+                                                            lng: city.lng
+                                                       }
+                                                  }
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        onInputChange={(text) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  fromLocation: text
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        value={question.value.fromLocation}
+                                        placeholder="Starting Location"
+                                        style={styles.cityAutocompleteInput}
+                                        theme={theme}
+                                        onSuggestionsVisibilityChange={setIsLocationSuggestionsVisible}
+                                   />
                               </View>
-                              <View style={[styles.radiusContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
-                                   <View style={styles.radiusLabelContainer}>
-                                        <Text style={[styles.radiusLabel, { color: theme.text }]}>Search radius</Text>
-                                   </View>
-                                   <View style={styles.radiusInputContainer}>
-                                        <TouchableOpacity
-                                             style={[styles.numberButton, {
-                                                  borderColor: theme.borderColor,
-                                                  backgroundColor: theme.background
-                                             }]}
-                                             onPress={() => {
-                                                  const newValue = {
-                                                       ...question.value,
-                                                       radius: Math.max(5, question.value.radius - 5)
-                                                  };
-                                                  updateValue(newValue);
-                                             }}>
-                                             <Ionicons name="remove" size={16} color={theme.text} />
-                                        </TouchableOpacity>
-                                        <Text style={[styles.numberText, { color: theme.text }]}>{question.value.radius} mi</Text>
-                                        <TouchableOpacity
-                                             style={[styles.numberButton, {
-                                                  borderColor: theme.borderColor,
-                                                  backgroundColor: theme.background
-                                             }]}
-                                             onPress={() => {
-                                                  const newValue = {
-                                                       ...question.value,
-                                                       radius: question.value.radius + 5
-                                                  };
-                                                  updateValue(newValue);
-                                             }}>
-                                             <Ionicons name="add" size={16} color={theme.text} />
-                                        </TouchableOpacity>
-                                   </View>
+
+                              <View style={[styles.locationInputContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
+                                   <Ionicons name="location-outline" size={20} color={theme.icon} style={styles.locationIcon} />
+                                   <CityAutocomplete
+                                        onSelect={(city: City) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  toLocation: `${city.city}, ${city.state_id}`,
+                                                  toLocationData: {
+                                                       city: city.city,
+                                                       state: city.state_name,
+                                                       stateCode: city.state_id,
+                                                       coordinates: {
+                                                            lat: city.lat,
+                                                            lng: city.lng
+                                                       }
+                                                  }
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        onInputChange={(text) => {
+                                             const newValue = {
+                                                  ...question.value,
+                                                  toLocation: text
+                                             };
+                                             updateValue(newValue);
+                                        }}
+                                        value={question.value.toLocation}
+                                        placeholder="Destination"
+                                        style={styles.cityAutocompleteInput}
+                                        theme={theme}
+                                        onSuggestionsVisibilityChange={setIsLocationSuggestionsVisible}
+                                   />
                               </View>
+
+                              {!isLocationSuggestionsVisible && (
+                                   <View style={[styles.radiusContainer, { backgroundColor: theme.card, borderColor: theme.borderColor }]}>
+                                        <View style={styles.radiusLabelContainer}>
+                                             <Text style={[styles.radiusLabel, { color: theme.text }]}>Search radius</Text>
+                                        </View>
+                                        <View style={styles.radiusInputContainer}>
+                                             <TouchableOpacity
+                                                  style={[styles.numberButton, {
+                                                       borderColor: theme.borderColor,
+                                                       backgroundColor: theme.background
+                                                  }]}
+                                                  onPress={() => {
+                                                       const newValue = {
+                                                            ...question.value,
+                                                            radius: Math.max(5, question.value.radius - 5)
+                                                       };
+                                                       updateValue(newValue);
+                                                  }}>
+                                                  <Ionicons name="remove" size={16} color={theme.text} />
+                                             </TouchableOpacity>
+                                             <Text style={[styles.numberText, { color: theme.text }]}>{question.value.radius} mi</Text>
+                                             <TouchableOpacity
+                                                  style={[styles.numberButton, {
+                                                       borderColor: theme.borderColor,
+                                                       backgroundColor: theme.background
+                                                  }]}
+                                                  onPress={() => {
+                                                       const newValue = {
+                                                            ...question.value,
+                                                            radius: question.value.radius + 5
+                                                       };
+                                                       updateValue(newValue);
+                                                  }}>
+                                                  <Ionicons name="add" size={16} color={theme.text} />
+                                             </TouchableOpacity>
+                                        </View>
+                                   </View>
+                              )}
                          </View>
                     );
                case 'date':
@@ -1447,6 +1494,9 @@ const styles = StyleSheet.create({
           alignItems: 'center',
           paddingHorizontal: 16,
           paddingVertical: 20,
+          borderRadius: 30,
+          borderWidth: 1,
+          marginBottom: 10,
      },
      locationIcon: {
           marginRight: 12,
@@ -1456,6 +1506,10 @@ const styles = StyleSheet.create({
           fontSize: 16,
           padding: 0,
           ...Typography.text.body,
+     },
+     cityAutocompleteInput: {
+          flex: 1,
+          margin: 0,
      },
      locationDivider: {
           height: 1,

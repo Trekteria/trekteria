@@ -236,6 +236,7 @@ export const parseRecommendations = async (
       // Create a structured trip object
       return {
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         planId: "",
         bookmarked: false,
         userId,

@@ -28,6 +28,7 @@ import { useUserStore } from '../../store/userStore';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { useOfflineData } from '../../hooks/useOfflineData';
+import { useSQLite } from '../../hooks/useSQLite';
 
 // Define types for the data
 interface Trip extends TripType {
@@ -442,6 +443,7 @@ export default function Home() {
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
   const { getPlans, getTrips, getBookmarkedTrips, updateTripBookmark, isInitialized, pullData } = useOfflineData();
+  const { deletePlan } = useSQLite();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -620,11 +622,17 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       fetchUserData(); // From Zustand store
-      if (isInitialized) {
-        fetchTrips();
-        fetchPlans();
-      }
-    }, [fetchUserData, fetchPlans, fetchTrips, isInitialized])
+      const refreshData = async () => {
+        if (isOnline) {
+          await pullData(userId);
+        }
+        if (isInitialized) {
+          fetchTrips();
+          fetchPlans();
+        }
+      };
+      refreshData();
+    }, [fetchUserData, fetchPlans, fetchTrips, isInitialized, pullData, userId, isOnline])
   );
 
   const goToSettings = () => router.push("/(app)/settings");
@@ -828,6 +836,10 @@ export default function Home() {
                   newSet.delete(planId);
                   return newSet;
                 });
+
+                // 5. Delete the plan from SQLite
+                await deletePlan(planId);
+
               } catch (error) {
                 console.error("Error deleting plan and associated trips:", error);
                 Alert.alert("Error", "Could not delete plan or its trips.");
