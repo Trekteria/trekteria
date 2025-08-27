@@ -20,6 +20,8 @@ import { useColorScheme } from "../../../hooks/useColorScheme";
 import { supabase } from "../../../services/supabaseConfig";
 import { Trip } from "../../../types/Types";
 import { trackScreen, trackEvent } from "../../../services/analyticsService";
+import { useOfflineData } from "../../../hooks/useOfflineData";
+import { useUserStore } from "../../../store";
 
 // Add interface for component props
 interface PackingTabProps {
@@ -34,7 +36,7 @@ interface PackingItem {
 
 export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   const [packingItems, setPackingItems] = useState<
-    Array<{ id: string; title: string; checked: boolean }>
+    { id: string; title: string; checked: boolean }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,9 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
   } | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const { pullData } = useOfflineData();
+  const { userId } = useUserStore();
 
   // Get the color scheme
   const { effectiveColorScheme } = useColorScheme();
@@ -316,7 +321,7 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
 
   // Helper function to update Supabase
   const updatePackingListInSupabase = async (
-    items: Array<{ id: string; title: string; checked: boolean }>
+    items: { id: string; title: string; checked: boolean }[]
   ) => {
     // Try to get trip ID from multiple sources to ensure we have one
     let currentTripId = currentTripIdRef.current;
@@ -366,6 +371,8 @@ export default function PackingTab({ tripId, tripData }: PackingTabProps) {
       }
       throw error;
     }
+
+    await pullData(userId);
 
     console.log("Updated packing list in Supabase");
   };

@@ -441,7 +441,7 @@ export default function Home() {
 
   // Zustand store
   const { firstName, ecoPoints, fetchUserData, userId } = useUserStore();
-  const { getPlans, getTrips, getBookmarkedTrips, updateTripBookmark, isInitialized } = useOfflineData();
+  const { getPlans, getTrips, getBookmarkedTrips, updateTripBookmark, isInitialized, pullData } = useOfflineData();
 
   // Network status
   const { isOnline } = useNetworkStatus();
@@ -720,6 +720,9 @@ export default function Home() {
 
                 if (updateError) throw updateError;
 
+                // Pull data from Supabase
+                await pullData(userId);
+
                 // Update local trips state
                 setTrips((prevTrips) =>
                   prevTrips.filter((trip) => trip.id !== tripId)
@@ -810,6 +813,9 @@ export default function Home() {
                   .eq('plan_id', planId);
 
                 if (deletePlanError) throw deletePlanError;
+
+                // Pull data from Supabase
+                await pullData(userId);
 
                 // 4. Update local plans state
                 setPlans((prevPlans) =>

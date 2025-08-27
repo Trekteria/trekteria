@@ -24,6 +24,8 @@ import { trackScreen, trackPreferencesEvent, trackEvent } from '../../services/a
 import { processRecommendations } from '@/services/recommendation';
 import { supabase } from '@/services/supabaseConfig';
 import { useColorScheme } from '../../hooks/useColorScheme';
+import { useOfflineData } from '../../hooks/useOfflineData';
+import { useUserStore } from '../../store';
 
 type TravelerGroup = {
      label: string;
@@ -52,6 +54,9 @@ export default function Preferences() {
      const { effectiveColorScheme } = useColorScheme();
      const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
+
+     const { pullData } = useOfflineData();
+     const { userId } = useUserStore();
 
      const [currentQuestion, setCurrentQuestion] = useState<number>(0);
      const [loading, setLoading] = useState<boolean>(false);
@@ -512,6 +517,9 @@ export default function Preferences() {
                               completeCurrentStep(); // Complete step 3 (final)
 
                               setSuccess(true);
+
+                              // Pull data from Supabase
+                              await pullData(userId);
 
                               // Navigate to results page
                               router.replace({

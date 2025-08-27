@@ -21,13 +21,14 @@ import { Typography } from '../../../constants/Typography';
 import { useColorScheme } from '../../../hooks/useColorScheme';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { submitFeedback } from '../../../services/feedbackService';
+import { useNetworkStatus } from '../../../hooks/useNetworkStatus';
 
 export default function FeedbackPage() {
      const router = useRouter();
      const { effectiveColorScheme } = useColorScheme();
      const isDarkMode = effectiveColorScheme === 'dark';
      const theme = isDarkMode ? Colors.dark : Colors.light;
-
+     const { isOnline } = useNetworkStatus();
      const [subject, setSubject] = useState('');
      const [message, setMessage] = useState('');
      const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +42,11 @@ export default function FeedbackPage() {
      ]);
 
      const handleSubmit = async () => {
+          if (!isOnline) {
+               Alert.alert('Error', 'Please check your internet connection and try again.');
+               return;
+          }
+
           // Validate inputs
           if (!subject.trim() || !message.trim()) {
                Alert.alert('Error', 'Please fill out all fields');
