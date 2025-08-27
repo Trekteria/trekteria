@@ -722,6 +722,8 @@ export default function Home() {
 
                 // Pull data from Supabase
                 await pullData(userId);
+                await fetchTrips();
+                await fetchPlans();
 
                 // Update local trips state
                 setTrips((prevTrips) =>
@@ -813,10 +815,6 @@ export default function Home() {
                   .eq('plan_id', planId);
 
                 if (deletePlanError) throw deletePlanError;
-
-                // Pull data from Supabase
-                await pullData(userId);
-
                 // 4. Update local plans state
                 setPlans((prevPlans) =>
                   prevPlans.filter((plan) => plan.id !== planId)
@@ -828,6 +826,12 @@ export default function Home() {
                   newSet.delete(planId);
                   return newSet;
                 });
+
+                // Pull data from Supabase
+                await pullData(userId);
+                await fetchTrips();
+                await fetchPlans();
+
               } catch (error) {
                 console.error("Error deleting plan and associated trips:", error);
                 Alert.alert("Error", "Could not delete plan or its trips.");
