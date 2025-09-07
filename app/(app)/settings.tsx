@@ -17,6 +17,7 @@ import { Typography } from "../../constants/Typography";
 import { supabase } from "../../services/supabaseConfig";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { useTemperatureUnit } from "../../hooks/useTemperatureUnit";
+import { useNetworkStatus } from "../../hooks/useNetworkStatus";
 import { Share } from "react-native";
 import { trackScreen, trackEvent, analyticsService } from "../../services/analyticsService";
 import { sqliteService } from "../../services/database/sqliteService";
@@ -45,6 +46,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { colorScheme, setColorScheme, effectiveColorScheme } = useColorScheme();
   const { temperatureUnit, setTemperatureUnit } = useTemperatureUnit();
+  const { isOnline } = useNetworkStatus();
   const isDarkMode = effectiveColorScheme === 'dark';
   const [measurementUnit, setMeasurementUnit] = useState("Imperial");
   const [showTemperatureModal, setShowTemperatureModal] = useState(false);
@@ -190,8 +192,24 @@ export default function SettingsPage() {
         {/* Account Section */}
         <Text style={[styles.sectionHeader, { color: theme.text }]}>Account</Text>
         <TouchableOpacity
-          style={[styles.row, { borderBottomColor: theme.borderColor }]}
-          onPress={() => router.push("/(app)/settings/change-name")}
+          style={[
+            styles.row,
+            {
+              borderBottomColor: theme.borderColor,
+              opacity: isOnline ? 1 : 0.5
+            }
+          ]}
+          onPress={() => {
+            if (isOnline) {
+              router.push("/(app)/settings/change-name");
+            } else {
+              Alert.alert(
+                "Offline Mode",
+                "Name changes are not available while offline. Please connect to the internet to update your name.",
+                [{ text: "OK" }]
+              );
+            }
+          }}
         >
           <Text style={[styles.label, { color: theme.text }]}>Change name</Text>
         </TouchableOpacity>
@@ -224,11 +242,17 @@ export default function SettingsPage() {
             styles.row,
             {
               borderBottomColor: theme.borderColor,
-              opacity: isOAuth ? 0.5 : 1
+              opacity: isOAuth ? 0.5 : (isOnline ? 1 : 0.5)
             }
           ]}
           onPress={() => {
-            if (!isOAuth) {
+            if (!isOnline) {
+              Alert.alert(
+                "Offline Mode",
+                "Password changes are not available while offline. Please connect to the internet to update your password.",
+                [{ text: "OK" }]
+              );
+            } else if (!isOAuth) {
               router.push("/(app)/settings/change-password");
             } else {
               Alert.alert(

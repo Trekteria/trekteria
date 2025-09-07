@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "../services/supabaseConfig";
+import { useNetworkStore } from "./networkStore";
+import { sqliteService } from "../services/database/sqliteService";
 
 interface UserState {
   // User data
@@ -41,28 +43,64 @@ export const useUserStore = create<UserState>((set, get) => ({
       if (userError) throw userError;
 
       if (user) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("firstname, lastname, ecoPoints")
-          .eq("user_id", user.id)
-          .single();
+        // Check if we're online
+        const isOnline = useNetworkStore.getState().isOnline;
 
-        if (error) throw error;
+        if (isOnline) {
+          // Online: fetch from Supabase
+          const { data, error } = await supabase
+            .from("users")
+            .select("firstname, lastname, ecoPoints")
+            .eq("user_id", user.id)
+            .single();
 
-        if (data) {
-          const firstName = data.firstname || "";
-          const lastName = data.lastname || "";
-          const fullName = `${firstName} ${lastName}`.trim() || "User";
+          if (error) throw error;
 
-          set({
-            userId: user.id,
-            firstName,
-            lastName,
-            fullName,
-            ecoPoints: data.ecoPoints || 0,
-            isLoading: false,
-            error: null,
-          });
+          if (data) {
+            const firstName = data.firstname || "";
+            const lastName = data.lastname || "";
+            const fullName = `${firstName} ${lastName}`.trim() || "User";
+
+            set({
+              userId: user.id,
+              firstName,
+              lastName,
+              fullName,
+              ecoPoints: data.ecoPoints || 0,
+              isLoading: false,
+              error: null,
+            });
+          }
+        } else {
+          // Offline: fetch from SQLite
+          const localUser = await sqliteService.getUser(user.id);
+
+          if (localUser) {
+            const firstName = localUser.firstName || "";
+            const lastName = localUser.lastName || "";
+            const fullName = `${firstName} ${lastName}`.trim() || "User";
+
+            set({
+              userId: user.id,
+              firstName,
+              lastName,
+              fullName,
+              ecoPoints: localUser.ecoPoints || 0,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            // No local user data found
+            set({
+              userId: user.id,
+              firstName: "",
+              lastName: "",
+              fullName: "User",
+              ecoPoints: 0,
+              isLoading: false,
+              error: null,
+            });
+          }
         }
       }
     } catch (error) {

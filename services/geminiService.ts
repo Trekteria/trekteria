@@ -240,6 +240,7 @@ Remember:
 - Include accurate GPS coordinates for trails, viewpoints, and attractions
 - Do NOT include coordinates for general campsite activities
 - Use real, verified coordinates when possible
+- Do not include any extra text after the time range
 `;
 
     // Send the prompt to Gemini
