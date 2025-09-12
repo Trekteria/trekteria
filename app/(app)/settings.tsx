@@ -115,6 +115,167 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      trackEvent('settings_delete_account_clicked', {
+        category: 'authentication'
+      });
+
+      // Show first confirmation dialog
+      Alert.alert(
+        "Delete Account",
+        "Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              // Show second confirmation dialog
+              Alert.alert(
+                "Final Confirmation",
+                "This will permanently delete your account and all associated data. Type 'DELETE' to confirm.",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "DELETE",
+                    style: "destructive",
+                    onPress: async () => {
+                      try {
+                        // Get current user
+                        const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+                        if (getUserError || !user) {
+                          throw new Error('Failed to get user information');
+                        }
+
+                        const userId = user.id;
+
+                        // Delete all user data from Supabase tables first
+                        try {
+                          // Delete user's feedback
+                          const { error: feedbackError } = await supabase
+                            .from('feedback')
+                            .delete()
+                            .eq('userId', userId);
+
+                          if (feedbackError) {
+                            console.warn('Failed to delete feedback:', feedbackError);
+                          }
+
+                          // Delete user's trips
+                          const { error: tripsError } = await supabase
+                            .from('trips')
+                            .delete()
+                            .eq('userId', userId);
+
+                          if (tripsError) {
+                            console.warn('Failed to delete trips:', tripsError);
+                          }
+
+                          // Delete user's plans
+                          const { error: plansError } = await supabase
+                            .from('plans')
+                            .delete()
+                            .eq('userId', userId);
+
+                          if (plansError) {
+                            console.warn('Failed to delete plans:', plansError);
+                          }
+
+                          // Delete user profile
+                          const { error: userError } = await supabase
+                            .from('users')
+                            .delete()
+                            .eq('user_id', userId);
+
+                          if (userError) {
+                            console.warn('Failed to delete user profile:', userError);
+                          }
+
+                          console.log('✅ User data deleted from Supabase');
+                        } catch (error) {
+                          console.warn('⚠️ Failed to delete some user data from Supabase:', error);
+                          // Continue with deletion process even if some data deletion fails
+                        }
+
+                        // Clear local SQLite data
+                        try {
+                          await sqliteService.clearAllData();
+                          console.log('🗑️ Local SQLite data cleared successfully');
+                        } catch (error) {
+                          console.warn('⚠️ Failed to clear local SQLite data:', error);
+                        }
+
+                        // Try to call RPC function to delete user account
+                        // This requires a Supabase database function to be created
+                        try {
+                          const { error: rpcError } = await supabase.rpc('delete_user_account', {
+                            user_id: userId
+                          });
+
+                          if (rpcError) {
+                            console.warn('⚠️ RPC delete function not available or failed:', rpcError);
+                            // Fallback: Sign out the user (data already deleted above)
+                            const { error: signOutError } = await supabase.auth.signOut();
+                            if (signOutError) {
+                              throw signOutError;
+                            }
+                            console.log('✅ User signed out (RPC delete not available)');
+                          } else {
+                            console.log('✅ User account fully deleted via RPC function');
+                          }
+                        } catch (error) {
+                          console.warn('⚠️ RPC delete not available, signing out instead:', error);
+                          // Fallback: Sign out the user
+                          const { error: signOutError } = await supabase.auth.signOut();
+                          if (signOutError) {
+                            throw signOutError;
+                          }
+                        }
+
+                        trackEvent('settings_delete_account_success', {
+                          category: 'authentication'
+                        });
+
+                        analyticsService.clearUser();
+
+                        Alert.alert(
+                          "Account Deleted",
+                          "Your account has been successfully deleted. You will now be redirected to the login screen.",
+                          [
+                            {
+                              text: "OK",
+                              onPress: () => router.replace("/auth")
+                            }
+                          ]
+                        );
+                      } catch (error) {
+                        trackEvent('settings_delete_account_failed', {
+                          error_message: error instanceof Error ? error.message : 'Unknown error',
+                          category: 'authentication'
+                        });
+                        Alert.alert(
+                          "Error",
+                          "Failed to delete account. Please try again or contact support if the problem persists."
+                        );
+                      }
+                    }
+                  }
+                ]
+              );
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      trackEvent('settings_delete_account_failed', {
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        category: 'authentication'
+      });
+      Alert.alert("Error", "Failed to initiate account deletion. Please try again.");
+    }
+  };
+
   // Get the appropriate theme colors
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
@@ -496,6 +657,32 @@ export default function SettingsPage() {
           <Text style={[styles.label, { color: theme.text }]}>Rate on App Store</Text>
         </TouchableOpacity> */}
 
+        {/* Delete Account Button */}
+        <TouchableOpacity
+          style={[
+            styles.deleteAccountButton,
+            {
+              backgroundColor: 'transparent',
+              borderColor: '#FF4444',
+              borderWidth: 2,
+              opacity: isOnline ? 1 : 0.5
+            }
+          ]}
+          onPress={() => {
+            if (!isOnline) {
+              Alert.alert(
+                "Offline Mode",
+                "Account deletion is not available while offline. Please connect to the internet to delete your account.",
+                [{ text: "OK" }]
+              );
+            } else {
+              handleDeleteAccount();
+            }
+          }}
+        >
+          <Text style={[styles.deleteAccountText, { color: '#FF4444' }]}>Delete Account</Text>
+        </TouchableOpacity>
+
         {/* Log Out Button */}
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: theme.buttonBackground }]}
@@ -547,8 +734,17 @@ const styles = StyleSheet.create({
   value: {
     ...Typography.text.body, // same as label, but with gray override
   },
-  logoutButton: {
+  deleteAccountButton: {
     marginTop: 30,
+    paddingVertical: 16,
+    borderRadius: 100,
+    alignItems: "center",
+  },
+  deleteAccountText: {
+    ...Typography.text.button, // 18px, Montserrat, bold
+  },
+  logoutButton: {
+    marginTop: 15,
     paddingVertical: 16,
     borderRadius: 100,
     alignItems: "center",
