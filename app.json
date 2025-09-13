@@ -15,6 +15,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.trailmate.app",
       "appleTeamId": "5H4VD3F5J6",
+      "usesAppleSignIn": true,
       "buildNumber": "3",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Trekteria to access your camera for trip photos.",
@@ -44,6 +45,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {

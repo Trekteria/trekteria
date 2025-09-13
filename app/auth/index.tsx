@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { useColorScheme } from "../../hooks/useColorScheme";
 import { signInWithGoogle } from '../../services/googleAuth';
+import { signInWithApple } from '../../services/appleAuth';
 import { trackScreen, trackAuthEvent, trackEvent } from '../../services/analyticsService';
 import { supabase } from '../../services/supabaseConfig';
 import { useOfflineData } from '../../hooks/useOfflineData';
@@ -228,14 +229,24 @@ export default function AuthIndex() {
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        {/* <TouchableOpacity style={[styles.socialButton, { borderColor: theme.borderColor }]}>
+        <TouchableOpacity
+          style={[styles.socialButton, { borderColor: theme.borderColor }]}
+          onPress={() => {
+            trackEvent('apple_signin_button_clicked', {
+              method: 'apple',
+              screen: 'auth_signin',
+              category: 'authentication'
+            });
+            signInWithApple();
+          }}
+        >
           <FontAwesome
             name="apple"
             size={24}
             color={theme.text}
           />
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Registration link */}
         <View style={styles.registerContainer}>
