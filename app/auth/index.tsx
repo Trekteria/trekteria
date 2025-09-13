@@ -20,6 +20,7 @@ import { signInWithApple } from '../../services/appleAuth';
 import { trackScreen, trackAuthEvent, trackEvent } from '../../services/analyticsService';
 import { supabase } from '../../services/supabaseConfig';
 import { useOfflineData } from '../../hooks/useOfflineData';
+import * as AppleAuthentication from "expo-apple-authentication";
 
 // Main authentication screen component
 export default function AuthIndex() {
@@ -229,8 +230,13 @@ export default function AuthIndex() {
           <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.socialButton, { borderColor: theme.borderColor }]}
+        <AppleAuthentication.AppleAuthenticationButton
+          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+          buttonStyle={isDarkMode ?
+            AppleAuthentication.AppleAuthenticationButtonStyle.WHITE :
+            AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+          }
+          style={styles.appleButton}
           onPress={() => {
             trackEvent('apple_signin_button_clicked', {
               method: 'apple',
@@ -239,14 +245,7 @@ export default function AuthIndex() {
             });
             signInWithApple();
           }}
-        >
-          <FontAwesome
-            name="apple"
-            size={24}
-            color={theme.text}
-          />
-          <Text style={[styles.socialButtonText, { color: theme.text }]}>Continue with Apple</Text>
-        </TouchableOpacity>
+        />
 
         {/* Registration link */}
         <View style={styles.registerContainer}>
@@ -369,6 +368,11 @@ const styles = StyleSheet.create({
   },
   socialButtonText: {
     ...Typography.text.body,
+  },
+  appleButton: {
+    width: '100%',
+    height: 50,
+    marginBottom: 15,
   },
   registerContainer: {
     flexDirection: "row",

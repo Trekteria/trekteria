@@ -12,26 +12,12 @@ import { Platform, Alert } from "react-native";
 export async function signInWithApple() {
   try {
     // Check if Apple Authentication is available
-    if (Platform.OS !== "ios") {
-      Alert.alert(
-        "Apple Sign In Unavailable",
-        "Apple Sign In is only available on iOS devices. Please use Google Sign In or email authentication instead.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
     const isAvailable = await AppleAuthentication.isAvailableAsync();
     if (!isAvailable) {
-      Alert.alert(
-        "Apple Sign In Unavailable",
-        "Apple Sign In is not available on this device. Please use Google Sign In or email authentication instead.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Error", "Apple Sign In is not available on this device.");
       return;
     }
 
-    // Request Apple Authentication
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -39,114 +25,69 @@ export async function signInWithApple() {
       ],
     });
 
-    // Sign in with Supabase using the Apple ID token
-    const { data, error } = await supabase.auth.signInWithIdToken({
-      provider: "apple",
-      token: credential.identityToken!,
-    });
+    console.log("Apple credential:", credential);
 
-    if (error) throw error;
-
-    // Get user data after successful authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError) throw userError;
-
-    if (user) {
-      // Check if user already exists in our database
-      const { data: existingUser, error: fetchError } = await supabase
-        .from("users")
-        .select("firstname, lastname, ecoPoints")
-        .eq("user_id", user.id)
-        .single();
-
-      // Extract name information from Apple credential
-      const firstName =
-        credential.fullName?.givenName || existingUser?.firstname || "User";
-      const lastName =
-        credential.fullName?.familyName || existingUser?.lastname || "";
-
-      // Store user data in the users table
-      const { error: upsertError } = await supabase.from("users").upsert(
-        {
-          user_id: user.id,
-          email: user.email || credential.email,
-          emailVerified: true, // Apple emails are always verified
-          firstname: firstName,
-          lastname: lastName,
-          ecoPoints: existingUser?.ecoPoints || 0,
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
-
-      if (upsertError) throw upsertError;
-
-      // Track successful sign in
-      trackEvent("apple_signin_success", {
-        method: "apple",
-        user_id: user.id,
-        is_new_user: !existingUser,
-        provider: "apple",
-        category: "authentication",
+    if (credential.identityToken) {
+      // Sign in with Supabase using the Apple credential
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
       });
 
-      // Set user in analytics
-      analyticsService.setUser(user.id, {
-        email: user.email || credential.email || "",
-        name: `${firstName} ${lastName}`.trim(),
-        hasCompletedOnboarding: !!existingUser,
-      });
-
-      // Pull data from Supabase to local SQLite
-      try {
-        await syncService.pullData(user.id);
-      } catch (error) {
-        console.error("Error pulling data:", error);
+      if (error) {
+        console.error("Supabase Apple sign-in error:", error);
+        Alert.alert("Sign In Failed", error.message);
+        return;
       }
+
+      if (data.user) {
+        // Track successful sign-in
+        trackAuthEvent('sign_in', {
+          user_id: data.user.id,
+          method: 'apple'
+        });
+
+        // Create or update user record
+        const { error: upsertError } = await supabase
+          .from('users')
+          .upsert({
+            user_id: data.user.id,
+            email: data.user.email,
+            full_name: credential.fullName ? 
+              `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim() : 
+              null,
+            emailVerified: true,
+            auth_provider: 'apple',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (upsertError) {
+          console.error("Error upserting user:", upsertError);
+        }
+
+        console.log("Apple Sign In successful:", data.user.email);
+        
+        // Navigate to home screen
+        router.replace('/(app)/home');
+      }
+    } else {
+      Alert.alert("Error", "Failed to get identity token from Apple.");
     }
-
-    console.log("Apple OAuth successful! User is signed in.");
-    router.replace("/(app)/home");
-  } catch (error: any) {
-    console.error("Error signing in with Apple:", error);
-
-    // Handle specific Apple Authentication errors
-    if (error.code === "ERR_REQUEST_CANCELED") {
-      console.log("User canceled Apple Sign-In");
-      return; // Don't track this as an error since user intentionally canceled
+  } catch (e: any) {
+    console.error("Apple Sign In error:", e);
+    
+    if (e.code === 'ERR_REQUEST_CANCELED') {
+      console.log("User canceled the sign-in flow");
+      // Don't show error for user cancellation
+    } else if (e.code === 'ERR_REQUEST_NOT_HANDLED') {
+      Alert.alert("Error", "Apple Sign In is not configured properly. Please contact support.");
+    } else if (e.code === 'ERR_REQUEST_NOT_INTERACTIVE') {
+      Alert.alert("Error", "Apple Sign In is not available in this context.");
+    } else {
+      Alert.alert("Sign In Failed", e.message || "An unknown error occurred during Apple Sign In.");
     }
-
-    // Show user-friendly error message
-    Alert.alert(
-      "Apple Sign In Error",
-      "There was an issue signing in with Apple. Please try again or use an alternative sign-in method.",
-      [{ text: "OK" }]
-    );
-
-    // Track failed sign in
-    trackEvent("apple_signin_failed", {
-      method: "apple",
-      provider: "apple",
-      error_message: error instanceof Error ? error.message : "Unknown error",
-      error_code: error.code,
-      category: "authentication",
-    });
-  }
-}
-
-export async function isAppleAuthenticationAvailable(): Promise<boolean> {
-  if (Platform.OS !== "ios") {
-    return false;
-  }
-
-  try {
-    return await AppleAuthentication.isAvailableAsync();
-  } catch (error) {
-    console.error("Error checking Apple Authentication availability:", error);
-    return false;
   }
 }
